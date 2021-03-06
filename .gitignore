@@ -5,6 +5,10 @@
 *.so
 *.dylib
 
+# My binary and database
+chasm
+chasm.db
+
 # Test binary, built with `go test -c`
 *.test
 

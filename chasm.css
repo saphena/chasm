@@ -1,0 +1,18 @@
+h1 {
+    text-align: center;
+
+}
+h1 strong {
+    color: red;
+    font-weight: bold;
+    font-size: larger;
+}
+#aboutbox {
+    margin: 1em auto 1em auto;
+    padding: 1em;
+    background-color: white;
+    color: black;
+    max-width: 50em;
+    min-height: 10em;
+    border: .3em black solid;
+}
