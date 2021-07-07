@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"os"
 	"path/filepath"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -28,24 +29,34 @@ func init() {
 
 	var err error
 
-	fmt.Printf("%v\nCopyright (c) Bob Stammers 2021\n\n", PROGRAMVERSION)
+	fmt.Printf("%v\nCopyright (c) Bob Stammers 2021\n\n", appversion)
 
 	flag.Parse()
 	dbx, _ := filepath.Abs(*DBNAME)
-	fmt.Printf("Using %v\n", dbx)
+	fmt.Printf("Using %v\n\n", dbx)
 
 	DBH, err = sql.Open("sqlite3", dbx)
 	if err != nil {
 		panic(err)
 	}
-	sql := "SELECT eventname FROM config"
+
+	sql := "SELECT eventname,dbinitialised FROM config"
+
 	rows, err := DBH.Query(sql)
 	if err != nil {
-		panic(err)
+		if getYN("Database is not setup. Establish now? [Y/n] ") {
+			createDatabase()
+			rows, _ = DBH.Query(sql)
+		} else {
+			fmt.Printf("\nDatabase is not setup, run terminating\n\n")
+			os.Exit(1)
+		}
 	}
+
 	if rows.Next() {
-		rows.Scan((&EventName))
-		DBInitialised = EventName != ""
+		var dbi int
+		rows.Scan(&EventName, &dbi)
+		DBInitialised = (EventName != "") && (dbi != 0)
 	} else {
 		DBInitialised = false
 		EventName = ""

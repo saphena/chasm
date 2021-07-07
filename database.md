@@ -9,6 +9,8 @@ dbversion   | integer   | Readonly. The database schema version used
 mileskms    | integer   | 0 = Distance unit is miles; 1 is kilometres
 langcode    | text      | Language code, default is 'en'
 eventname   | text      | Title of the rally
+dbinitialised | integer | 0 = uninitialised; 1 = initialised
+defaultstart | text     | / = Home/main menu; sc = Scorecards; cl = Claimslog
 
 
 ## Table reasons
@@ -37,6 +39,21 @@ cat1        | integer   | Analysis category 1
 cat2        | integer   | Analysis category 2
 cat3        | integer   | Analysis category 3
 
+
+## Table claims
+
+This holds records for each bonus claim processed.
+
+Field       | Datatype  | Notes
+---         | ---       | ---
+claimid     | integer   | Unique identifier
+entrantid   | integer   | Entrant identifier
+leg         | integer   | Number of rally leg
+bonusid     | text      | Bonus identifier
+odo         | integer   | Odometer reading
+claimtime   | text      | Time of claim
+decision    | integer   | -1 = undecided, 0 = good claim, 1.. reason for full/partial rejection
+points      | integer   | Points value of decided claim
 
 ## Table combos
 

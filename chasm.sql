@@ -3,7 +3,9 @@ CREATE TABLE IF NOT EXISTS "config" (
 	"dbversion"	INTEGER NOT NULL DEFAULT 1,
 	"mileskms"	INTEGER NOT NULL DEFAULT 0,
 	"langcode"	TEXT NOT NULL DEFAULT 'en',
-	"eventname"	TEXT NOT NULL
+	"eventname"	TEXT NOT NULL,
+	"dbinitialised" TEXT NOT NULL DEFAULT 0,
+	"defaultstart" TEXT NOT NULL DEFAULT '/'
 );
 CREATE TABLE IF NOT EXISTS "entrants" (
 	"entrantid"	INTEGER NOT NULL,

@@ -4,24 +4,35 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"time"
+
+	"github.com/pkg/browser"
 )
 
-// PROGRAMVERSION is used a literal string in various places
-const PROGRAMVERSION = "Chasm v0.0.0"
+// appversion is used as a literal string in various places
+const appversion = "Chasm v0.0.0"
 
 func main() {
 
 	fmt.Printf("Serving %v\n", *HTTPPort)
 
-	if !DBInitialised {
-		fmt.Printf("Running basic wizard\n")
-	}
-	fs := http.FileServer(http.Dir("."))
+	fs := http.FileServer(http.Dir("./files"))
 	http.Handle("/", fs)
+
+	http.HandleFunc("/chasm", centralDispatch)
 	http.HandleFunc("/about", aboutChasm)
+	launchUI()
 	http.ListenAndServe(":"+*HTTPPort, nil)
 }
 
+func launchUI() {
+
+	time.Sleep(5 * time.Second)
+	starturl := "http://localhost:" + *HTTPPort + "/chasm"
+
+	browser.OpenURL(starturl)
+
+}
 func aboutChasm(w http.ResponseWriter, r *http.Request) {
 	var cfg struct {
 		Version string
@@ -29,14 +40,40 @@ func aboutChasm(w http.ResponseWriter, r *http.Request) {
 		Schema  int
 		Event   string
 	}
-	cfg.Version = PROGRAMVERSION
+	cfg.Version = appversion
 	cfg.DBPath = *DBNAME
 	cfg.Schema = 1
 	cfg.Event = "IBA Rally"
 
-	t := template.Must(template.New("about.html").Option("missingkey=error").ParseFiles("about.html"))
+	t := template.Must(template.New("about.html").Option("missingkey=error").ParseFiles("files/about.html"))
 	err := t.Execute(w, cfg)
 	if err != nil {
 		fmt.Printf("%v\n", err)
 	}
+}
+
+func centralDispatch(w http.ResponseWriter, r *http.Request) {
+
+	if !DBInitialised {
+		fmt.Printf("Running basic wizard\n")
+		//sendTemplate(w, r, "wizard")
+		showWizardPage(w, r, 1)
+	}
+
+}
+
+func sendTemplate(w http.ResponseWriter, r *http.Request, tmplt string) {
+
+	fmt.Printf("%v\n", r.URL)
+
+	var cfg struct {
+	}
+
+	t := template.Must(template.New(tmplt + ".html").Option("missingkey=error").ParseFiles("files/" + tmplt + ".html"))
+
+	err := t.Execute(w, cfg)
+	if err != nil {
+		fmt.Printf("%v\n", err)
+	}
+
 }
