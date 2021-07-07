@@ -1,0 +1,55 @@
+:root {
+    --regular-bg        : #b9ac3c;
+    --regular-fg        : black;
+}
+body    {
+    background-color    : var(--regular-bg);
+    color               : var(--regular-fg);
+    font-size           : 14pt;
+}
+h1 {
+    text-align: center;
+}
+#aboutbox {
+    margin: 1em auto 1em auto;
+    padding: 1em;
+    background-color: white;
+    color: black;
+    max-width: 50em;
+    min-height: 10em;
+    border: .3em black solid;
+}
+.chasmlogo {
+    text-align: center;
+    color: green;
+    background-color: white;
+    padding: .5em;
+}
+.chasmlogo strong {
+    color: blue;
+    font-weight: bold;
+    font-size: larger;
+}
+#aboutbox dt {
+    font-weight: normal;
+}
+#aboutbox dd {
+    font-weight: bold;
+    margin-left: 2em;
+}
+
+#topline {
+    background-color: rgb(150, 202, 245);
+}
+
+.wizheader {
+    margin-top: 4em;
+}
+.wizitem {
+    height: 4em;
+}
+.wizitem label {
+    width: 20em;
+    text-align: right;
+    margin-right: .5em;
+}

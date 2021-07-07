@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Chasm</title>
+        <link rel="stylesheet" href="reboot.css" />
+        <link rel="stylesheet" href="chasm.css" />
+    </head>
+    <body>
+        <div id="topline">
+        <!--<img src="home.svg" width="32px" height="32px" alt="/"/>-->
+        <!-- 
+            The below icon is inline in order to save one fetch. It will form part of a navigation
+            system and is scaled, in case you can't remember, by the ratio of its box size (width,
+            height) and its viewbox "zoom level" 
+        -->
+        <svg xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+xmlns:svg="http://www.w3.org/2000/svg"
+xmlns="http://www.w3.org/2000/svg"
+width="32"   height="32"
+viewbox="0 0 512 512"
+version="1.1"   id="svg2">
+	<g transform="translate(0,448)">
+		<path
+		style="fill:#0000ff;fill-opacity:1;stroke:#000000;stroke-width:12;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+		d="m 16,256 240,-192 96,72 0,-32 48,0 0,72 96,80 -48,0 0,192 -120,0 0,-160 -96,0 0,160 -168,0 0,-192 z"
+		transform="translate(0,-448)"/>
+	</g>
+</svg>
+</div> <!-- topline -->
+
+        <div id="aboutbox">
+            <h1 class="chasmlogo"><strong>Ch</strong>asm <strong>A</strong>in't <strong>S</strong>core<strong>M</strong>aster</h1>
+            <dl>
+                <dt>Program version</dt>
+                <dd>{{.Version}}</dd>
+                <dt>Database</dt>
+                <dd>{{.DBPath}} [v{{.Schema}}] {{.Event}}</dd>
+            </dl>
+        </div>
+        <p>This is some old text</p>
+        <div>
+            <label>01 --</label> <input type="checkbox">
+            <label>02 --</label> <input type="checkbox">
+            <label>03 --</label> <input type="checkbox">
+            <label>04 --</label> <input type="checkbox">
+            <label>05 --</label> <input type="checkbox">
+        </div>
+    </body>
+</html>
