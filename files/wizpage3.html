@@ -1,0 +1,29 @@
+{{template "wizhead.html" .}}
+
+    <form action="/setup" method="post">
+        <input type="hidden" name="wizpage" value="3">
+
+        {{if .Virtual}}
+
+        <p>This is a virtual rally so you need to specify these variables to be applied to all entrants.</p>
+
+        <div class="wizitem">
+            <label for="Tankrange">Tank range in {{if .MilesKms}}kilometres{{else}}miles{{end}}</label>
+            <input autofocus type="number" class="shortnum" id="Tankrange" name="Tankrange" value="{{.Tankrange}}" onfocus="showPrompt(this)">
+        </div>
+
+        <div class="wizitem" title="Every bonus visited will involve stopping for this number of minutes">
+            <label for="MinsPerStop">Minutes per stop</label>
+            <input type="number" class="shortnum" id="MinsPerStop" name="MinsPerStop" value="{{.MinsPerStop}}" onfocus="showPrompt(this)">
+        </div>
+
+        {{else}}
+
+        {{end}}
+
+
+        <p>This wizard is now complete and the installation is ready for use.</p>
+        
+        <input type="hidden" name="DBInitialised" value="1">
+
+{{template "wizfoot.html" .}}

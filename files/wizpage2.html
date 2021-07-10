@@ -1,0 +1,26 @@
+{{template "wizhead.html" .}}
+
+    <form action="/setup" method="post">
+        <input type="hidden" name="wizpage" value="2">
+        <div class="wizitem" title="The date of the first rally riding day ">
+            <label for="Startdate">Rally start date</label>
+            <input autofocus type="date" id="Startdate" name="Startdate" value="{{.Startdate}}" onblur="rallyTimesChanged()" onfocus="showPrompt(this)">
+        </div>
+        <div class="wizitem" title="The start time of the rally. Some rallies have mass starts, others staggered starts. This is the earliest possible start time.">
+            <label for="Starttime">Earliest start time</label>
+            <input type="time" id="Starttime" name="Starttime" value="{{.Starttime}}" onblur="rallyTimesChanged()" onfocus="showPrompt(this)">
+        </div>
+        <div class="wizitem" title="The last riding day of the rally">
+            <label for="Finishdate">Rally finish date</label>
+            <input type="date" id="Finishdate" name="Finishdate" value="{{.Finishdate}}" onblur="rallyTimesChanged()" onfocus="showPrompt(this)">
+        </div>
+        <div class="wizitem" title="The finish time of the rally. Entrants not checked-in by this time are DNF">
+            <label for="Finishtime">Latest finish time</label>
+            <input type="time" id="Finishtime" name="Finishtime" value="{{.Finishtime}}" onblur="rallyTimesChanged()" onfocus="showPrompt(this)">
+        </div>
+        <div class="wizitem" title="Maximum number of hours that may be ridden ">
+            <label for="Maxhours">Maximum riding hours</label>
+            <input type="number" class="shortnum" id="Maxhours" name="Maxhours" value="{{.Maxhours}}" onfocus="showPrompt(this)">
+        </div>
+
+{{template "wizfoot.html" .}}

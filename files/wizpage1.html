@@ -1,0 +1,56 @@
+{{template "wizhead.html" .}}
+
+    <form action="/setup" method="post">
+        <input type="hidden" name="wizpage" value="1">
+        <div class="wizitem" title="The full name of this rally, used on screen pages, certificates, etc ">
+            <label for="Eventname">Rally title</label>
+            <input autofocus type="text" id="Eventname" name="Eventname" value="{{.Eventname}}">
+        </div>
+        <div class="wizitem" title="Whereabouts is this event taking place? You can fine-tune the settings elsewhere.">
+            <label for="Region">Region</label>
+            <select id="Region" name="Region" onchange="regionChanged()" onfocus="showPrompt(this)">
+                {{range .Regions}}
+                <option value="{{.Region}}"
+                {{if .Current}} selected{{end}}
+                >{{.Region}}</option>
+                {{end}}       
+            </select>
+        </div>
+        <div class="wizitem" title="Used as default for entrant addresses">
+            <label for="Hostcountry">Host country</label>
+            <input type="text" id="Hostcountry" name="Hostcountry" value="{{.Hostcountry}}" onfocus="showPrompt(this)">
+        </div>
+    <div id="regiondetail" style="display:none">  <!-- values primarily controlled by region but might be fine-tuned -->
+        <div class="wizitem" title="All records and reports will use this unit of distance. Odometers count miles/kilometres">
+            <label for="MilesKms">Unit of distance is</label>
+            <select id="MilesKms" name="MilesKms" onfocus="showPrompt(this)">
+                <option value="0"{{if .MilesKms}}{{else}} selected{{end}}>miles</option>
+                <option value="1"{{if .MilesKms}} selected{{end}}>kilometres</option>
+            </select>
+        </div>
+        <div class="wizitem" title="">
+                <label for="Localtz">Local timezone</label>
+                <input type="text" id="Localtz" name="Localtz" value="{{.Localtz}}" onfocus="showPrompt(this)">
+            </div>
+            <div class="wizitem" title="">
+                <label for="Decimalcomma">Decimal point is</label>
+                <select id="Decimalcomma" name="Decimalcomma" onfocus="showPrompt(this)">
+                    <option value="0"{{if .Decimalcomma}}{{else}} selected{{end}}>decimal point ( . )</option>
+                    <option value="1"{{if .Decimalcomma}} selected{{end}}>comma ( , )</option>
+                </select>
+            </div>
+            <div class="wizitem" title="Used internally only">
+                <label for="Locale">Locale</label>
+                <input type="text" id="Locale" name="Locale" value="{{.Locale}}" onfocus="showPrompt(this)">
+            </div>
+
+        </div>
+        <div class="wizitem" title="Is this a real rally involving people actually riding motorcycles or a virtual rally involving only computers?">
+            <label for="VirtualRally">Rally type</label>
+            <select id="VirtualRally" name="VirtualRally" onfocus="showPrompt(this)">
+                <option value="0"{{if .Virtual}}{{else}}  selected{{end}}>Real rally</option>option>
+                <option value="1"{{if .Virtual}} selected{{end}}>Virtual rally</option>option>
+            </select>
+        </div>
+
+{{template "wizfoot.html" .}}

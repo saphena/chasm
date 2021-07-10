@@ -40,7 +40,7 @@ func init() {
 		panic(err)
 	}
 
-	sql := "SELECT eventname,dbinitialised FROM config"
+	sql := "SELECT Eventname,DBInitialised FROM config"
 
 	rows, err := DBH.Query(sql)
 	if err != nil {
@@ -52,6 +52,7 @@ func init() {
 			os.Exit(1)
 		}
 	}
+	defer rows.Close()
 
 	if rows.Next() {
 		var dbi int

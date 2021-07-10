@@ -2,32 +2,43 @@ package main
 
 const chasmSQL = `BEGIN TRANSACTION;
 CREATE TABLE IF NOT EXISTS "config" (
-	"dbversion"	INTEGER NOT NULL DEFAULT 1,
-	"mileskms"	INTEGER NOT NULL DEFAULT 0,
-	"langcode"	TEXT NOT NULL DEFAULT 'en',
-	"eventname"	TEXT NOT NULL,
-	"dbinitialised" TEXT NOT NULL DEFAULT 0,
-	"defaultstart" TEXT NOT NULL DEFAULT '/',
-	"region" TEXT NOT NULL DEFAULT 'United Kingdom',
-	"localtz" TEXT NOT NULL DEFAULT 'Europe/London',
-	"decimalcomma" INTEGER NOT NULL DEFAULT 0,
-	"hostcountry" TEXT NOT NULL DEFAULT 'UK',
-	"locale" TEXT NOT NULL DEFAULT 'en-GB',
-	"virtualrally" INTEGER NOT NULL DEFAULT 0
+	"DBVersion"	INTEGER NOT NULL DEFAULT 1,
+	"MilesKms"	INTEGER NOT NULL DEFAULT 0,
+	"Langcode"	TEXT NOT NULL DEFAULT 'en',
+	"Eventname"	TEXT NOT NULL,
+	"DBInitialised" TEXT NOT NULL DEFAULT 0,
+	"DefaultStart" TEXT NOT NULL DEFAULT '/',
+	"Region" TEXT NOT NULL DEFAULT 'United Kingdom',
+	"Localtz" TEXT NOT NULL DEFAULT 'Europe/London',
+	"Decimalcomma" INTEGER NOT NULL DEFAULT 0,
+	"Hostcountry" TEXT NOT NULL DEFAULT 'UK',
+	"Locale" TEXT NOT NULL DEFAULT 'en-GB',
+	"VirtualRally" INTEGER NOT NULL DEFAULT 0,
+	"Startdate" TEXT NOT NULL DEFAULT '2021-01-01',
+	"Starttime" TEXT NOT NULL DEFAULT '09:00',
+	"Finishdate" TEXT NOT NULL DEFAULT '2021-01-01',
+	"Finishtime" TEXT NOT NULL DEFAULT '17:00',
+	"Maxhours" INTEGER NOT NULL DEFAULT 8,
+	"MaxmilesDNF" INTEGER NOT NULL DEFAULT 0,
+	"MaxmilesPenalties" INTEGER NOT NULL DEFAULT 0,
+	"MinmilesDNF" INTEGER NOT NULL DEFAULT 0,
+	"ExcessPPM" INTEGER NOT NULL DEFAULT 0,
+	"Tankrange" INTEGER NOT NULL DEFAULT 200,
+	"MinsPerStop" INTEGER NOT NULL DEFAULT 10
 );
 INSERT INTO config (EVENTNAME) VALUES('IBA Rally');
 CREATE TABLE IF NOT EXISTS "regions" (
-	"region" TEXT NOT NULL,
-	"localtz" TEXT NOT NULL,
-	"hostcountry" TEXT NOT NULL,
-	"locale" TEXT NOT NULL,
-	"mileskms" INTEGER NOT NULL DEFAULT 0,
-	"decimalcomma" INTEGER NOT NULL DEFAULT 0
+	"Region" TEXT NOT NULL,
+	"Localtz" TEXT NOT NULL,
+	"Hostcountry" TEXT NOT NULL,
+	"Locale" TEXT NOT NULL,
+	"MilesKms" INTEGER NOT NULL DEFAULT 0,
+	"Decimalcomma" INTEGER NOT NULL DEFAULT 0
 );
-INSERT INTO regions (region,localtz,hostcountry,locale,mileskms,decimalcomma) VALUES('United Kingdom','Europe/London','UK','en-GB',0,0);
-INSERT INTO regions (region,localtz,hostcountry,locale,mileskms,decimalcomma) VALUES('Republic of Ireland','Europe/Dublin','Eire','en-EI',1,0);
-INSERT INTO regions (region,localtz,hostcountry,locale,mileskms,decimalcomma) VALUES('Western Europe','Europe/Berlin','DE','de-DE',1,1);
-INSERT INTO regions (region,localtz,hostcountry,locale,mileskms,decimalcomma) VALUES('Eastern Europe','Europe/Helsinki','Finland','fi-FI',1,1);
+INSERT INTO regions (Region,Localtz,Hostcountry,Locale,MilesKms,Decimalcomma) VALUES('United Kingdom','Europe/London','UK','en-GB',0,0);
+INSERT INTO regions (Region,Localtz,Hostcountry,Locale,MilesKms,Decimalcomma) VALUES('Republic of Ireland','Europe/Dublin','Eire','en-EI',1,0);
+INSERT INTO regions (Region,Localtz,Hostcountry,Locale,MilesKms,Decimalcomma) VALUES('Western Europe','Europe/Berlin','Germany','de-DE',1,1);
+INSERT INTO regions (Region,Localtz,Hostcountry,Locale,MilesKms,Decimalcomma) VALUES('Eastern Europe','Europe/Helsinki','Finland','fi-FI',1,1);
 CREATE TABLE IF NOT EXISTS "entrants" (
 	"entrantid"	INTEGER NOT NULL,
 	"riderid"	INTEGER NOT NULL,

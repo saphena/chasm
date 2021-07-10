@@ -1,0 +1,15 @@
+
+                <div class="wizbuttons">
+                    {{if .WizShowNext}}
+                        <input type="submit" class="wizbutton" name="nextpage" title="Move forward through the wizard" value="Next"> 
+                    {{else}}
+                        <input type="submit" class="wizbutton" name="endwiz" title="Complete the wizard" value="Finish">
+                    {{end}}
+                    {{if .WizShowPrev}}
+                        <input type="submit" class="wizbutton" name="prevpage" title="Move backward through the wizard" value="Previous"> 
+                    {{end}}
+                </div>
+            </form>
+        </div>
+    </body>
+</html>

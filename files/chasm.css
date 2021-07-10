@@ -42,6 +42,11 @@ h1 {
     background-color: rgb(150, 202, 245);
 }
 
+.wizpage {
+    max-width: 60em;
+    margin-left: auto;
+    margin-right: auto;
+}
 .wizheader {
     margin-top: 4em;
 }
@@ -52,4 +57,12 @@ h1 {
     width: 20em;
     text-align: right;
     margin-right: .5em;
+}
+.wizbuttons {
+    display:flex; 
+    flex-direction: row-reverse;
+}
+
+.shortnum {
+    width: 4em;
 }

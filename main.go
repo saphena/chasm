@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -20,7 +21,9 @@ func main() {
 	http.Handle("/", fs)
 
 	http.HandleFunc("/chasm", centralDispatch)
+	http.HandleFunc("/setup", showWizard)
 	http.HandleFunc("/about", aboutChasm)
+	http.HandleFunc("/ajax", fetchData)
 	launchUI()
 	http.ListenAndServe(":"+*HTTPPort, nil)
 }
@@ -52,6 +55,31 @@ func aboutChasm(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func fetchData(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		fmt.Printf("Error parsing fetchData form %v\n", err)
+		return
+	}
+	if r.FormValue("c") == "region" {
+		sql := "SELECT * FROM regions WHERE region=?"
+		stmt, _ := DBH.Prepare(sql)
+		rows, _ := stmt.Query(r.FormValue("key"))
+		defer rows.Close()
+		if rows.Next() {
+			type Region struct {
+				Region, Localtz, Hostcountry, Locale string
+				MilesKms, Decimalcomma               int
+			}
+			var reg Region
+			rows.Scan(&reg.Region, &reg.Localtz, &reg.Hostcountry, &reg.Locale, &reg.MilesKms, &reg.Decimalcomma)
+			a, _ := json.Marshal(reg)
+			w.Write(a)
+		}
+
+	}
+
+}
+
 func centralDispatch(w http.ResponseWriter, r *http.Request) {
 
 	if !DBInitialised {
@@ -62,6 +90,7 @@ func centralDispatch(w http.ResponseWriter, r *http.Request) {
 
 }
 
+/*****
 func sendTemplate(w http.ResponseWriter, r *http.Request, tmplt string) {
 
 	fmt.Printf("%v\n", r.URL)
@@ -77,3 +106,4 @@ func sendTemplate(w http.ResponseWriter, r *http.Request, tmplt string) {
 	}
 
 }
+*****/
