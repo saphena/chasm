@@ -16,6 +16,9 @@ var DBNAME *string = flag.String("db", "chasm.db", "database file")
 // HTTPPort is the web port to serve
 var HTTPPort *string = flag.String("port", "8080", "Web port")
 
+// Language identifies the i18n folder to use
+var Language *string = flag.String("lang", "", "Language folder override")
+
 // DBInitialised shows the configuration status of the database
 var DBInitialised bool
 
@@ -24,6 +27,9 @@ var EventName string
 
 // DBH provides access to the database
 var DBH *sql.DB
+
+// Docroot holds the path to the web assets folder
+var Docroot string
 
 func init() {
 
@@ -40,12 +46,12 @@ func init() {
 		panic(err)
 	}
 
-	sql := "SELECT Eventname,DBInitialised FROM config"
+	sql := "SELECT Eventname,DBInitialised, Langcode FROM config"
 
 	rows, err := DBH.Query(sql)
 	if err != nil {
 		if getYN("Database is not setup. Establish now? [Y/n] ") {
-			createDatabase()
+			createDatabase(*Language)
 			rows, _ = DBH.Query(sql)
 		} else {
 			fmt.Printf("\nDatabase is not setup, run terminating\n\n")
@@ -56,11 +62,13 @@ func init() {
 
 	if rows.Next() {
 		var dbi int
-		rows.Scan(&EventName, &dbi)
+		rows.Scan(&EventName, &dbi, Language)
 		DBInitialised = (EventName != "") && (dbi != 0)
 	} else {
 		DBInitialised = false
 		EventName = ""
+		*Language = "en"
 	}
+	Docroot = "files/"
 
 }

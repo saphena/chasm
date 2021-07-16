@@ -4,7 +4,7 @@
         <input type="hidden" name="wizpage" value="2">
         <div class="wizitem" title="The date of the first rally riding day ">
             <label for="Startdate">Rally start date</label>
-            <input autofocus type="date" id="Startdate" name="Startdate" value="{{.Startdate}}" onblur="rallyTimesChanged()" onfocus="showPrompt(this)">
+            <input autofocus type="date" id="Startdate" name="Startdate" value="{{.Startdate}}" onchange="document.getElementById('Finishdate').value=this.value" onblur="rallyTimesChanged()" onfocus="showPrompt(this)">
         </div>
         <div class="wizitem" title="The start time of the rally. Some rallies have mass starts, others staggered starts. This is the earliest possible start time.">
             <label for="Starttime">Earliest start time</label>

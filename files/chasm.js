@@ -14,7 +14,7 @@ function regionChanged() {
             rdpage.style.display = 'inherit';
 		}
 	};
-	xhttp.open("GET", encodeURI("/ajax?c=region&key="+reg.value), true);
+	xhttp.open("GET", encodeURI("/ajax?c=getregion&key="+reg.value), true);
 	xhttp.send();
 
 }
@@ -24,6 +24,19 @@ function dateFromIso(date) {
                 Number(date.substring(8, 10)), Number(date.substring(11, 13)), 
                 Number(date.substring(14, 16)), Number('00'));
 
+}
+
+function enableSaveButton(fld) {
+    let tr = fld.parentElement.parentElement; // tr
+    let flds = tr.cells;
+    for (i = 0; i < flds.length; i++) {
+        console.log(flds[i].firstChild);
+        for (j = 0; j < flds[i].children.length; j++) 
+            if (flds[i].children[j].name=='SaveButton') {
+                flds[i].children[j].disabled = false;
+                return;
+            }
+    }
 }
 
 function rallyTimesChanged() {
@@ -40,6 +53,110 @@ function rallyTimesChanged() {
     max.value='0';
     max.setAttribute('max',hrs);
     max.value = hrs;
+}
+
+function addnewReason() {
+    let tab = document.getElementById('reasonstable').getElementsByTagName('tbody')[0];
+    let flds = tab.getElementsByTagName('input');
+    let lastcode = 0;
+    let code = 0;
+    for (i = 0; i < flds.length; i++) {
+        if (flds[i].name == 'Code') {
+            code = parseInt(flds[i].value);
+            if (code > lastcode)
+                lastcode = code;
+        }
+    }
+    code++;
+    let nr = tab.insertRow();
+    nr.innerHTML = document.getElementById('newTR').innerHTML;
+    flds = nr.getElementsByTagName('input');
+    for (i = 0; i < flds.length; i++) {
+        if (flds[i].name == 'Code') {
+            flds[0].value = code;
+        }
+    }
+}
+
+
+
+function deleteReason(delButton) {
+    let frm = delButton.form;
+    let flds = frm.elements;
+    let code = '';
+    for (i = 0; i < flds.length; i++) {
+        if (flds[i].name == 'Code') {
+            code = flds[i].value;
+            break;
+        }
+    }
+    if (code == '') return;
+
+    let xhttp = new XMLHttpRequest();
+	xhttp.onreadystatechange = function() {
+		if (this.readyState == 4 && this.status == 200) {
+            console.log('{'+this.responseText+'}');
+            delButton.disabled = true;
+            let tr = delButton.parentElement.parentElement;
+            tr.parentElement.removeChild(tr);
+		}
+	};
+    let x = "/ajax?c=delreason&Code="+code;
+    console.log(x);
+	xhttp.open("POST", encodeURI(x), true);
+	xhttp.send();
+
+}
+function saveReason(obj) {
+    let sb, db, code, brief, action, param
+
+
+    let tr = obj.parentElement.parentElement; // tr
+    
+    let flds = tr.cells;
+    for (i = 0; i < flds.length; i++) {
+        console.log(flds[i].firstChild);
+        for (j = 0; j < flds[i].children.length; j++) 
+
+        
+        switch(flds[i].children[j].name) {
+            case 'DeleteButton':
+                db = flds[i].children[j];
+                break;
+            case 'SaveButton':
+                sb = flds[i].children[j];
+                break;
+            case 'Code':
+                code = flds[i].children[j].value;
+                break;
+            case 'Briefdesc':
+                brief = flds[i].children[j].value;
+                break;
+            case 'Action':
+                action = flds[i].children[j].value;
+                break;
+            case 'Param':
+                param = flds[i].children[j].value;
+                break;
+
+    }
+
+
+    }
+    let xhttp = new XMLHttpRequest();
+	xhttp.onreadystatechange = function() {
+		if (this.readyState == 4 && this.status == 200) {
+            console.log('{'+this.responseText+'}');
+            sb.disabled = true;
+            db.disabled = false;
+		}
+	};
+    let x = "/ajax?c=putreason&Code="+code+'&Briefdesc='+brief+'&Action='+action+'&Param='+param;
+    console.log(x);
+	xhttp.open("POST", encodeURI(x), true);
+	xhttp.send();
+
+
 }
 
 function showPrompt(obj) {

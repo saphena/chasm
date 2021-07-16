@@ -20,8 +20,18 @@ func getYN(prompt string) bool {
 
 }
 
-func createDatabase() {
+func createDatabase(LangCodeOverride string) {
 
 	fmt.Printf("Establishing initial database structure\n")
 	DBH.Exec(chasmSQL)
+
+	if LangCodeOverride == "" {
+		return
+	}
+
+	sql := "UPDATE config SET Langcode=?"
+	stmt, _ := DBH.Prepare(sql)
+	defer stmt.Close()
+	stmt.Exec(LangCodeOverride)
+
 }

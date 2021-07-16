@@ -71,7 +71,7 @@ func showWizardPage(w http.ResponseWriter, r *http.Request, pg int) {
 	}
 	rows.Close()
 
-	tt, _ := template.ParseGlob("./files/wiz*")
+	tt, _ := template.ParseGlob(Docroot + "/" + *Language + "/wiz*")
 	tmplt := "wizpage" + strconv.Itoa(pg) + ".html"
 	err := tt.ExecuteTemplate(w, tmplt, cfg)
 	if err != nil {
@@ -132,6 +132,7 @@ func saveWizardDetail(r *http.Request) {
 			args[i] = v.Value
 		}
 		stmt, _ := DBH.Prepare(sql)
+		defer stmt.Close()
 		_, err := stmt.Exec(args...)
 		if err != nil {
 			fmt.Printf("%v\n", err)

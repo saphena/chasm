@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8"/>
+        <title>Rally params</title>
+        <link rel="stylesheet" href="../reboot.css" />
+        <link rel="stylesheet" href="../chasm.css" />
+        <script src="../chasm.js"></script>
+    </head>
+    <body>
+        <div id="topline">
+            <a href="/about" id="helpchasm"><img src="../images/chasm.png" alt="[About Chasm]" title="About Chasm" /></a>
+        </div>
+        <div id="mainbody">
+            <h1>Rally parameters</h1>
+            <p id="promptpanel" class="wizheader"></p>
+
+            <form>
+                <div class="tabs_area">
+                    <ul id="tabs">
+                        <li><a href="#tab_basic">Basic</a></li>
+                        <li><a href="#tab_region">Regional</a></li>
+                    </ul>
+                </div>
+
+                <fieldset id="tab_basic" class="tab_content">
+                    <legend>Basic</legend>
+                    <div class="tab_field">
+                        <label for="Eventname">Rally title</label>
+                        <input autofocus type="text" id="Eventname" name="Eventname" value="{{.Eventname}}" onfocus="showPrompt(this)">
+                    </div>
+                    <div class="tab_field" title="The date of the first rally riding day ">
+                        <label for="Startdate">Rally start date</label>
+                        <input type="date" id="Startdate" name="Startdate" value="{{.Startdate}}" onchange="document.getElementById('Finishdate').value=this.value" onblur="rallyTimesChanged()" onfocus="showPrompt(this)">
+                    </div>
+                    <div class="tab_field" title="The start time of the rally. Some rallies have mass starts, others staggered starts. This is the earliest possible start time.">
+                        <label for="Starttime">Earliest start time</label>
+                        <input type="time" id="Starttime" name="Starttime" value="{{.Starttime}}" onblur="rallyTimesChanged()" onfocus="showPrompt(this)">
+                    </div>
+                    <div class="tab_field" title="The last riding day of the rally">
+                        <label for="Finishdate">Rally finish date</label>
+                        <input type="date" id="Finishdate" name="Finishdate" value="{{.Finishdate}}" onblur="rallyTimesChanged()" onfocus="showPrompt(this)">
+                    </div>
+                    <div class="tab_field" title="The finish time of the rally. Entrants not checked-in by this time are DNF">
+                        <label for="Finishtime">Latest finish time</label>
+                        <input type="time" id="Finishtime" name="Finishtime" value="{{.Finishtime}}" onblur="rallyTimesChanged()" onfocus="showPrompt(this)">
+                    </div>
+                    <div class="tab_field" title="Maximum number of hours that may be ridden before DNF">
+                        <label for="Maxhours">Maximum riding hours</label>
+                        <input type="number" class="shortnum" id="Maxhours" name="Maxhours" value="{{.Maxhours}}" onfocus="showPrompt(this)">
+                    </div>
+                </fieldset>
+
+                <fieldset id="tab_region" class="tab_content">
+                    <legend>Regional</legend>
+                    <div class="tab_field" title="Used as default for entrant addresses">
+                        <label for="Hostcountry">Host country</label>
+                        <input type="text" id="Hostcountry" name="Hostcountry" value="{{.Hostcountry}}" onfocus="showPrompt(this)">
+                    </div>
+                    <div class="tab_field" title="All records and reports will use this unit of distance. Odometers count miles/kilometres">
+                        <label for="MilesKms">Unit of distance is</label>
+                        <select id="MilesKms" name="MilesKms" onfocus="showPrompt(this)">
+                            <option value="0"{{if .MilesKms}}{{else}} selected{{end}}>miles</option>
+                            <option value="1"{{if .MilesKms}} selected{{end}}>kilometres</option>
+                        </select>
+                    </div>
+                    <div class="tab_field" title="">
+                            <label for="Localtz">Local timezone</label>
+                            <input type="text" id="Localtz" name="Localtz" value="{{.Localtz}}" onfocus="showPrompt(this)">
+                    </div>
+                    <div class="tab_field" title="">
+                        <label for="Decimalcomma">Decimal point is</label>
+                        <select id="Decimalcomma" name="Decimalcomma" onfocus="showPrompt(this)">
+                            <option value="0"{{if .Decimalcomma}}{{else}} selected{{end}}>decimal point ( . )</option>
+                            <option value="1"{{if .Decimalcomma}} selected{{end}}>comma ( , )</option>
+                        </select>
+                    </div>
+                    <div class="tab_field" title="Used internally only">
+                        <label for="Locale">Locale</label>
+                        <input type="text" id="Locale" name="Locale" value="{{.Locale}}" onfocus="showPrompt(this)">
+                    </div>
+                </fieldset>
+                
+
+            </form>
+        </div>
+
+    </body>
+</html>

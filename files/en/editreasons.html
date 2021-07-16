@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8"/>
+        <title>Reasons</title>
+        <link rel="stylesheet" href="../reboot.css" />
+        <link rel="stylesheet" href="../chasm.css" />
+        <script src="../chasm.js"></script>
+    </head>
+    <body>
+        <div id="topline">
+            <a href="/about" id="helpchasm"><img src="../images/chasm.png" alt="[About Chasm]" title="About Chasm" /></a>
+        </div>
+        <div id="mainbody">
+            <h1>Claim rejections/penalties</h1>
+            <p id="promptpanel" class="wizheader"></p>
+            <table id="reasonstable">
+                <thead>
+                    <tr><th>Code</th><th>Description</th><th>Action</th><th>Param</th><th></th></tr>
+                </thead>
+                <tbody>
+                    {{range .}}
+                    <tr>
+                        <form onsubmit="return false">
+                        <td><input readonly type="num" class="shortnum" name="Code" value="{{.Code}}"></td>
+                        <td><input type="text" name="Briefdesc" value="{{.Briefdesc}}" oninput="enableSaveButton(this)"></td>
+                        <td><select name="Action" onchange="enableSaveButton(this)">
+                            <option value="0" {{if eq .Action  0}}selected{{end}}>Reject claim</option>
+                            <option value="1" {{if ne .Action  0}}selected{{end}}>Reduce points</option>
+                        </select></td>
+                        <td><input type="text" class="shortnum" name="Param" value="{{.Param}}" oninput="enableSaveButton(this)"></td>
+                        <td>
+                            <input disabled type="button" name="SaveButton" value="&checkmark;" title="Save changes" onclick="saveReason(this)">
+                            <input type="button" name="DeleteButton" value="&cross;" title="Delete record" onclick="deleteReason(this)">
+                        </td>
+                        </form>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+            <input type="button" value="&plus;" onclick="addnewReason()">
+            <div style="display:none;">
+                <table>
+                    <tr id="newTR">
+                <form onsubmit="return false">
+                    <td><input readonly type="num" class="shortnum" name="Code" value=""></td>
+                    <td><input type="text" name="Briefdesc" value="" oninput="enableSaveButton(this)"></td>
+                    <td><select name="Action" onchange="enableSaveButton(this)">
+                        <option value="0" selected>Reject claim</option>
+                        <option value="1" >Reduce points</option>
+                    </select></td>
+                    <td><input type="text" class="shortnum" name="Param" value="" oninput="enableSaveButton(this)"></td>
+                    <td>
+                        <input type="button" name="SaveButton" value="&checkmark;" title="Save changes" onclick="saveReason(this)">
+                        <input disabled type="button" name="DeleteButton" value="&cross;" title="Delete record" onclick="deleteReason(this)">
+                    </td>
+                </form>
+            </template>
+                </table>
+            </div>
+        </div>
+    </body>
+</html>
+
