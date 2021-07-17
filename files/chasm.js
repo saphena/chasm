@@ -30,7 +30,7 @@ function enableSaveButton(fld) {
     let tr = fld.parentElement.parentElement; // tr
     let flds = tr.cells;
     for (i = 0; i < flds.length; i++) {
-        console.log(flds[i].firstChild);
+        //console.log(flds[i].firstChild);
         for (j = 0; j < flds[i].children.length; j++) 
             if (flds[i].children[j].name=='SaveButton') {
                 flds[i].children[j].disabled = false;
@@ -81,15 +81,18 @@ function addnewReason() {
 
 
 function deleteReason(delButton) {
-    let frm = delButton.form;
-    let flds = frm.elements;
-    let code = '';
+
+    let tr = delButton.parentElement.parentElement; // tr
+    let flds = tr.cells;
+    let code = '0';
     for (i = 0; i < flds.length; i++) {
-        if (flds[i].name == 'Code') {
-            code = flds[i].value;
-            break;
-        }
+        console.log(flds[i].firstChild);
+        for (j = 0; j < flds[i].children.length; j++) 
+            if (flds[i].children[j].name=='Code') {
+                code = flds[i].children[j].value;
+            }
     }
+
     if (code == '') return;
 
     let xhttp = new XMLHttpRequest();
@@ -108,7 +111,7 @@ function deleteReason(delButton) {
 
 }
 function saveReason(obj) {
-    let sb, db, code, brief, action, param
+    let sb, db, cf, code, brief, action, param
 
 
     let tr = obj.parentElement.parentElement; // tr
@@ -128,6 +131,7 @@ function saveReason(obj) {
                 break;
             case 'Code':
                 code = flds[i].children[j].value;
+                cf = flds[i].children[j];
                 break;
             case 'Briefdesc':
                 brief = flds[i].children[j].value;
@@ -149,6 +153,7 @@ function saveReason(obj) {
             console.log('{'+this.responseText+'}');
             sb.disabled = true;
             db.disabled = false;
+            cf.readOnly = true;
 		}
 	};
     let x = "/ajax?c=putreason&Code="+code+'&Briefdesc='+brief+'&Action='+action+'&Param='+param;

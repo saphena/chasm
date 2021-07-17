@@ -23,15 +23,21 @@ func getYN(prompt string) bool {
 func createDatabase(LangCodeOverride string) {
 
 	fmt.Printf("Establishing initial database structure\n")
-	DBH.Exec(chasmSQL)
+	defer DBH.Close()
+
+	_, err := DBH.Exec(chasmSQL)
+	if err != nil {
+		fmt.Printf("%v\n", err)
+	}
 
 	if LangCodeOverride == "" {
 		return
 	}
 
 	sql := "UPDATE config SET Langcode=?"
-	stmt, _ := DBH.Prepare(sql)
-	defer stmt.Close()
-	stmt.Exec(LangCodeOverride)
+	_, err = DBH.Exec(sql, LangCodeOverride)
+	if err != nil {
+		fmt.Printf("%v\n", err)
+	}
 
 }

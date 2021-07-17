@@ -46,13 +46,15 @@ func init() {
 		panic(err)
 	}
 
-	sql := "SELECT Eventname,DBInitialised, Langcode FROM config"
+	sqlx := "SELECT Eventname,DBInitialised, Langcode FROM config"
 
-	rows, err := DBH.Query(sql)
+	rows, err := DBH.Query(sqlx)
 	if err != nil {
 		if getYN("Database is not setup. Establish now? [Y/n] ") {
 			createDatabase(*Language)
-			rows, _ = DBH.Query(sql)
+			fmt.Printf("Closing new database, please rerun me\n")
+			os.Exit(0)
+			//rows, _ = DBH.Query(sqlx)
 		} else {
 			fmt.Printf("\nDatabase is not setup, run terminating\n\n")
 			os.Exit(1)

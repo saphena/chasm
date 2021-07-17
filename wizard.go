@@ -121,6 +121,9 @@ func saveWizardDetail(r *http.Request) {
 		x := r.FormValue(fld)
 		if x != "" {
 			nv = append(nv, nameval{fld, x})
+			if fld == "DBInitialised" {
+				DBInitialised = x != "0"
+			}
 		}
 	}
 	if len(nv) > 0 {
@@ -156,5 +159,9 @@ func showWizard(w http.ResponseWriter, r *http.Request) {
 	} else if r.FormValue("prevpage") != "" {
 		pg--
 	}
-	showWizardPage(w, r, pg)
+	if DBInitialised {
+		centralDispatch(w, r)
+	} else {
+		showWizardPage(w, r, pg)
+	}
 }

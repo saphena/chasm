@@ -166,6 +166,11 @@ CREATE TABLE IF NOT EXISTS "reasons" (
 	"Param"	TEXT,
 	PRIMARY KEY("Code")
 );
+INSERT INTO reasons (Code,Briefdesc,Action,Param) VALUES(1,'Face not in photo',0,'');
+INSERT INTO reasons (Code,Briefdesc,Action,Param) VALUES(2,'Flag not in photo',0,'');
+INSERT INTO reasons (Code,Briefdesc,Action,Param) VALUES(3,'Bike not in photo',0,'');
+INSERT INTO reasons (Code,Briefdesc,Action,Param) VALUES(4,'Wrong/missing photo',0,'');
+INSERT INTO reasons (Code,Briefdesc,Action,Param) VALUES(5,'Out of hours',0,'');
 CREATE TABLE IF NOT EXISTS "people" (
 	"Personid"	INTEGER NOT NULL,
 	"Firstname"	TEXT,
@@ -199,6 +204,10 @@ CREATE TABLE IF NOT EXISTS "bonuses" (
 	"Cat1"	INTEGER NOT NULL DEFAULT 0,
 	"Cat2"	INTEGER NOT NULL DEFAULT 0,
 	"Cat3"	INTEGER NOT NULL DEFAULT 0,
+	"Compulsory" INTEGER NOT NULL DEFAULT 0,
+	"RestMinutes" INTEGER NOT NULL DEFAULT 0,
+	"AskPoints" INTEGER NOT NULL DEFAULT 0,
+	"AskMinutes" INTEGER NOT NULL DEFAULT 0,
 	PRIMARY KEY("Bonusid")
 );
 COMMIT;

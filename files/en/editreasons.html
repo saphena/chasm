@@ -21,7 +21,6 @@
                 <tbody>
                     {{range .}}
                     <tr>
-                        <form onsubmit="return false">
                         <td><input readonly type="num" class="shortnum" name="Code" value="{{.Code}}"></td>
                         <td><input type="text" name="Briefdesc" value="{{.Briefdesc}}" oninput="enableSaveButton(this)"></td>
                         <td><select name="Action" onchange="enableSaveButton(this)">
@@ -33,7 +32,6 @@
                             <input disabled type="button" name="SaveButton" value="&checkmark;" title="Save changes" onclick="saveReason(this)">
                             <input type="button" name="DeleteButton" value="&cross;" title="Delete record" onclick="deleteReason(this)">
                         </td>
-                        </form>
                     </tr>
                     {{end}}
                 </tbody>
@@ -42,8 +40,7 @@
             <div style="display:none;">
                 <table>
                     <tr id="newTR">
-                <form onsubmit="return false">
-                    <td><input readonly type="num" class="shortnum" name="Code" value=""></td>
+                    <td><input type="num" class="shortnum" name="Code" value=""></td>
                     <td><input type="text" name="Briefdesc" value="" oninput="enableSaveButton(this)"></td>
                     <td><select name="Action" onchange="enableSaveButton(this)">
                         <option value="0" selected>Reject claim</option>
@@ -51,10 +48,9 @@
                     </select></td>
                     <td><input type="text" class="shortnum" name="Param" value="" oninput="enableSaveButton(this)"></td>
                     <td>
-                        <input type="button" name="SaveButton" value="&checkmark;" title="Save changes" onclick="saveReason(this)">
+                        <input disabled type="button" name="SaveButton" value="&checkmark;" title="Save changes" onclick="saveReason(this)">
                         <input disabled type="button" name="DeleteButton" value="&cross;" title="Delete record" onclick="deleteReason(this)">
                     </td>
-                </form>
             </template>
                 </table>
             </div>
