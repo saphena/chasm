@@ -1,0 +1,336 @@
+BEGIN TRANSACTION;
+DROP TABLE IF EXISTS "rallyparams";
+CREATE TABLE IF NOT EXISTS "rallyparams" (
+	"RallyTitle"	TEXT,
+	"MaxHours"	INTEGER NOT NULL DEFAULT 0,
+	"StartTime"	TEXT,
+	"FinishTime"	TEXT,
+	"MinMiles"	INTEGER NOT NULL DEFAULT 0,
+	"PenaltyMaxMiles"	INTEGER NOT NULL DEFAULT 0,
+	"MaxMilesMethod"	INTEGER NOT NULL DEFAULT 0,
+	"MaxMilesPoints"	INTEGER NOT NULL DEFAULT 0,
+	"PenaltyMilesDNF"	INTEGER NOT NULL DEFAULT 0,
+	"MinPoints"	INTEGER NOT NULL DEFAULT 0,
+	"ScoringMethod"	INTEGER NOT NULL DEFAULT 3,
+	"ShowMultipliers"	INTEGER NOT NULL DEFAULT 2,
+	"TiedPointsRanking"	INTEGER NOT NULL DEFAULT 1,
+	"TeamRanking"	INTEGER NOT NULL DEFAULT 3,
+	"OdoCheckMiles"	NUMERIC DEFAULT 0,
+	"Cat1Label"	TEXT,
+	"Cat2Label"	TEXT,
+	"Cat3Label"	TEXT,
+	"Cat4Label"	TEXT,
+	"Cat5Label"	TEXT,
+	"Cat6Label"	TEXT,
+	"Cat7Label"	TEXT,
+	"Cat8Label"	TEXT,
+	"Cat9Label"	TEXT,
+	"RejectReasons"	TEXT,
+	"DBState"	INTEGER NOT NULL DEFAULT 0,
+	"DBVersion"	INTEGER NOT NULL DEFAULT 10,
+	"AutoRank"	INTEGER NOT NULL DEFAULT 1,
+	"Theme"	TEXT NOT NULL DEFAULT 'default',
+	"MilesKms"	INTEGER NOT NULL DEFAULT 0,
+	"LocalTZ"	TEXT NOT NULL DEFAULT 'Europe/London',
+	"DecimalComma"	INTEGER NOT NULL DEFAULT 0,
+	"HostCountry"	TEXT NOT NULL DEFAULT 'UK',
+	"Locale"	TEXT NOT NULL DEFAULT 'en-GB',
+	"EmailParams"	TEXT,
+	"isvirtual"	INTEGER NOT NULL DEFAULT 0,
+	"tankrange"	INTEGER NOT NULL DEFAULT 200,
+	"refuelstops"	TEXT,
+	"stopmins"	INTEGER NOT NULL DEFAULT 10,
+	"spbonus"	TEXT,
+	"fpbonus"	TEXT,
+	"mpbonus"	TEXT,
+	"settings"	TEXT,
+	"StartOption"	INTEGER NOT NULL DEFAULT 0,
+	"ebcsettings"	TEXT
+);
+DROP TABLE IF EXISTS "cohorts";
+CREATE TABLE IF NOT EXISTS "cohorts" (
+	"Cohort"	INTEGER NOT NULL,
+	"FixedStart"	INTEGER NOT NULL DEFAULT 1,
+	"StartTime"	TEXT,
+	PRIMARY KEY("Cohort")
+);
+DROP TABLE IF EXISTS "teams";
+CREATE TABLE IF NOT EXISTS "teams" (
+	"TeamID"	INTEGER NOT NULL,
+	"BriefDesc"	TEXT,
+	PRIMARY KEY("TeamID")
+);
+DROP TABLE IF EXISTS "ebclaims";
+CREATE TABLE IF NOT EXISTS "ebclaims" (
+	"EBClaimID"	INTEGER NOT NULL PRIMARY KEY,
+	"LoggedAt"	TEXT NOT NULL,
+	"AttachmentTime"	TEXT,
+	"DateTime"	TEXT NOT NULL,
+	"FirstTime"	TEXT,
+	"FinalTime"	TEXT NOT NULL,
+	"EntrantID"	INTEGER NOT NULL,
+	"BonusID"	TEXT NOT NULL,
+	"OdoReading"	INTEGER NOT NULL,
+	"ClaimTime"	TEXT NOT NULL,
+	"ClaimHH"	INTEGER NOT NULL DEFAULT 0,
+	"ClaimMM"	INTEGER NOT NULL DEFAULT 0,
+	"Decision"	INTEGER NOT NULL DEFAULT -1,
+	"Judgedby"	TEXT,
+	"Points"	INTEGER NOT NULL DEFAULT 0,
+	"EmailID"	INTEGER NOT NULL,
+	"Subject"	TEXT NOT NULL,
+	"ExtraField"	TEXT NOT NULL,
+	"Processed"	INTEGER NOT NULL DEFAULT 0,
+	"RestMinutes"	INTEGER NOT NULL DEFAULT 0,
+	"AskPoints"	INTEGER NOT NULL DEFAULT 0,
+	"AskMinutes"	INTEGER NOT NULL DEFAULT 0
+);
+DROP TABLE IF EXISTS "ebcphotos";
+CREATE TABLE IF NOT EXISTS "ebcphotos" (
+	"PhotoID"	INTEGER NOT NULL PRIMARY KEY,
+	"EntrantID"	INTEGER NOT NULL,
+	"BonusID"	TEXT NOT NULL,
+	"EmailID"	INTEGER NOT NULL,
+	"EBClaimID"	INTEGER NOT NULL,
+	"Image"	TEXT
+);
+DROP TABLE IF EXISTS "emailq";
+CREATE TABLE IF NOT EXISTS "emailq" (
+	"EntrantID"	INTEGER NOT NULL,
+	"TemplateID"	INTEGER NOT NULL DEFAULT 0,
+	"EmailSent"	INTEGER NOT NULL DEFAULT 0,
+	"SentAt"	TEXT
+);
+DROP TABLE IF EXISTS "emailtemplates";
+CREATE TABLE IF NOT EXISTS "emailtemplates" (
+	"TemplateID"	INTEGER NOT NULL,
+	"EmailSubject"	TEXT,
+	"EmailBody"	TEXT,
+	"EmailSignature"	TEXT,
+	"IncludeScorex"	INTEGER NOT NULL DEFAULT 0,
+	"IncludeCertificate"	INTEGER NOT NULL DEFAULT 0,
+	"AttachFiles"	TEXT,
+	"AttachNames"	TEXT,
+	"WhereSQL"	TEXT,
+	PRIMARY KEY("TemplateID")
+);
+DROP TABLE IF EXISTS "functions";
+CREATE TABLE IF NOT EXISTS "functions" (
+	"functionid"	INTEGER NOT NULL,
+	"menulbl"	TEXT,
+	"url"	TEXT,
+	"onclick"	TEXT,
+	"Tags"	TEXT,
+	PRIMARY KEY("functionid")
+);
+DROP TABLE IF EXISTS "menus";
+CREATE TABLE IF NOT EXISTS "menus" (
+	"menuid"	TEXT,
+	"menulbl"	TEXT,
+	"menufuncs"	TEXT,
+	PRIMARY KEY("menuid")
+);
+DROP TABLE IF EXISTS "certificates";
+CREATE TABLE IF NOT EXISTS "certificates" (
+	"EntrantID"	INTEGER NOT NULL DEFAULT 0,
+	"css"	TEXT,
+	"html"	TEXT,
+	"options"	TEXT,
+	"image"	TEXT,
+	"Class"	INTEGER NOT NULL DEFAULT 0,
+	"Title"	TEXT,
+	PRIMARY KEY("EntrantID","Class")
+);
+DROP TABLE IF EXISTS "timepenalties";
+CREATE TABLE IF NOT EXISTS "timepenalties" (
+	"TimeSpec"	INTEGER NOT NULL DEFAULT 2,
+	"PenaltyStart"	TEXT,
+	"PenaltyFinish"	TEXT,
+	"PenaltyMethod"	INTEGER NOT NULL DEFAULT 0,
+	"PenaltyFactor"	INTEGER NOT NULL DEFAULT 0
+);
+DROP TABLE IF EXISTS "sgroups";
+CREATE TABLE IF NOT EXISTS "sgroups" (
+	"GroupName"	TEXT NOT NULL,
+	"GroupType"	TEXT DEFAULT 'C',
+	PRIMARY KEY("GroupName")
+);
+DROP TABLE IF EXISTS "combos";
+CREATE TABLE IF NOT EXISTS "combos" (
+	"ComboID"	TEXT,
+	"BriefDesc"	TEXT,
+	"ScoreMethod"	INTEGER NOT NULL DEFAULT 0,
+	"MinimumTicks"	INTEGER NOT NULL DEFAULT 0,
+	"ScorePoints"	TEXT DEFAULT 0,
+	"Bonuses"	TEXT,
+	"Cat1"	INTEGER NOT NULL DEFAULT 0,
+	"Cat2"	INTEGER NOT NULL DEFAULT 0,
+	"Cat3"	INTEGER NOT NULL DEFAULT 0,
+	"Cat4"	INTEGER NOT NULL DEFAULT 0,
+	"Cat5"	INTEGER NOT NULL DEFAULT 0,
+	"Cat6"	INTEGER NOT NULL DEFAULT 0,
+	"Cat7"	INTEGER NOT NULL DEFAULT 0,
+	"Cat8"	INTEGER NOT NULL DEFAULT 0,
+	"Cat9"	INTEGER NOT NULL DEFAULT 0,
+	"Compulsory"	INTEGER NOT NULL DEFAULT 0,
+	PRIMARY KEY("ComboID")
+);
+DROP TABLE IF EXISTS "claims";
+CREATE TABLE IF NOT EXISTS "claims" (
+	"ClaimID"	INTEGER NOT NULL PRIMARY KEY,
+	"LoggedAt"	TEXT,
+	"ClaimTime"	TEXT,
+	"BCMethod"	INTEGER NOT NULL DEFAULT 0,
+	"EntrantID"	INTEGER,
+	"BonusID"	TEXT,
+	"OdoReading"	INTEGER,
+	"Decision"	INTEGER NOT NULL DEFAULT 0,
+	"Applied"	INTEGER NOT NULL DEFAULT 0,
+	"NextTimeMins"	INTEGER NOT NULL DEFAULT 0,
+	"FuelBalance"	INTEGER NOT NULL DEFAULT 0,
+	"SpeedPenalty"	INTEGER NOT NULL DEFAULT 0,
+	"FuelPenalty"	INTEGER NOT NULL DEFAULT 0,
+	"MagicPenalty"	INTEGER NOT NULL DEFAULT 0,
+	"MagicWord"	TEXT,
+	"Photo"	TEXT,
+	"Points"	INTEGER NOT NULL DEFAULT 0,
+	"RestMinutes"	INTEGER NOT NULL DEFAULT 0,
+	"AskPoints"	INTEGER NOT NULL DEFAULT 0,
+	"AskMinutes"	INTEGER NOT NULL DEFAULT 0,
+	"QuestionAsked"	INTEGER NOT NULL DEFAULT 0,
+	"QuestionAnswered"	INTEGER NOT NULL DEFAULT 0,
+	"AnswerSupplied"	TEXT
+);
+DROP TABLE IF EXISTS "categories";
+CREATE TABLE IF NOT EXISTS "categories" (
+	"Axis"	INTEGER NOT NULL DEFAULT 1,
+	"Cat"	INTEGER,
+	"BriefDesc"	TEXT,
+	PRIMARY KEY("Axis","Cat")
+);
+DROP TABLE IF EXISTS "catcompound";
+CREATE TABLE IF NOT EXISTS "catcompound" (
+	"Axis"	INTEGER NOT NULL DEFAULT 1,
+	"Cat"	INTEGER,
+	"NMethod"	INTEGER NOT NULL DEFAULT -1,
+	"ModBonus"	INTEGER NOT NULL DEFAULT 0,
+	"NMin"	INTEGER NOT NULL DEFAULT 1,
+	"PointsMults"	INTEGER NOT NULL DEFAULT 0,
+	"NPower"	INTEGER NOT NULL DEFAULT 2,
+	"Ruletype"	INTEGER NOT NULL DEFAULT 0
+);
+DROP TABLE IF EXISTS "bonuses";
+CREATE TABLE IF NOT EXISTS "bonuses" (
+	"BonusID"	TEXT,
+	"BriefDesc"	TEXT,
+	"Points"	INTEGER NOT NULL DEFAULT 1,
+	"Cat1"	INTEGER NOT NULL DEFAULT 0,
+	"Cat2"	INTEGER NOT NULL DEFAULT 0,
+	"Cat3"	INTEGER NOT NULL DEFAULT 0,
+	"Cat4"	INTEGER NOT NULL DEFAULT 0,
+	"Cat5"	INTEGER NOT NULL DEFAULT 0,
+	"Cat6"	INTEGER NOT NULL DEFAULT 0,
+	"Cat7"	INTEGER NOT NULL DEFAULT 0,
+	"Cat8"	INTEGER NOT NULL DEFAULT 0,
+	"Cat9"	INTEGER NOT NULL DEFAULT 0,
+	"Compulsory"	INTEGER NOT NULL DEFAULT 0,
+	"Notes"	TEXT,
+	"Flags"	TEXT,
+	"AskPoints"	INTEGER NOT NULL DEFAULT 0,
+	"RestMinutes"	INTEGER NOT NULL DEFAULT 0,
+	"AskMinutes"	INTEGER NOT NULL DEFAULT 0,
+	"GroupName"	TEXT,
+	"Image"	TEXT,
+	"Coords"	TEXT,
+	"Waffle"	TEXT,
+	"Question"	TEXT,
+	"Answer"	TEXT,
+	PRIMARY KEY("BonusID")
+);
+DROP TABLE IF EXISTS "magicwords";
+CREATE TABLE IF NOT EXISTS "magicwords" (
+	"asfrom"	TEXT NOT NULL,
+	"magic"	TEXT NOT NULL
+);
+DROP TABLE IF EXISTS "speedpenalties";
+CREATE TABLE IF NOT EXISTS "speedpenalties" (
+	"Basis"	INTEGER NOT NULL DEFAULT 0,
+	"MinSpeed"	INTEGER NOT NULL,
+	"PenaltyType"	INTEGER NOT NULL DEFAULT 0,
+	"PenaltyPoints"	INTEGER DEFAULT 0
+);
+DROP TABLE IF EXISTS "importspecs";
+CREATE TABLE IF NOT EXISTS "importspecs" (
+	"specid"	TEXT NOT NULL,
+	"specTitle"	TEXT,
+	"importType"	INTEGER NOT NULL DEFAULT 0,
+	"fieldSpecs"	TEXT,
+	PRIMARY KEY("specid")
+);
+DROP TABLE IF EXISTS "themes";
+CREATE TABLE IF NOT EXISTS "themes" (
+	"Theme"	TEXT NOT NULL,
+	"css"	TEXT NOT NULL,
+	PRIMARY KEY("Theme")
+);
+DROP TABLE IF EXISTS "classes";
+CREATE TABLE IF NOT EXISTS "classes" (
+	"Class"	INTEGER NOT NULL,
+	"BriefDesc"	TEXT NOT NULL,
+	"AutoAssign"	INTEGER NOT NULL DEFAULT 1,
+	"MinPoints"	INTEGER NOT NULL DEFAULT 0,
+	"MinBonuses"	INTEGER NOT NULL DEFAULT 0,
+	"BonusesReqd"	TEXT,
+	"LowestRank"	INTEGER NOT NULL DEFAULT 0,
+	PRIMARY KEY("Class")
+);
+DROP TABLE IF EXISTS "entrants";
+CREATE TABLE IF NOT EXISTS "entrants" (
+	"EntrantID"	INTEGER,
+	"Bike"	TEXT,
+	"BikeReg"	TEXT,
+	"RiderName"	TEXT,
+	"RiderFirst"	TEXT,
+	"RiderIBA"	INTEGER,
+	"PillionName"	TEXT,
+	"PillionFirst"	TEXT,
+	"PillionIBA"	INTEGER,
+	"TeamID"	INTEGER NOT NULL DEFAULT 0,
+	"Country"	TEXT DEFAULT 'UK',
+	"OdoKms"	INTEGER NOT NULL DEFAULT 0,
+	"OdoCheckStart"	NUMERIC,
+	"OdoCheckFinish"	NUMERIC,
+	"OdoCheckTrip"	NUMERIC,
+	"OdoScaleFactor"	NUMERIC DEFAULT 1,
+	"OdoRallyStart"	NUMERIC,
+	"OdoRallyFinish"	NUMERIC,
+	"CorrectedMiles"	NUMERIC DEFAULT 0,
+	"FinishTime"	TEXT,
+	"BonusesVisited"	TEXT,
+	"CombosTicked"	TEXT,
+	"TotalPoints"	INTEGER NOT NULL DEFAULT 0,
+	"StartTime"	TEXT,
+	"FinishPosition"	INTEGER NOT NULL DEFAULT 0,
+	"EntrantStatus"	INTEGER NOT NULL DEFAULT 0,
+	"ScoringNow"	INTEGER NOT NULL DEFAULT 0,
+	"ScoredBy"	TEXT,
+	"ExtraData"	TEXT,
+	"Class"	INTEGER NOT NULL DEFAULT 0,
+	"ScoreX"	TEXT,
+	"RejectedClaims"	TEXT,
+	"Phone"	TEXT,
+	"Email"	TEXT,
+	"NoKName"	TEXT,
+	"NoKRelation"	TEXT,
+	"NoKPhone"	TEXT,
+	"BCMethod"	INTEGER NOT NULL DEFAULT 1,
+	"RestMinutes"	INTEGER NOT NULL DEFAULT 0,
+	"Confirmed"	INTEGER NOT NULL DEFAULT 0,
+	"AvgSpeed"	TEXT,
+	"Cohort"	INTEGER NOT NULL DEFAULT 0,
+	"ReviewedByTeam"	INTEGER NOT NULL DEFAULT 0,
+	"AcceptedByEntrant"	INTEGER NOT NULL DEFAULT 0,
+	"LastReviewed"	TEXT,
+	PRIMARY KEY("EntrantID")
+);
+COMMIT;
