@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"log"
 	"net/http"
 	"path/filepath"
 
@@ -19,7 +20,7 @@ var HTTPPort *string = flag.String("port", "8080", "Web port")
 // DBH provides access to the database
 var DBH *sql.DB
 
-func getValueFromDB(sqlx string, defval string) string {
+func getStringFromDB(sqlx string, defval string) string {
 
 	rows, err := DBH.Query(sqlx)
 	if err != nil {
@@ -36,7 +37,7 @@ func getValueFromDB(sqlx string, defval string) string {
 
 func main() {
 
-	fmt.Println("Hello sailor")
+	log.Println("Hello sailor")
 	flag.Parse()
 
 	dbx, _ := filepath.Abs(*DBNAME)
@@ -49,7 +50,7 @@ func main() {
 	}
 
 	sqlx := "SELECT DBInitialised FROM config"
-	dbi := getValueFromDB(sqlx, "0")
+	dbi := getStringFromDB(sqlx, "0")
 	if dbi != "1" {
 		fmt.Println("Duff database")
 		return
