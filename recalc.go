@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"slices"
 	"strconv"
+	"strings"
 )
 
 func checkerr(err error) {
@@ -79,6 +80,83 @@ type CompoundRule struct {
 
 var CompoundRules []CompoundRule
 
+type ComboBonus struct {
+	Comboid     string
+	BriefDesc   string
+	ScoreMethod int
+	MinTicks    int
+	PointsList  string
+	BonusList   string
+	Compulsory  bool
+	Cat         [NumCategoryAxes]int
+	Points      []int
+	Bonuses     []string
+}
+
+var ComboBonuses []ComboBonus
+
+func loadCombos() []ComboBonus {
+
+	const cbFieldsB4Cats = 8
+
+	var cb ComboBonus
+	res := make([]ComboBonus, 0)
+
+	sqlx := "SELECT ComboID,BriefDesc,ScoreMethod,MinimumTicks,ScorePoints,Bonuses,Compulsory,Cat1"
+	for i := 2; i <= NumCategoryAxes; i++ {
+		sqlx += fmt.Sprintf(",Cat%d", i)
+	}
+	sqlx += " FROM combinations ORDER BY ComboID"
+	rows, err := DBH.Query(sqlx)
+	checkerr(err)
+	defer rows.Close()
+
+	s := reflect.ValueOf(&cb).Elem()
+	numCols := cbFieldsB4Cats + NumCategoryAxes - 1
+	columns := make([]interface{}, numCols)
+	for i := 0; i < cbFieldsB4Cats; i++ {
+		field := s.Field(i)
+
+		if field.Kind() == reflect.Array {
+			for j := 0; j < field.Len(); j++ {
+				columns[i+j] = field.Index(j).Addr().Interface()
+			}
+		} else {
+			columns[i] = field.Addr().Interface()
+		}
+	}
+	for rows.Next() {
+		err := rows.Scan(columns...)
+		checkerr(err)
+		x := strings.Split(cb.BonusList, ",")
+		cb.Bonuses = make([]string, len(x))
+		k := len(x)
+		for i := 0; i < k; i++ {
+			cb.Bonuses[i] = x[i]
+		}
+		cb.Points = make([]int, k)
+		x = strings.Split(cb.PointsList, ",")
+		if cb.MinTicks > k {
+			cb.MinTicks = k
+		}
+		if cb.MinTicks < 1 {
+			cb.MinTicks = k
+		}
+		j := 0
+		n := 0
+		for i := cb.MinTicks - 1; i < k; i++ {
+			if j < len(x) {
+				n, _ = strconv.Atoi(x[j])
+			}
+			cb.Points[i] = n
+			j++
+		}
+		res = append(res, cb)
+	}
+	return res
+
+}
+
 type ScorexLine struct {
 	IsValidLine bool
 	Code        string
@@ -120,23 +198,15 @@ func build_scorecardBonusArray(CurrentLeg int) []ScorecardBonusDetail {
 
 	s := reflect.ValueOf(&b).Elem()
 	numCols := s.NumField() - 1 + NumCategoryAxes - 1
-	//	log.Printf("numCols is %v\n", numCols)
 	columns := make([]interface{}, numCols)
 	for i := 0; i < s.NumField()-1; i++ { // -1 limit to avoid Scored
-		//		log.Printf("Loading %v\n", i)
 		field := s.Field(i)
 
-		//log.Printf("Field(%v).Kind is %v\n", i, field.Kind())
 		if field.Kind() == reflect.Array {
-			//			k := field.Len()
-			//			L := len(columns)
 			for j := 0; j < field.Len(); j++ {
-				//				log.Printf("array index %v  < Len(field)=%v  i+j=%v < Len(columns)=%v\n", j, k, i+j, L)
 				columns[i+j] = field.Index(j).Addr().Interface()
-				//				log.Println("ok")
 			}
 		} else {
-			//			log.Printf("index %v\n", i)
 			columns[i] = field.Addr().Interface()
 		}
 	}
@@ -191,7 +261,7 @@ func build_bonusclaim_array(entrant int) ClaimedBonusMap {
 			log.Printf("Excluding %v\n", bonus.Bonusid)
 			continue
 		}
-		log.Printf("Including %v\n", bonus.Bonusid)
+		//log.Printf("Including %v\n", bonus.Bonusid)
 		ix, ok := Bid[bonus.Bonusid]
 		if ok { // Supersede the earlier claim
 			B[ix] = bonus
@@ -285,13 +355,13 @@ func checkApplySequences(BC ClaimedBonus, LastBonusClaimed ClaimedBonus) ScorexL
 
 		// Trigger sequential bonus
 
-		log.Println("Triggering sequential bonus")
+		//log.Println("Triggering sequential bonus")
 		const sequential_bonus_symbol = "&#8752;"
 		//const atleast_symbol = "&ge;"
 		//const checkmark_symbol = "&#x2713;"
 		sqlx := fmt.Sprintf("SELECT BriefDesc FROM categories WHERE Axis=%d AND Cat=%d", CR.Axis, LastCat)
 		defaultValue := fmt.Sprintf("%d/%d", CR.Axis, LastCat)
-		BonusDesc := fmt.Sprintf("%s %d X %s", sequential_bonus_symbol, CatCounts[CR.Axis].sameCatCount, getStringFromDB(sqlx, defaultValue))
+		BonusDesc := fmt.Sprintf("%s %d x %s", sequential_bonus_symbol, CatCounts[CR.Axis].sameCatCount, getStringFromDB(sqlx, defaultValue))
 		//BonusDesc += fmt.Sprintf(" (%d %s %d)", , atleast_symbol, CR.Min)
 
 		PointsDesc := ""
@@ -331,11 +401,15 @@ func recalc_scorecard(entrant int) {
 
 	CatCounts = build_emptyCatCountsArray()
 
+	ComboBonuses = loadCombos()
+
+	log.Printf("\nCombos = %v\n", ComboBonuses)
+
 	var sx ScorexLine
 	TotalPoints := 0
 	var Scorex []ScorexLine
 
-	log.Printf("BonusesClaimed == %v\n", BonusesClaimed)
+	//log.Printf("BonusesClaimed == %v\n", BonusesClaimed)
 
 	var LastBonusClaimed ClaimedBonus
 	for _, BC := range BonusesClaimed {
@@ -381,6 +455,8 @@ func recalc_scorecard(entrant int) {
 
 		BasicPoints := BC.Points
 
+		// Compound rules affecting individual bonuses
+
 		TotalPoints += BasicPoints
 		var sx ScorexLine
 
@@ -400,7 +476,7 @@ func recalc_scorecard(entrant int) {
 	}
 	//log.Printf("Scorex == %v\n", Scorex)
 	for x := range Scorex {
-		log.Printf("%-3s %-20s %-10s %v\n", Scorex[x].Code, html.UnescapeString(Scorex[x].Desc), html.UnescapeString(Scorex[x].PointsDesc), Scorex[x].Points)
+		log.Printf("%-3s %-20s %-10s %7d\n", Scorex[x].Code, html.UnescapeString(Scorex[x].Desc), html.UnescapeString(Scorex[x].PointsDesc), Scorex[x].Points)
 	}
 	log.Printf("Total points is %d\n", TotalPoints)
 }
