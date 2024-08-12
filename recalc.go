@@ -91,10 +91,45 @@ type ComboBonus struct {
 	Cat         [NumCategoryAxes]int
 	Points      []int
 	Bonuses     []string
+	Scored      bool
 }
 
 var ComboBonuses []ComboBonus
 
+func processCombos() []ScorexLine {
+
+	res := make([]ScorexLine, 0)
+
+	for cix, cb := range ComboBonuses {
+		scoredbonuses := 0
+		log.Printf("Checking combo %v=%v\n", cb.Comboid, cb.Bonuses)
+		for _, b := range cb.Bonuses {
+			for _, sb := range ScorecardBonuses {
+				if sb.Bonusid == b {
+					log.Printf("Matched %v\n", sb.Bonusid)
+					if sb.Scored {
+						scoredbonuses++
+						log.Printf("%v scored\n", sb.Bonusid)
+					}
+					break
+				}
+			}
+		}
+		if scoredbonuses >= cb.MinTicks {
+			var sx ScorexLine
+			ComboBonuses[cix].Scored = true
+			sx.Code = "[" + cb.Comboid + "]"
+			sx.Desc = cb.BriefDesc
+			sx.IsValidLine = true
+			sx.Points = cb.Points[scoredbonuses-1]
+			sx.PointsDesc = fmt.Sprintf("(%v/%v)", scoredbonuses, len(cb.Bonuses))
+			res = append(res, sx)
+		}
+	}
+	log.Printf("Updated Combos %v\n", ComboBonuses)
+	return res
+
+}
 func loadCombos() []ComboBonus {
 
 	const cbFieldsB4Cats = 8
@@ -426,7 +461,7 @@ func recalc_scorecard(entrant int) {
 		SB := ScorecardBonuses[BC.BonusScorecardIX] // Convenient shorthand
 
 		//log.Printf("ScorecardIX = %v\n", BC.BonusScorecardIX)
-		SB.Scored = BC.Decision == ClaimDecision_GoodClaim // Only good claims count against "must score" flag
+		ScorecardBonuses[BC.BonusScorecardIX].Scored = BC.Decision == ClaimDecision_GoodClaim // Only good claims count against "must score" flag
 
 		sx = checkApplySequences(BC, LastBonusClaimed)
 		if sx.IsValidLine {
@@ -474,6 +509,13 @@ func recalc_scorecard(entrant int) {
 		TotalPoints += sx.Points
 		Scorex = append(Scorex, sx)
 	}
+
+	combosx := processCombos()
+	for _, cx := range combosx {
+		TotalPoints += cx.Points
+	}
+	Scorex = append(Scorex, combosx...)
+
 	//log.Printf("Scorex == %v\n", Scorex)
 	for x := range Scorex {
 		log.Printf("%-3s %-20s %-10s %7d\n", Scorex[x].Code, html.UnescapeString(Scorex[x].Desc), html.UnescapeString(Scorex[x].PointsDesc), Scorex[x].Points)
