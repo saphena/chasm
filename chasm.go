@@ -58,9 +58,17 @@ func main() {
 	recalc_all()
 	http.HandleFunc("/", central_dispatch)
 	http.HandleFunc("/about", about_chasm)
+	http.HandleFunc("/recalc", recalc_handler)
 	http.ListenAndServe(":"+*HTTPPort, nil)
 }
 
+func recalc_handler(w http.ResponseWriter, r *http.Request) {
+
+	e := r.FormValue("e")
+	if e == "" {
+		recalc_all()
+	}
+}
 func about_chasm(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "Hello there, I say, I say")
 }
