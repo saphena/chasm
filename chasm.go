@@ -56,6 +56,7 @@ func main() {
 		return
 	}
 	recalc_all()
+	//recalc_scorecard(2)
 	http.HandleFunc("/", central_dispatch)
 	http.HandleFunc("/about", about_chasm)
 	http.HandleFunc("/recalc", recalc_handler)

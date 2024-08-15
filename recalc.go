@@ -10,7 +10,6 @@ Cat is a non-zero integer but -1 when used to access arrays
 
 import (
 	"fmt"
-	"html"
 	"log"
 	"math"
 	"reflect"
@@ -131,6 +130,67 @@ type catLabel struct {
 	BriefDesc string
 }
 
+type ScorexParams struct {
+	RiderName      string
+	PillionName    string
+	DistanceRidden int
+}
+
+const EntrantDNS = 0
+const EntrantOK = 1
+const EntrantFinisher = 8
+const EntrantDNF = 3
+
+var EntrantStatusLits = map[int]string{0: "DNS", 1: "ok", 8: "Finisher", 3: "DNF"}
+
+func calcEntrantStatus() int {
+
+	return EntrantFinisher
+}
+
+func htmlScorex(sx []ScorexLine, e int, es int, tp int) string {
+
+	var sp ScorexParams
+
+	KmsRally := getStringFromDB("SELECT MilesKms FROM rallyparams", "0") == "1"
+	mk := "miles"
+	if KmsRally {
+		mk = "km"
+	}
+	sqlx := "SELECT RiderName,IfNull(PillionName,''),IfNull(CorrectedMiles,0) FROM entrants WHERE EntrantID=" + strconv.Itoa(e)
+	rows, err := DBH.Query(sqlx)
+	checkerr(err)
+	defer rows.Close()
+	for rows.Next() {
+		err = rows.Scan(&sp.RiderName, &sp.PillionName, &sp.DistanceRidden)
+		checkerr(err)
+	}
+
+	xx := sp.RiderName
+	if sp.PillionName != "" {
+		xx += " &amp; " + sp.PillionName
+	}
+	esx, ok := EntrantStatusLits[es]
+	if !ok {
+		esx = strconv.Itoa(es)
+	}
+	res := fmt.Sprintf(`<table class="sxtable"><caption>#%d %s [ <span class="sxsfs">%s</span> ]<br><span class="explain">%d %s</span></caption>`, e, xx, esx, sp.DistanceRidden, mk)
+	for _, sl := range sx {
+		if !sl.IsValidLine {
+			continue
+		}
+		pv := strconv.Itoa(sl.Points)
+		if sl.Points == 0 {
+			pv = ""
+		}
+		res += fmt.Sprintf(`<tr><td class="sxcode">%s</td><td class="sxdesc">%s<span class="sxdescx">%s</span></td><td class="sxitempoints">%s</td></tr>`, sl.Code, sl.Desc, sl.PointsDesc, pv)
+	}
+
+	res += fmt.Sprintf(`<tr><td class="sxcode"></td><td class="sxdesc">TOTAL<span class="sxdescx"></span></td><td class="sxitempoints">%d</td></tr>`, tp)
+	res += `</table>`
+
+	return res
+}
 func checkerr(err error) {
 	if err != nil {
 		panic(err)
@@ -139,22 +199,29 @@ func checkerr(err error) {
 
 func recalc_all() {
 
-	_, err := DBH.Exec("BEGIN TRANSACTION")
-	checkerr(err)
-	defer DBH.Exec("COMMIT")
+	/* 	_, err := DBH.Exec("BEGIN TRANSACTION")
+	   	checkerr(err)
+	   	defer DBH.Exec("COMMIT")
+	*/
 	sqlx := "SELECT EntrantID FROM entrants ORDER BY EntrantID"
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
 	defer rows.Close()
-	n := 2
+	n := 3
+	entrants := make([]int, 0)
 	for rows.Next() {
 		var entrant int
 		rows.Scan(&entrant)
-		recalc_scorecard(entrant)
+		entrants = append(entrants, entrant)
+		//		recalc_scorecard(entrant)
 		n--
 		if n < 1 {
 			break
 		}
+	}
+	rows.Close()
+	for _, e := range entrants {
+		recalc_scorecard(e)
 	}
 
 }
@@ -304,7 +371,7 @@ func loadCombos() []ComboBonus {
 func build_compoundRuleArray(CurrentLeg int) []CompoundRule {
 
 	var res []CompoundRule
-	sqlx := "SELECT rowid AS id,Axis,Cat,NMethod,ModBonus,NMin,PointsMults,NPower,Ruletype"
+	sqlx := "SELECT rowid AS id,IfNull(Axis,1),IfNull(Cat,0),IfNull(NMethod,0),IfNull(ModBonus,0),IfNull(NMin,1),IfNull(PointsMults,0),IfNull(NPower,0),IfNull(Ruletype,0)"
 	sqlx += " FROM catcompound WHERE Leg=0 OR Leg=" + strconv.Itoa(CurrentLeg)
 	sqlx += " ORDER BY Axis,NMin DESC"
 	rows, err := DBH.Query(sqlx)
@@ -318,9 +385,8 @@ func build_compoundRuleArray(CurrentLeg int) []CompoundRule {
 	return res
 }
 
+// Build array of all bonuses for use with this scorecard
 func build_scorecardBonusArray(CurrentLeg int) []ScorecardBonusDetail {
-
-	// Build array of all bonuses for use with this scorecard
 
 	var res []ScorecardBonusDetail
 	var b ScorecardBonusDetail
@@ -362,9 +428,9 @@ func build_scorecardBonusArray(CurrentLeg int) []ScorecardBonusDetail {
 	return res
 
 }
-func build_bonusclaim_array(entrant int) ClaimedBonusMap {
 
-	// Build list of bonuses claimed
+// Build list of bonuses claimed
+func build_bonusclaim_array(entrant int) ClaimedBonusMap {
 
 	Bid := make(map[string]int)
 	B := make(ClaimedBonusMap, 0)
@@ -590,6 +656,11 @@ func recalc_scorecard(entrant int) {
 	const Leg = 1
 
 	log.Printf("recalc for %v\n", entrant)
+
+	/* 	_, err := DBH.Exec("BEGIN TRANSACTION")
+	   	checkerr(err)
+	   	defer DBH.Exec("COMMIT")
+	*/
 	ScorecardBonuses = build_scorecardBonusArray(Leg)
 
 	BonusesClaimed = build_bonusclaim_array(entrant)
@@ -734,7 +805,7 @@ func recalc_scorecard(entrant int) {
 
 		TotalPoints += BasicPoints
 		var sx ScorexLine
-
+		sx.IsValidLine = true
 		sx.Code = SB.Bonusid
 		sx.Desc = SB.BriefDesc
 		sx.Points = BasicPoints
@@ -767,11 +838,36 @@ func recalc_scorecard(entrant int) {
 		}
 	}
 
-	//log.Printf("Scorex == %v\n", Scorex)
-	for x := range Scorex {
-		log.Printf("%-3s %-20s %-10s %7d\n", Scorex[x].Code, html.UnescapeString(Scorex[x].Desc), html.UnescapeString(Scorex[x].PointsDesc), Scorex[x].Points)
+	nz := processCompoundNZ()
+	for _, cx := range nz {
+		TotalPoints += cx.Points
 	}
-	log.Printf("Total points is %d\n", TotalPoints)
+
+	Scorex = append(Scorex, nz...)
+
+	status := calcEntrantStatus()
+	htmlSX := htmlScorex(Scorex, entrant, status, TotalPoints)
+
+	log.Println(htmlSX)
+
+	/* 	_, err = DBH.Exec("COMMIT")
+	   	checkerr(err)
+	*/
+	sqlx := "UPDATE entrants SET ScoreX=?,EntrantStatus=?,TotalPoints=? WHERE EntrantID=?"
+	stmt, err := DBH.Prepare(sqlx)
+	checkerr(err)
+	defer stmt.Close()
+	log.Println(sqlx)
+
+	_, err = stmt.Exec(htmlSX, status, TotalPoints, entrant)
+	checkerr(err)
+	//log.Printf("Scorex == %v\n", Scorex)
+
+	/* 	for x := range Scorex {
+	   		log.Printf("%-3s %-20s %-10s %7d\n", Scorex[x].Code, html.UnescapeString(Scorex[x].Desc), html.UnescapeString(Scorex[x].PointsDesc), Scorex[x].Points)
+	   	}
+	   	log.Printf("Total points is %d\n", TotalPoints)
+	*/
 }
 
 func updateCatCounts(BS ScorecardBonusDetail) {
