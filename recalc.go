@@ -20,20 +20,18 @@ import (
 )
 
 // Compound category rules
-/*
-   $KONSTANTS['CAT_ModifyAxisScore'] = 0;
-*/
 
-const CAT_OrdinaryScoringRule = 0
+const CAT_ModifyAxisScore = 0
 const CAT_ModifyBonusScore = 1
 const CAT_ResultMults = 1
 const CAT_ResultPoints = 0
-const CAT_OrdinaryScoringSequence = 4
 const CAT_NumBonusesPerCatMethod = 0
 const CAT_NumNZCatsPerAxisMethod = 1
+const CAT_OrdinaryScoringRule = 0
 const CAT_DNF_Unless_Triggered = 1
 const CAT_DNF_If_Triggered = 2
 const CAT_PlaceholderRule = 3
+const CAT_OrdinaryScoringSequence = 4
 
 const checkmark_symbol = "&#x2713;"
 const sequential_bonus_symbol = "&#8752;"

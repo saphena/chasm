@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"strconv"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -16,6 +17,8 @@ var DBNAME *string = flag.String("db", "chasm.db", "database file")
 
 // HTTPPort is the web port to serve
 var HTTPPort *string = flag.String("port", "8080", "Web port")
+
+var runOnline *bool = flag.Bool("online", false, "act as webserver")
 
 // DBH provides access to the database
 var DBH *sql.DB
@@ -58,11 +61,14 @@ func main() {
 	recalc_all()
 	//recalc_scorecard(2)
 
-	return
+	if !*runOnline {
+		return
+	}
 
 	http.HandleFunc("/", central_dispatch)
 	http.HandleFunc("/about", about_chasm)
 	http.HandleFunc("/recalc", recalc_handler)
+	http.HandleFunc("/rule", show_rule)
 	http.ListenAndServe(":"+*HTTPPort, nil)
 
 }
@@ -72,7 +78,31 @@ func recalc_handler(w http.ResponseWriter, r *http.Request) {
 	e := r.FormValue("e")
 	if e == "" {
 		recalc_all()
+	} else {
+		n, err := strconv.Atoi(e)
+		if err != nil {
+			w.Write([]byte(`{ok:false,msg:"e not numeric"}`))
+			return
+		}
+		recalc_scorecard(n)
 	}
+	w.Write([]byte(`{ok:true,msg:"ok"}`))
+}
+func show_rule(w http.ResponseWriter, r *http.Request) {
+
+	const Leg = 0
+
+	n, err := strconv.Atoi(r.FormValue("r"))
+	if err != nil {
+		n = 1
+	}
+	CompoundRules = build_compoundRuleArray(Leg)
+	if n < len(CompoundRules) {
+		showSingleRule(w, CompoundRules[n])
+	} else {
+		w.Write([]byte("OMG"))
+	}
+
 }
 func about_chasm(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "Hello there, I say, I say")
