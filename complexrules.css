@@ -1,0 +1,36 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+.singlerule {
+  max-width: 50em;
+  margin: auto;
+  display: grid;
+}
+.field {
+    margin: 1em;
+    border: none;
+    display: grid;
+    grid-template-columns: 15em 15em;
+}
+.field label {
+    text-align: right;
+    padding-right: 1em;
+}
+.field fieldset {
+    border: none;
+    display: inline;
+    margin: 0;
+}
+.singlerule input[type="number"] {
+  width: 5em;
+}
+.n {
+  font-style: italic;
+  font-size: large;
+  padding: 0 0.5em;
+}
+.hide {
+  display: none;
+}

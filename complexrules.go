@@ -9,16 +9,16 @@ import (
 	"strings"
 )
 
-//go:embed compoundrules.js
+//go:embed complexrules.js
 var script string
+
+//go:embed complexrules.css
+var css string
 
 var tmpltOption = `<option value="%s" %s>%s</option>`
 
 var tmpltSingleRule = `
-<style>
-.singlerule { max-width: 50em; margin: auto; }
-.singlerule input[type='number'] {width: 5em;}
-.hide {display:none;}
+<style>` + css + `
 </style>
 <script>` + script + `
 </script>
@@ -36,24 +36,26 @@ var tmpltSingleRule = `
     </select>
   </fieldset>
   <fieldset class="field rule0 rule1 rule2 rule3">
-    <label for="NMethod">Calculate 'n' using </label>
+    <label for="NMethod">Calculate <span class="n">n</span> using </label>
     <select id="NMethod" name="NMethod">
     %s
     </select>
   </fieldset>
   <fieldset class="field rule0 rule1 rule2 rule3 rule4">
-    <label for="NMin">Triggered when 'n' &ge; </label>
+    <label for="NMin">Triggered when <span class="n">n</span> &ge; </label>
 	<input id="NMin" name="NMin" type="number" value="%d">
   </fieldset>
   <fieldset class="field rule0 rule4">
     <label for="PointsMults">This rule results in</label>
+	<fieldset class="field rule0 rule4">
 	<input id="NPower" name="NPower" type="number" value="%d">
     <select id="PointsMults" name="PointsMults">
     %s
     </select>
+	</fieldset>
   </fieldset>
   <fieldset class="field rule0 rule1 rule2 rule3 rule4">
-    <label for="Axis">Axis</label>
+    <label for="Axis">Bonus category</label>
 	<select id="Axis" name="Axis" onchange="chgAxis(this);">
 	%s
 	</select>
@@ -64,7 +66,10 @@ var tmpltSingleRule = `
     %s
     </select>
   </fieldset>
-</div>`
+</div>` + `
+<script>
+setupForm()
+</script>`
 
 func optsSingleAxisCats(axis int, selcat int) []string {
 
@@ -125,11 +130,11 @@ func showSingleRule(w http.ResponseWriter, r CompoundRule) {
 	}
 
 	rtvals := []int{CAT_OrdinaryScoringRule, CAT_DNF_Unless_Triggered, CAT_DNF_If_Triggered, CAT_PlaceholderRule, CAT_OrdinaryScoringSequence}
-	rtlabs := []string{"ordinary scoring rule", "DNF unless triggered", "DNF if triggered", "placeholder only", "Ordinary scoring sequence"}
+	rtlabs := []string{"ordinary scoring rule", "DNF unless triggered", "DNF if triggered", "placeholder only", "ordinary scoring sequence"}
 
 	page := fmt.Sprintf(tmpltSingleRule,
 		selectOptionArray(rtvals, rtlabs, r.Ruletype),
-		selectOptionArray([]int{CAT_ModifyBonusScore, CAT_ModifyAxisScore}, []string{"Individual bonuses", "Additional group-based awards"}, r.Target),
+		selectOptionArray([]int{CAT_ModifyBonusScore, CAT_ModifyAxisScore}, []string{"individual bonuses", "additional group-based awards"}, r.Target),
 		selectOptionArray([]int{CAT_NumBonusesPerCatMethod, CAT_NumNZCatsPerAxisMethod}, []string{"Bonuses per category", "Categories scored"}, r.Method),
 		r.Min,
 		r.Power,
