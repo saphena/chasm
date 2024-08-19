@@ -2,12 +2,14 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -69,10 +71,48 @@ func main() {
 	http.HandleFunc("/about", about_chasm)
 	http.HandleFunc("/recalc", recalc_handler)
 	http.HandleFunc("/rule", show_rule)
+	http.HandleFunc("/x", json_requests)
 	http.ListenAndServe(":"+*HTTPPort, nil)
 
 }
 
+func json_requests(w http.ResponseWriter, r *http.Request) {
+
+	var res struct {
+		OK  bool
+		Msg string
+	}
+	r.ParseForm()
+	f := r.FormValue("f")
+	switch f {
+	case "axiscats":
+		a := r.FormValue("a")
+		s := r.FormValue("s")
+		if a == "" || s == "" {
+			log.Printf("a=%v, s=%v\n", a, s)
+			fmt.Fprint(w, `{"ok":false,"msg":"missing args"}`)
+			return
+		}
+		aa, err := strconv.Atoi(a)
+		if err != nil {
+			aa = 1
+		}
+		ss, err := strconv.Atoi(s)
+		if err != nil {
+			ss = 0
+		}
+		res.Msg = strings.Join(optsSingleAxisCats(aa, ss), "")
+		res.OK = true
+
+		b, err := json.Marshal(res)
+		checkerr(err)
+		log.Println(string(b))
+		fmt.Fprint(w, string(b))
+		return
+	}
+
+	fmt.Fprint(w, `{"ok":true,"msg":"<option>one</option><option>two</option>"}`)
+}
 func recalc_handler(w http.ResponseWriter, r *http.Request) {
 
 	e := r.FormValue("e")

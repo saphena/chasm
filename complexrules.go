@@ -1,57 +1,66 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
 )
 
-var tmpltOption = `<option value="%d" %s>%s</option>`
+//go:embed compoundrules.js
+var script string
+
+var tmpltOption = `<option value="%s" %s>%s</option>`
 
 var tmpltSingleRule = `
+<style>
+.singlerule { max-width: 50em; margin: auto; }
+.singlerule input[type='number'] {width: 5em;}
+.hide {display:none;}
+</style>
+<script>` + script + `
+</script>
 <div class="singlerule">
-  <fieldset class="field">
-    <label for="Axis">Axis</label>
-	<select id="Axis" name="Axis">
-	%s
-	</select>
-  </fieldset>
-  <fieldset class="field">
-    <label for="Cat">Category</label>
-    <select id="Cat" name="Cat">
+  <fieldset class="field rule0 rule1 rule2 rule3 rule4">
+    <label for="RuleType">This rule is</label>
+    <select id="RuleType" name="RuleType" onchange="chgRuleType(this);">
     %s
     </select>
   </fieldset>
-  <fieldset class="field">
-    <label for="NMethod">Calculate 'n' =</label>
-    <select id="NMethod" name="NMethod">
-    %s
-    </select>
-  </fieldset>
-  <fieldset class="field">
-    <label for="ModBonus">This rule affects</label>
+  <fieldset class="field rule0">
+    <label for="ModBonus">This rule affects the value of</label>
     <select id="ModBonus" name="ModBonus">
     %s
     </select>
   </fieldset>
-  <fieldset class="field">
-    <label for="NMin">Minimum value of 'n'</label>
+  <fieldset class="field rule0 rule1 rule2 rule3">
+    <label for="NMethod">Calculate 'n' using </label>
+    <select id="NMethod" name="NMethod">
+    %s
+    </select>
+  </fieldset>
+  <fieldset class="field rule0 rule1 rule2 rule3 rule4">
+    <label for="NMin">Triggered when 'n' &ge; </label>
 	<input id="NMin" name="NMin" type="number" value="%d">
   </fieldset>
-  <fieldset class="field">
+  <fieldset class="field rule0 rule4">
     <label for="PointsMults">This rule results in</label>
+	<input id="NPower" name="NPower" type="number" value="%d">
     <select id="PointsMults" name="PointsMults">
     %s
     </select>
   </fieldset>
-  <fieldset class="field">
-    <label for="NPower">Number of points or multipliers</label>
-	<input id="NPower" name="NPower" type="number" value="%d">
+  <fieldset class="field rule0 rule1 rule2 rule3 rule4">
+    <label for="Axis">Axis</label>
+	<select id="Axis" name="Axis" onchange="chgAxis(this);">
+	%s
+	</select>
   </fieldset>
-  <fieldset class="field">
-    <label for="RuleType">This rule is</label>
-    <select id="RuleType" name="RuleType">
+  <fieldset class="field rule0 rule1 rule2 rule3 rule4">
+    <label for="Cat">Category</label>
+    <select id="Cat" name="Cat">
     %s
     </select>
   </fieldset>
@@ -64,16 +73,21 @@ func optsSingleAxisCats(axis int, selcat int) []string {
 	checkerr(err)
 	defer rows.Close()
 	res := make([]string, 0)
+	sel := ""
+	if selcat == 0 {
+		sel = "selected"
+	}
+	res = append(res, fmt.Sprintf(tmpltOption, "0", sel, "any"))
 	for rows.Next() {
 		var cat int
 		var desc string
 		err = rows.Scan(&cat, &desc)
 		checkerr(err)
-		sel := ""
+		sel = ""
 		if cat == selcat {
 			sel = "selected"
 		}
-		x := fmt.Sprintf(tmpltOption, cat, sel, desc)
+		x := fmt.Sprintf(tmpltOption, strconv.Itoa(cat), sel, desc)
 		res = append(res, x)
 	}
 	return res
@@ -87,7 +101,7 @@ func selectOptionArray(vals []int, lbls []string, sel int) []string {
 		if v == sel {
 			selx = "selected"
 		}
-		x := fmt.Sprintf(tmpltOption, v, selx, lbls[i])
+		x := fmt.Sprintf(tmpltOption, strconv.Itoa(v), selx, lbls[i])
 		res = append(res, x)
 	}
 	return res
@@ -101,61 +115,28 @@ func showSingleRule(w http.ResponseWriter, r CompoundRule) {
 			continue
 		}
 		sel := ""
-		if r.Axis == ix {
+		if r.Axis == ix+1 {
 			sel = "selected"
 		}
-		x := fmt.Sprintf(tmpltOption, strconv.Itoa(ix), sel, axis)
+		xx := strconv.Itoa(ix + 1)
+		x := fmt.Sprintf(tmpltOption, xx, sel, axis)
+		log.Printf("x=%v, ix=%d, xx=%v\n", x, ix, xx)
 		axisopts = append(axisopts, x)
-	}
-
-	opts := make([]string, 2)
-
-	if r.Method == CAT_NumBonusesPerCatMethod {
-		opts[0] = fmt.Sprintf(tmpltOption, CAT_NumBonusesPerCatMethod, "selected", "Bonuses per category")
-		opts[1] = fmt.Sprintf(tmpltOption, CAT_NumNZCatsPerAxisMethod, "", "Nonzero categories")
-	} else {
-		opts[0] = fmt.Sprintf(tmpltOption, CAT_NumBonusesPerCatMethod, "", "Bonuses per category")
-		opts[1] = fmt.Sprintf(tmpltOption, CAT_NumNZCatsPerAxisMethod, "selected", "Nonzero categories")
-	}
-	targets := make([]string, 2)
-
-	if r.Method == CAT_ModifyBonusScore {
-		targets[0] = fmt.Sprintf(tmpltOption, CAT_ModifyBonusScore, "selected", "Individual bonuses")
-		targets[1] = fmt.Sprintf(tmpltOption, CAT_ModifyAxisScore, "", "Groups of bonuses")
-	} else {
-		targets[0] = fmt.Sprintf(tmpltOption, CAT_ModifyBonusScore, "", "Individual bonuses")
-		targets[1] = fmt.Sprintf(tmpltOption, CAT_ModifyAxisScore, "selected", "Groups of bonuses")
-	}
-
-	pms := make([]string, 2)
-
-	if r.Method == CAT_ResultPoints {
-		pms[0] = fmt.Sprintf(tmpltOption, CAT_ResultPoints, "selected", "points")
-		pms[1] = fmt.Sprintf(tmpltOption, CAT_ResultMults, "", "multipliers")
-	} else {
-		pms[0] = fmt.Sprintf(tmpltOption, CAT_ResultPoints, "", "points")
-		pms[1] = fmt.Sprintf(tmpltOption, CAT_ResultMults, "selected", "multipliers")
-	}
-
-	if r.Method == CAT_ResultPoints {
-		pms[0] = fmt.Sprintf(tmpltOption, CAT_ResultPoints, "selected", "points")
-		pms[1] = fmt.Sprintf(tmpltOption, CAT_ResultMults, "", "multipliers")
-	} else {
-		pms[0] = fmt.Sprintf(tmpltOption, CAT_ResultPoints, "", "points")
-		pms[1] = fmt.Sprintf(tmpltOption, CAT_ResultMults, "selected", "multipliers")
 	}
 
 	rtvals := []int{CAT_OrdinaryScoringRule, CAT_DNF_Unless_Triggered, CAT_DNF_If_Triggered, CAT_PlaceholderRule, CAT_OrdinaryScoringSequence}
 	rtlabs := []string{"ordinary scoring rule", "DNF unless triggered", "DNF if triggered", "placeholder only", "Ordinary scoring sequence"}
 
 	page := fmt.Sprintf(tmpltSingleRule,
-		strings.Join(axisopts, ""),
-		strings.Join(optsSingleAxisCats(r.Axis, r.Cat), ""),
-		strings.Join(opts, ""),
-		strings.Join(targets, ""),
+		selectOptionArray(rtvals, rtlabs, r.Ruletype),
+		selectOptionArray([]int{CAT_ModifyBonusScore, CAT_ModifyAxisScore}, []string{"Individual bonuses", "Additional group-based awards"}, r.Target),
+		selectOptionArray([]int{CAT_NumBonusesPerCatMethod, CAT_NumNZCatsPerAxisMethod}, []string{"Bonuses per category", "Categories scored"}, r.Method),
 		r.Min,
-		strings.Join(pms, ""),
 		r.Power,
-		selectOptionArray(rtvals, rtlabs, r.Ruletype))
+		selectOptionArray([]int{CAT_ResultPoints, CAT_ResultMults}, []string{"points", "multipliers"}, r.PointsMults),
+		strings.Join(axisopts, ""),
+		strings.Join(optsSingleAxisCats(r.Axis, r.Cat), ""))
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
 	w.Write([]byte(page))
 }
