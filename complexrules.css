@@ -9,27 +9,39 @@
   display: grid;
 }
 .field {
-    margin: 1em;
-    border: none;
-    display: grid;
-    grid-template-columns: 15em 15em;
+  margin: 1em;
+  border: none;
+  display: grid;
+  grid-template-columns: 15em 15em;
 }
 .field label {
-    text-align: right;
-    padding-right: 1em;
+  text-align: right;
+  padding-right: 1em;
 }
 .field fieldset {
+  border: none;
+  display: inline;
+  margin: 0;
+}
+.row {
+    display: grid;
+    grid-template-columns:  repeat(4,10em);
+    border: none;
+}
+.target:hover {
+    cursor: pointer;
+    background: lightblue;
+}
+.col {
     border: none;
     display: inline;
-    margin: 0;
+    text-align: left;
+}
+.flexspread input {
+  margin: 0 2em;
 }
 .singlerule input[type="number"] {
   width: 5em;
-}
-.n {
-  font-style: italic;
-  font-size: large;
-  padding: 0 0.5em;
 }
 .hide {
   display: none;

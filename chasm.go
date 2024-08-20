@@ -71,7 +71,9 @@ func main() {
 	http.HandleFunc("/about", about_chasm)
 	http.HandleFunc("/recalc", recalc_handler)
 	http.HandleFunc("/rule", show_rule)
+	http.HandleFunc("/rules", show_rules)
 	http.HandleFunc("/x", json_requests)
+	http.HandleFunc("/updtcrule", update_rule)
 	http.ListenAndServe(":"+*HTTPPort, nil)
 
 }
@@ -137,12 +139,13 @@ func show_rule(w http.ResponseWriter, r *http.Request) {
 		n = 1
 	}
 	CompoundRules = build_compoundRuleArray(Leg)
-	if n < len(CompoundRules) {
-		showSingleRule(w, CompoundRules[n])
-	} else {
-		w.Write([]byte("OMG"))
+	for _, cr := range CompoundRules {
+		if cr.Ruleid == n {
+			showSingleRule(w, cr)
+			return
+		}
 	}
-
+	fmt.Fprint(w, `OMG`)
 }
 func about_chasm(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "Hello there, I say, I say")

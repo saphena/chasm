@@ -23,6 +23,7 @@ var tmpltSingleRule = `
 <script>` + script + `
 </script>
 <div class="singlerule">
+  <form action="updtcrule" method="post">
   <fieldset class="field rule0 rule1 rule2 rule3 rule4">
     <label for="RuleType">This rule is</label>
     <select id="RuleType" name="RuleType" onchange="chgRuleType(this);">
@@ -36,13 +37,13 @@ var tmpltSingleRule = `
     </select>
   </fieldset>
   <fieldset class="field rule0 rule1 rule2 rule3">
-    <label for="NMethod">Calculate <span class="n">n</span> using </label>
+    <label for="NMethod">Calculate <var>n</var> using </label>
     <select id="NMethod" name="NMethod">
     %s
     </select>
   </fieldset>
   <fieldset class="field rule0 rule1 rule2 rule3 rule4">
-    <label for="NMin">Triggered when <span class="n">n</span> &ge; </label>
+    <label for="NMin">Triggered when <var>n</var> &ge; </label>
 	<input id="NMin" name="NMin" type="number" value="%d">
   </fieldset>
   <fieldset class="field rule0 rule4">
@@ -66,6 +67,14 @@ var tmpltSingleRule = `
     %s
     </select>
   </fieldset>
+  <input type="hidden" name="ruleid" value="%d">
+  <fieldset class="field rule0 rule1 rule2 rule3 rule4">
+	<fieldset class="rule0 rule1 rule2 rule3 rule4"></fieldset>
+	<fieldset class="rule0 rule1 rule2 rule3 rule4 flexspread">
+    <input type="submit" name="save" value="update database"> <input type="button" name="delete" value=" &#10006; ">
+	</fieldset>
+  </fieldset>
+  </form>
 </div>` + `
 <script>
 setupForm()
@@ -140,8 +149,66 @@ func showSingleRule(w http.ResponseWriter, r CompoundRule) {
 		r.Power,
 		selectOptionArray([]int{CAT_ResultPoints, CAT_ResultMults}, []string{"points", "multipliers"}, r.PointsMults),
 		strings.Join(axisopts, ""),
-		strings.Join(optsSingleAxisCats(r.Axis, r.Cat), ""))
+		strings.Join(optsSingleAxisCats(r.Axis, r.Cat), ""),
+		r.Ruleid)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
 	w.Write([]byte(page))
+}
+
+func show_rules(w http.ResponseWriter, r *http.Request) {
+
+	const leg = 0
+	var rt = map[int]string{0: "standard", 1: "DNF unless", 2: "DNF if", 3: "dummy", 4: "sequence"}
+	rules := build_compoundRuleArray(leg)
+	axes := build_axisLabels()
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	fmt.Fprintf(w, `<style>%s</style>`, css)
+	fmt.Fprintf(w, `<script>%s</script>`, script)
+	fmt.Fprint(w, `<div class="ruleset">`)
+	for _, cr := range rules {
+		fmt.Fprintf(w, `<fieldset class="row target" data-rowid="%d" onclick="showRule(this);">`, cr.Ruleid)
+		fmt.Fprintf(w, `<fieldset class="col">%s</fieldset>`, axes[cr.Axis-1])
+		sqlx := fmt.Sprintf("SELECT BriefDesc FROM categories WHERE Axis=%d AND Cat=%d", cr.Axis, cr.Cat)
+		fmt.Fprintf(w, `<fieldset class="col">%s</fieldset>`, getStringFromDB(sqlx, "any"))
+		fmt.Fprintf(w, `<fieldset class="col">%s</fieldset>`, rt[cr.Ruletype])
+		fmt.Fprintf(w, `<fieldset class="col">%d</fieldset>`, cr.Min)
+		fmt.Fprint(w, `</fieldset>`)
+	}
+	fmt.Fprint(w, `</div>`)
+}
+
+func update_rule(w http.ResponseWriter, r *http.Request) {
+
+	log.Println("updating a rule")
+	var cr CompoundRule
+
+	r.ParseForm()
+
+	log.Printf("%v\n", r.Form)
+	ruleid, err := strconv.Atoi(r.FormValue("ruleid"))
+	if err != nil || ruleid == 0 {
+		fmt.Fprint(w, "No ruleid supplied")
+		return
+	}
+	if r.FormValue("delete") != "" {
+		log.Printf("Deleting rule %v\n", ruleid)
+	}
+	cr.Axis, _ = strconv.Atoi(r.FormValue("Axis"))
+	cr.Cat, _ = strconv.Atoi(r.FormValue("Cat"))
+	cr.Method, _ = strconv.Atoi(r.FormValue("NMethod"))
+	cr.Min, _ = strconv.Atoi(r.FormValue("NMin"))
+	cr.PointsMults, _ = strconv.Atoi("PointsMults")
+	cr.Power, _ = strconv.Atoi(r.FormValue("Power"))
+	cr.Ruletype, _ = strconv.Atoi(r.FormValue("RuleType"))
+
+	sqlx := "UPDATE catcompound SET Ruletype=%d,Axis=%d,Cat=%d,NMethod=%d,NMin=%d,PointsMults=%d,NPower=%d WHERE rowid=%d"
+	sqlx = fmt.Sprintf(sqlx, cr.Ruletype, cr.Axis, cr.Cat, cr.Method, cr.Min, cr.PointsMults, cr.Power, ruleid)
+	log.Println(sqlx)
+
+	_, err = DBH.Exec(sqlx)
+	checkerr(err)
+
+	fmt.Fprint(w, `<script>window.location.href="/rules"</script>`)
+
 }

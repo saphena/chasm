@@ -57,6 +57,10 @@ function chgAxis(obj) {
     });
 }
 
+function showRule(obj) {
+  window.location.href = "/rule?r=" + obj.getAttribute("data-rowid");
+}
+
 function setupForm() {
   chgRuleType(document.getElementById("RuleType"));
   chgAxis(document.getElementById("Axis"));
