@@ -162,6 +162,13 @@ func fetchCatDesc(axis int, cat int) string {
 	return getStringFromDB(sqlx, strconv.Itoa(cat))
 }
 
+func calcTimePenalty() []ScorexLine {
+
+	res := make([]ScorexLine, 0)
+	return res
+
+}
+
 func htmlScorex(sx []ScorexLine, e int, es int, tp int) string {
 
 	var sp ScorexParams
@@ -320,7 +327,7 @@ func processCombos() ([]ScorexLine, int) {
 	return res, mults
 
 }
-func loadCombos() []ComboBonus {
+func loadCombos(comboid string) []ComboBonus {
 
 	const cbFieldsB4Cats = 8
 
@@ -331,7 +338,12 @@ func loadCombos() []ComboBonus {
 	for i := 2; i <= NumCategoryAxes; i++ {
 		sqlx += fmt.Sprintf(",Cat%d", i)
 	}
-	sqlx += " FROM combinations ORDER BY ComboID"
+	sqlx += " FROM combinations"
+	if comboid != "" {
+		sqlx += " WHERE ComboID='" + comboid + "'"
+	}
+	sqlx += " ORDER BY ComboID"
+	log.Println(sqlx)
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
 	defer rows.Close()
@@ -767,7 +779,7 @@ func recalc_scorecard(entrant int) {
 
 	CatCounts = build_emptyCatCountsArray()
 
-	ComboBonuses = loadCombos()
+	ComboBonuses = loadCombos("")
 
 	RejectReasons := loadRejectReasons()
 

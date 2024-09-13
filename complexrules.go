@@ -71,7 +71,7 @@ var tmpltSingleRule = `
   <fieldset class="field rule0 rule1 rule2 rule3 rule4">
 	<fieldset class="rule0 rule1 rule2 rule3 rule4"></fieldset>
 	<fieldset class="rule0 rule1 rule2 rule3 rule4 flexspread">
-    <input type="submit" name="save" value="update database"> <input type="button" name="delete" value=" &#10006; ">
+    <input type="submit" name="save" value=" update database "> <input type="button" name="delete" value=" &#10006; ">
 	</fieldset>
   </fieldset>
   </form>
@@ -159,7 +159,7 @@ func showSingleRule(w http.ResponseWriter, r CompoundRule) {
 func show_rules(w http.ResponseWriter, r *http.Request) {
 
 	const leg = 0
-	var rt = map[int]string{0: "standard", 1: "DNF unless", 2: "DNF if", 3: "dummy", 4: "sequence"}
+	var rt = map[int]string{0: "ordinary", 1: "DNF unless", 2: "DNF if", 3: "dummy", 4: "sequence"}
 	rules := build_compoundRuleArray(leg)
 	axes := build_axisLabels()
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -172,7 +172,27 @@ func show_rules(w http.ResponseWriter, r *http.Request) {
 		sqlx := fmt.Sprintf("SELECT BriefDesc FROM categories WHERE Axis=%d AND Cat=%d", cr.Axis, cr.Cat)
 		fmt.Fprintf(w, `<fieldset class="col">%s</fieldset>`, getStringFromDB(sqlx, "any"))
 		fmt.Fprintf(w, `<fieldset class="col">%s</fieldset>`, rt[cr.Ruletype])
-		fmt.Fprintf(w, `<fieldset class="col">%d</fieldset>`, cr.Min)
+		fmt.Fprintf(w, `<fieldset class="col">&ge; %d</fieldset>`, cr.Min)
+		target := ""
+		pm := "pts"
+		if cr.PointsMults == CAT_ResultMults {
+			pm = "x"
+		}
+		pts := strconv.Itoa(cr.Power)
+		if cr.Ruletype == CAT_OrdinaryScoringRule {
+			if cr.Target == CAT_ModifyAxisScore {
+				target = "axis"
+			} else {
+				target = "bonus"
+			}
+		} else if cr.Ruletype == CAT_OrdinaryScoringSequence {
+			target = "bonus"
+		} else {
+			pm = ""
+			pts = ""
+		}
+		fmt.Fprintf(w, `<fieldset class="col">%s</fieldset>`, target)
+		fmt.Fprintf(w, `<fieldset class="col">%s %s</fieldset>`, pts, pm)
 		fmt.Fprint(w, `</fieldset>`)
 	}
 	fmt.Fprint(w, `</div>`)

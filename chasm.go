@@ -69,6 +69,8 @@ func main() {
 
 	http.HandleFunc("/", central_dispatch)
 	http.HandleFunc("/about", about_chasm)
+	http.HandleFunc("/combo", show_combo)
+	http.HandleFunc("/combos", show_combos)
 	http.HandleFunc("/recalc", recalc_handler)
 	http.HandleFunc("/rule", show_rule)
 	http.HandleFunc("/rules", show_rules)
@@ -130,6 +132,21 @@ func recalc_handler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Write([]byte(`{ok:true,msg:"ok"}`))
 }
+
+func show_combo(w http.ResponseWriter, r *http.Request) {
+
+	comboid := r.FormValue("c")
+	if comboid == "" {
+		fmt.Fprint(w, "no comboid!")
+		return
+	}
+	cr := loadCombos(comboid)
+	if len(cr) < 1 {
+		fmt.Fprint(w, "no such comboid")
+		return
+	}
+	showSingleCombo(w, cr[0])
+}
 func show_rule(w http.ResponseWriter, r *http.Request) {
 
 	const Leg = 0
@@ -147,6 +164,7 @@ func show_rule(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Fprint(w, `OMG`)
 }
+
 func about_chasm(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "Hello there, I say, I say")
 }
