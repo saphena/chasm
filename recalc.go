@@ -17,6 +17,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Compound category rules
@@ -144,6 +145,75 @@ type RejectReason struct {
 
 type RejectReasons map[int]RejectReason
 
+const myTimestamp = "2006-01-02T15:04"  // Stored format
+const myTimestampX = "2006-01-02 15:04" // Display format
+
+// Time penalties
+const (
+	TimeSpecDatetime   = 0
+	TimeSpecRallyDNF   = 1
+	TimeSpecEntrantDNF = 2
+)
+
+// TPM = Time Penalty Method
+const (
+	TPM_FixedPoints  = 0
+	TPM_FixedMult    = 1
+	TPM_PointsPerMin = 2
+	TPM_MultPerMin   = 3
+)
+
+type TimePenalty struct {
+	TimeSpec       int
+	PenaltyStartX  string
+	PenaltyFinishX string
+	PenaltyMethod  int
+	PenaltyFactor  int
+	PenaltyStart   time.Time
+	PenaltyFinish  time.Time
+}
+
+var TimePenalties []TimePenalty
+
+func build_timePenaltyArray() {
+
+	//	const currentLeg = "0"
+
+	rallyFinishtimex := getStringFromDB("SELECT FinishTime FROM rallyparams", "")
+
+	rft, err := time.Parse(myTimestamp, rallyFinishtimex)
+	checkerr(err)
+
+	sqlx := "SELECT TimeSpec,PenaltyStart,PenaltyFinish,PenaltyMethod,PenaltyFactor FROM timepenalties"
+	//sqlx += " WHERE Leg=0 OR Leg=" + currentLeg
+	sqlx += " ORDER BY PenaltyStart,PenaltyFinish"
+
+	TimePenalties = make([]TimePenalty, 0)
+	rows, err := DBH.Query(sqlx)
+	checkerr(err)
+	defer rows.Close()
+	for rows.Next() {
+		var tp TimePenalty
+		err = rows.Scan(&tp.TimeSpec, &tp.PenaltyStartX, &tp.PenaltyFinishX, &tp.PenaltyMethod, &tp.PenaltyFactor)
+		checkerr(err)
+
+		switch tp.TimeSpec {
+
+		case TimeSpecRallyDNF:
+			ps, _ := strconv.Atoi(tp.PenaltyStartX)
+			tp.PenaltyStart = rft.Add(time.Minute * time.Duration(0-ps))
+			pf, _ := strconv.Atoi(tp.PenaltyFinishX)
+			tp.PenaltyFinish = rft.Add(time.Minute * time.Duration(0-pf))
+
+		case TimeSpecDatetime:
+			tp.PenaltyStart, _ = time.Parse(myTimestamp, tp.PenaltyStartX)
+			tp.PenaltyFinish, _ = time.Parse(myTimestamp, tp.PenaltyFinishX)
+		}
+
+		TimePenalties = append(TimePenalties, tp)
+	}
+}
+
 const EntrantDNS = 0
 const EntrantOK = 1
 const EntrantFinisher = 8
@@ -162,10 +232,97 @@ func fetchCatDesc(axis int, cat int) string {
 	return getStringFromDB(sqlx, strconv.Itoa(cat))
 }
 
-func calcTimePenalty() []ScorexLine {
+// 2nd return is number of multipliers
+func calcTimePenalty(entrant int) ([]ScorexLine, int) {
+
+	const TimePenaltyIcon = "&#x23F0;"
+	const FinishTimeIcon = "" // Blank for now
 
 	res := make([]ScorexLine, 0)
-	return res
+	var numx int
+
+	rallyFinishtimex := getStringFromDB("SELECT FinishTime FROM rallyparams", "")
+
+	starttimex := getStringFromDB(fmt.Sprintf("SELECT StartTime FROM entrants WHERE EntrantID=%v", entrant), "")
+	if starttimex == "" {
+		starttimex = getStringFromDB("SELECT StartTime FROM rallyparams", "")
+	}
+	if starttimex == "" {
+		return res, numx
+	}
+	finishtimex := getStringFromDB(fmt.Sprintf("SELECT FinishTime FROM entrants WHERE EntrantID=%v", entrant), "")
+	if finishtimex == "" {
+		finishtimex = rallyFinishtimex
+	}
+	if finishtimex == "" {
+		return res, numx
+	}
+
+	rft, err := time.Parse(myTimestamp, rallyFinishtimex)
+	if err != nil {
+		return res, numx
+	}
+	st, err := time.Parse(myTimestamp, starttimex)
+	if err != nil {
+		return res, numx
+	}
+	ft, err := time.Parse(myTimestamp, finishtimex)
+	if err != nil {
+		return res, numx
+	}
+	if ft.Compare(rft) > 0 {
+		ft = rft
+	}
+
+	maxhrs, _ := strconv.Atoi(getStringFromDB("SELECT MaxHours FROM rallyparams", "999"))
+	myDNF := st.Add(time.Hour * time.Duration(maxhrs))
+	fmt.Printf("%v: %v << %v [%v]\n", entrant, starttimex, finishtimex, myDNF.Format(myTimestamp))
+
+	for _, tp := range TimePenalties {
+		switch tp.TimeSpec {
+		case TimeSpecEntrantDNF:
+			ps, _ := strconv.Atoi(tp.PenaltyStartX)
+			tp.PenaltyStart = myDNF.Add(time.Minute * time.Duration(0-ps))
+			pf, _ := strconv.Atoi(tp.PenaltyFinishX)
+			tp.PenaltyFinish = myDNF.Add(time.Minute * time.Duration(0-pf))
+		case TimeSpecRallyDNF:
+			ps, _ := strconv.Atoi(tp.PenaltyStartX)
+			tp.PenaltyStart = rft.Add(time.Minute * time.Duration(0-ps))
+			pf, _ := strconv.Atoi(tp.PenaltyFinishX)
+			tp.PenaltyFinish = rft.Add(time.Minute * time.Duration(0-pf))
+		default:
+			// Was specified as actual date/time stamps
+			// so already done
+		}
+		fmt.Printf("pstart=%v pfinish=%v\n", tp.PenaltyStart.Format(myTimestamp), tp.PenaltyFinish.Format(myTimestamp))
+		if ft.Before(tp.PenaltyStart) {
+			continue
+		}
+		if ft.After(tp.PenaltyFinish) {
+			ft = tp.PenaltyFinish
+		}
+		fmt.Println("Hello sailor")
+		var sx ScorexLine
+		penaltyTime := ft.Sub(tp.PenaltyStart)
+		penaltyMinutes := penaltyTime.Minutes()
+		sx.IsValidLine = true
+		switch tp.PenaltyMethod {
+		case TPM_PointsPerMin:
+			sx.Points = 0 - tp.PenaltyFactor*int(penaltyMinutes)
+			sx.Desc = fmt.Sprintf("%v %v &ge; %v %vm @ %v/m", TimePenaltyIcon, FinishTimeIcon, tp.PenaltyStart.Format(myTimestampX), int(penaltyMinutes), tp.PenaltyFactor)
+		case TPM_FixedPoints:
+			sx.Points = 0 - tp.PenaltyFactor
+			sx.Desc = fmt.Sprintf("%v %v &ge; %v", TimePenaltyIcon, FinishTimeIcon, tp.PenaltyStart.Format(myTimestampX))
+		case TPM_FixedMult:
+			numx -= tp.PenaltyFactor
+			sx.Desc = fmt.Sprintf("%v %v &ge; %v -%vX", TimePenaltyIcon, FinishTimeIcon, tp.PenaltyStart.Format(myTimestampX), tp.PenaltyFactor)
+		case TPM_MultPerMin:
+			numx -= tp.PenaltyFactor * int(penaltyMinutes)
+			sx.Desc = fmt.Sprintf("%v %v &ge; %v %vm @ -%vX/m", TimePenaltyIcon, FinishTimeIcon, tp.PenaltyStart.Format(myTimestampX), int(penaltyMinutes), tp.PenaltyFactor)
+		}
+		res = append(res, sx)
+	}
+	return res, numx
 
 }
 
@@ -783,6 +940,8 @@ func recalc_scorecard(entrant int) {
 
 	RejectReasons := loadRejectReasons()
 
+	build_timePenaltyArray()
+
 	//	log.Printf("\nCombos = %v\n", ComboBonuses)
 
 	var sx ScorexLine
@@ -963,6 +1122,13 @@ func recalc_scorecard(entrant int) {
 
 	Multipliers += nm
 	Scorex = append(Scorex, nc...)
+
+	ntp, nm := calcTimePenalty(entrant)
+	for _, px := range ntp {
+		TotalPoints += px.Points
+	}
+	Multipliers += nm
+	Scorex = append(Scorex, ntp...)
 
 	if Multipliers > 1 {
 		var sx ScorexLine
