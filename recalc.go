@@ -175,6 +175,12 @@ type TimePenalty struct {
 
 var TimePenalties []TimePenalty
 
+const (
+	MMM_FixedPoints   = 0
+	MMM_Multipliers   = 1
+	MMM_PointsPerMile = 2
+)
+
 func build_timePenaltyArray() {
 
 	//	const currentLeg = "0"
@@ -232,6 +238,53 @@ func fetchCatDesc(axis int, cat int) string {
 	return getStringFromDB(sqlx, strconv.Itoa(cat))
 }
 
+// Miles is either miles or kilometres depending on rally setting, ridden by the current entrant
+func calcMileagePenalty(entrant int) ([]ScorexLine, int) {
+
+	const MileagePenaltyIcon = "&#10238;"
+
+	res := make([]ScorexLine, 0)
+	var numx int
+
+	usingKms := getStringFromDB("SELECT MilesKms FROM rallyparams", "0") != "0"
+	mklit := "miles"
+	if usingKms {
+		mklit = "km"
+	}
+	Miles, _ := strconv.Atoi(getStringFromDB("SELECT CorrectedMiles FROM entrants WHERE EntrantID="+strconv.Itoa(entrant), "0"))
+	penaltyMaxMiles, _ := strconv.Atoi(getStringFromDB("SELECT PenaltyMaxMiles FROM rallyparams", "99999"))
+	if penaltyMaxMiles < 1 {
+		return res, numx
+	}
+	penaltyMiles := Miles - penaltyMaxMiles
+	if penaltyMiles < 1 {
+		return res, numx
+	}
+	penaltyMethod, _ := strconv.Atoi(getStringFromDB("SELECT MaxMilesMethod FROM rallyparams", strconv.Itoa(MMM_FixedPoints)))
+	penaltyPoints, _ := strconv.Atoi(getStringFromDB("SELECT MaxMilesPoints FROM rallyparams", "0"))
+	if penaltyPoints < 1 {
+		return res, numx
+	}
+
+	var sx ScorexLine
+	sx.IsValidLine = true
+	switch penaltyMethod {
+	case MMM_Multipliers:
+		numx = penaltyPoints
+		sx.Desc = fmt.Sprintf("%v %v %v > %v ", MileagePenaltyIcon, Miles, mklit, penaltyMaxMiles)
+		sx.PointsDesc = fmt.Sprintf("-%vX", numx)
+	case MMM_PointsPerMile:
+		sx.Points = penaltyPoints * penaltyMiles
+		sx.Desc = fmt.Sprintf("%v %v %v > %v ", MileagePenaltyIcon, Miles, mklit, penaltyMaxMiles)
+		sx.PointsDesc = fmt.Sprintf("%v x %v", penaltyMiles, penaltyPoints)
+	default:
+		sx.Points = penaltyPoints
+		sx.Desc = fmt.Sprintf("%v %v %v > %v ", MileagePenaltyIcon, Miles, mklit, penaltyMaxMiles)
+	}
+	res = append(res, sx)
+	return res, numx
+}
+
 // 2nd return is number of multipliers
 func calcTimePenalty(entrant int) ([]ScorexLine, int) {
 
@@ -276,7 +329,7 @@ func calcTimePenalty(entrant int) ([]ScorexLine, int) {
 
 	maxhrs, _ := strconv.Atoi(getStringFromDB("SELECT MaxHours FROM rallyparams", "999"))
 	myDNF := st.Add(time.Hour * time.Duration(maxhrs))
-	fmt.Printf("%v: %v << %v [%v]\n", entrant, starttimex, finishtimex, myDNF.Format(myTimestamp))
+	//fmt.Printf("%v: %v << %v [%v]\n", entrant, starttimex, finishtimex, myDNF.Format(myTimestamp))
 
 	for _, tp := range TimePenalties {
 		switch tp.TimeSpec {
@@ -294,14 +347,14 @@ func calcTimePenalty(entrant int) ([]ScorexLine, int) {
 			// Was specified as actual date/time stamps
 			// so already done
 		}
-		fmt.Printf("pstart=%v pfinish=%v\n", tp.PenaltyStart.Format(myTimestamp), tp.PenaltyFinish.Format(myTimestamp))
+		//fmt.Printf("pstart=%v pfinish=%v\n", tp.PenaltyStart.Format(myTimestamp), tp.PenaltyFinish.Format(myTimestamp))
 		if ft.Before(tp.PenaltyStart) {
 			continue
 		}
 		if ft.After(tp.PenaltyFinish) {
 			ft = tp.PenaltyFinish
 		}
-		fmt.Println("Hello sailor")
+		//fmt.Println("Hello sailor")
 		var sx ScorexLine
 		penaltyTime := ft.Sub(tp.PenaltyStart)
 		penaltyMinutes := penaltyTime.Minutes()
@@ -309,7 +362,8 @@ func calcTimePenalty(entrant int) ([]ScorexLine, int) {
 		switch tp.PenaltyMethod {
 		case TPM_PointsPerMin:
 			sx.Points = 0 - tp.PenaltyFactor*int(penaltyMinutes)
-			sx.Desc = fmt.Sprintf("%v %v &ge; %v %vm @ %v/m", TimePenaltyIcon, FinishTimeIcon, tp.PenaltyStart.Format(myTimestampX), int(penaltyMinutes), tp.PenaltyFactor)
+			sx.Desc = fmt.Sprintf("%v %v &ge; %v", TimePenaltyIcon, FinishTimeIcon, tp.PenaltyStart.Format(myTimestampX))
+			sx.PointsDesc = fmt.Sprintf("%vm @ %v/m", int(penaltyMinutes), tp.PenaltyFactor)
 		case TPM_FixedPoints:
 			sx.Points = 0 - tp.PenaltyFactor
 			sx.Desc = fmt.Sprintf("%v %v &ge; %v", TimePenaltyIcon, FinishTimeIcon, tp.PenaltyStart.Format(myTimestampX))
@@ -318,7 +372,8 @@ func calcTimePenalty(entrant int) ([]ScorexLine, int) {
 			sx.Desc = fmt.Sprintf("%v %v &ge; %v -%vX", TimePenaltyIcon, FinishTimeIcon, tp.PenaltyStart.Format(myTimestampX), tp.PenaltyFactor)
 		case TPM_MultPerMin:
 			numx -= tp.PenaltyFactor * int(penaltyMinutes)
-			sx.Desc = fmt.Sprintf("%v %v &ge; %v %vm @ -%vX/m", TimePenaltyIcon, FinishTimeIcon, tp.PenaltyStart.Format(myTimestampX), int(penaltyMinutes), tp.PenaltyFactor)
+			sx.Desc = fmt.Sprintf("%v %v &ge; %v", TimePenaltyIcon, FinishTimeIcon, tp.PenaltyStart.Format(myTimestampX))
+			sx.PointsDesc = fmt.Sprintf("%vm @ -%vX/m", int(penaltyMinutes), tp.PenaltyFactor)
 		}
 		res = append(res, sx)
 	}
@@ -1124,6 +1179,13 @@ func recalc_scorecard(entrant int) {
 	Scorex = append(Scorex, nc...)
 
 	ntp, nm := calcTimePenalty(entrant)
+	for _, px := range ntp {
+		TotalPoints += px.Points
+	}
+	Multipliers += nm
+	Scorex = append(Scorex, ntp...)
+
+	ntp, nm = calcMileagePenalty(entrant)
 	for _, px := range ntp {
 		TotalPoints += px.Points
 	}
