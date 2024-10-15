@@ -37,6 +37,8 @@ const CAT_OrdinaryScoringSequence = 4
 const checkmark_symbol = "&#x2713;"
 const sequential_bonus_symbol = "&#8752;"
 
+const penalty_symbol = "&#9785;"
+
 const ClaimDecision_ClaimExcluded = 9
 const ClaimDecision_GoodClaim = 0
 
@@ -50,6 +52,15 @@ const ScoreMethodMults = 1
 const NumCategoryAxes = 9
 
 const NumberOfAxes = 9
+
+const EntrantDNS = 0
+const EntrantOK = 1
+const EntrantFinisher = 8
+const EntrantDNF = 3
+
+var EntrantStatusLits = map[int]string{EntrantDNS: "DNS", EntrantOK: "ok", EntrantFinisher: "Finisher", EntrantDNF: "DNF"}
+
+const KmsPerMile = float64(1.60934)
 
 type ScorecardBonusDetail struct {
 	Bonusid      string
@@ -72,6 +83,7 @@ type ClaimedBonus struct {
 	Points           int
 	RestMinutes      int
 	QuestionScored   bool
+	OdoReading       int
 }
 
 type ClaimedBonusMap = []ClaimedBonus
@@ -143,7 +155,9 @@ type RejectReason struct {
 	Param     string
 }
 
-type RejectReasons map[int]RejectReason
+type RejectReasonsMap map[int]RejectReason
+
+var RejectReasons RejectReasonsMap
 
 const myTimestamp = "2006-01-02T15:04"  // Stored format
 const myTimestampX = "2006-01-02 15:04" // Display format
@@ -181,7 +195,139 @@ const (
 	MMM_PointsPerMile = 2
 )
 
-func build_timePenaltyArray() {
+var RallyParametersLoaded bool
+
+func build_axisLabels() []string {
+
+	sqlx := "SELECT IfNull(Cat1Label,'')"
+	for i := 2; i <= NumberOfAxes; i++ {
+		sqlx += ",IfNull(Cat" + strconv.Itoa(i) + "Label,'')"
+	}
+	sqlx += " FROM rallyparams"
+	rows, err := DBH.Query(sqlx)
+	checkerr(err)
+	defer rows.Close()
+	var res []string
+	s := make([]string, NumberOfAxes)
+	for rows.Next() {
+		err = rows.Scan(&s[0], &s[1], &s[2], &s[3], &s[4], &s[5], &s[6], &s[7], &s[8])
+		checkerr(err)
+	}
+	res = append(res, s...)
+	//log.Printf("AxisLabels = %v\n", res)
+	return res
+
+}
+
+// Build list of bonuses claimed
+func build_bonusclaim_array(entrant int) ClaimedBonusMap {
+
+	Bid := make(map[string]int)
+	B := make(ClaimedBonusMap, 0)
+
+	sqlx := "SELECT claims.Bonusid, Decision, claims.Points, claims.RestMinutes, claims.QuestionAnswered, claims.OdoReading"
+	sqlx += " FROM claims"
+	sqlx += " LEFT JOIN bonuses ON claims.Bonusid=bonuses.Bonusid"
+	sqlx += " WHERE EntrantID=" + strconv.Itoa(entrant)
+	sqlx += " AND Decision >= " + strconv.Itoa(ClaimDecision_GoodClaim) // Decided claim
+	//sqlx += " AND Decision != " + strconv.Itoa(ClaimDecision_ClaimExcluded)
+	sqlx += " ORDER BY ClaimTime, OdoReading"
+
+	rows, err := DBH.Query(sqlx)
+	checkerr(err)
+	defer rows.Close()
+	bix := 0
+	for rows.Next() {
+		var bonus ClaimedBonus
+		var qs int
+		rows.Scan(&bonus.Bonusid, &bonus.Decision, &bonus.Points, &bonus.RestMinutes, &qs, &bonus.OdoReading)
+		bonus.QuestionScored = qs != 0
+		ix, ok := Bid[bonus.Bonusid]
+		if ok { // Supersede the earlier claim
+			B[ix] = bonus
+		} else {
+			B = append(B, bonus)
+			Bid[bonus.Bonusid] = bix
+			bix++
+		}
+
+	}
+	return B
+}
+
+func build_compoundRuleArray(CurrentLeg int) []CompoundRule {
+
+	var res []CompoundRule
+	sqlx := "SELECT rowid AS id,IfNull(Axis,1),IfNull(Cat,0),IfNull(NMethod,0),IfNull(ModBonus,0),IfNull(NMin,1),IfNull(PointsMults,0),IfNull(NPower,0),IfNull(Ruletype,0)"
+	sqlx += " FROM catcompound WHERE Leg=0 OR Leg=" + strconv.Itoa(CurrentLeg)
+	sqlx += " ORDER BY Axis,NMin DESC"
+	rows, err := DBH.Query(sqlx)
+	checkerr(err)
+	defer rows.Close()
+	for rows.Next() {
+		var cr CompoundRule
+		rows.Scan(&cr.Ruleid, &cr.Axis, &cr.Cat, &cr.Method, &cr.Target, &cr.Min, &cr.PointsMults, &cr.Power, &cr.Ruletype)
+		res = append(res, cr)
+	}
+	return res
+}
+
+func build_emptyCatCountsArray() axisCounts {
+
+	res := make(axisCounts, 0)
+	for i := 0; i <= NumberOfAxes; i++ {
+		var cf catFields
+		cf.catCounts = make(map[int]int, 0)
+		res[i] = cf
+	}
+	return res
+}
+
+// Build array of all bonuses for use with this scorecard
+func build_scorecardBonusArray(CurrentLeg int) []ScorecardBonusDetail {
+
+	var res []ScorecardBonusDetail
+	var b ScorecardBonusDetail
+
+	s := reflect.ValueOf(&b).Elem()
+	numCols := s.NumField() - 2 + NumCategoryAxes - 1
+	columns := make([]interface{}, numCols)
+	for i := 0; i < s.NumField()-2; i++ { // -2 limit to avoid Scored, MultiplyLast
+		field := s.Field(i)
+
+		if field.Kind() == reflect.Array {
+			for j := 0; j < field.Len(); j++ {
+				columns[i+j] = field.Index(j).Addr().Interface()
+			}
+		} else {
+			columns[i] = field.Addr().Interface()
+		}
+	}
+
+	//	log.Println("Got here")
+	sqlx := "SELECT Bonusid, BriefDesc, Compulsory, Points, AskPoints, RestMinutes"
+	for i := 1; i <= NumCategoryAxes; i++ {
+		sqlx += ", Cat" + strconv.Itoa(i)
+	}
+	sqlx += " FROM bonuses"
+	sqlx += " WHERE Leg=0 OR Leg<=" + strconv.Itoa(CurrentLeg)
+	sqlx += " ORDER BY Bonusid"
+	//log.Println(sqlx)
+	rows, err := DBH.Query(sqlx)
+	checkerr(err)
+	defer rows.Close()
+	for rows.Next() {
+		err = rows.Scan(columns...)
+		checkerr(err)
+		b.MultiplyLast = b.AskPoints == PointsCalcMethod_MultiplyLast
+		res = append(res, b)
+	}
+	//log.Printf("BonusArray is %v\n", res)
+	return res
+
+}
+
+func build_timePenaltyArray() []TimePenalty {
 
 	//	const currentLeg = "0"
 
@@ -194,7 +340,7 @@ func build_timePenaltyArray() {
 	//sqlx += " WHERE Leg=0 OR Leg=" + currentLeg
 	sqlx += " ORDER BY PenaltyStart,PenaltyFinish"
 
-	TimePenalties = make([]TimePenalty, 0)
+	res := make([]TimePenalty, 0)
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
 	defer rows.Close()
@@ -216,30 +362,36 @@ func build_timePenaltyArray() {
 			tp.PenaltyFinish, _ = time.Parse(myTimestamp, tp.PenaltyFinishX)
 		}
 
-		TimePenalties = append(TimePenalties, tp)
+		res = append(res, tp)
 	}
+	return res
 }
 
-const EntrantDNS = 0
-const EntrantOK = 1
-const EntrantFinisher = 8
-const EntrantDNF = 3
+func BuildRallyParameters(Leg int) {
 
-var EntrantStatusLits = map[int]string{0: "DNS", 1: "ok", 8: "Finisher", 3: "DNF"}
+	if RallyParametersLoaded {
+		return
+	}
+
+	ScorecardBonuses = build_scorecardBonusArray(Leg)
+	CompoundRules = build_compoundRuleArray(Leg)
+	AxisLabels = build_axisLabels()
+	CatCounts = build_emptyCatCountsArray()
+	ComboBonuses = loadCombos("")
+	RejectReasons = loadRejectReasons()
+	TimePenalties = build_timePenaltyArray()
+
+	RallyParametersLoaded = true
+
+}
 
 func calcEntrantStatus() int {
 
 	return EntrantFinisher
 }
 
-func fetchCatDesc(axis int, cat int) string {
-
-	sqlx := fmt.Sprintf("SELECT BriefDesc FROM categories WHERE Axis=%d AND Cat=%d", axis, cat)
-	return getStringFromDB(sqlx, strconv.Itoa(cat))
-}
-
 // Miles is either miles or kilometres depending on rally setting, ridden by the current entrant
-func calcMileagePenalty(entrant int) ([]ScorexLine, int) {
+func calcMileagePenalty(Miles int) ([]ScorexLine, int) {
 
 	const MileagePenaltyIcon = "&#10238;"
 
@@ -251,8 +403,7 @@ func calcMileagePenalty(entrant int) ([]ScorexLine, int) {
 	if usingKms {
 		mklit = "km"
 	}
-	Miles, _ := strconv.Atoi(getStringFromDB("SELECT CorrectedMiles FROM entrants WHERE EntrantID="+strconv.Itoa(entrant), "0"))
-	penaltyMaxMiles, _ := strconv.Atoi(getStringFromDB("SELECT PenaltyMaxMiles FROM rallyparams", "99999"))
+	penaltyMaxMiles := getIntegerFromDB("SELECT PenaltyMaxMiles FROM rallyparams", 99999)
 	if penaltyMaxMiles < 1 {
 		return res, numx
 	}
@@ -260,29 +411,44 @@ func calcMileagePenalty(entrant int) ([]ScorexLine, int) {
 	if penaltyMiles < 1 {
 		return res, numx
 	}
-	penaltyMethod, _ := strconv.Atoi(getStringFromDB("SELECT MaxMilesMethod FROM rallyparams", strconv.Itoa(MMM_FixedPoints)))
-	penaltyPoints, _ := strconv.Atoi(getStringFromDB("SELECT MaxMilesPoints FROM rallyparams", "0"))
+	penaltyMethod := getIntegerFromDB("SELECT MaxMilesMethod FROM rallyparams", MMM_FixedPoints)
+	penaltyPoints := getIntegerFromDB("SELECT MaxMilesPoints FROM rallyparams", 0)
 	if penaltyPoints < 1 {
 		return res, numx
 	}
 
 	var sx ScorexLine
 	sx.IsValidLine = true
+	sx.Code = penalty_symbol
 	switch penaltyMethod {
 	case MMM_Multipliers:
-		numx = penaltyPoints
+		numx = 0 - penaltyPoints
 		sx.Desc = fmt.Sprintf("%v %v %v > %v ", MileagePenaltyIcon, Miles, mklit, penaltyMaxMiles)
 		sx.PointsDesc = fmt.Sprintf("-%vX", numx)
 	case MMM_PointsPerMile:
-		sx.Points = penaltyPoints * penaltyMiles
+		sx.Points = 0 - penaltyPoints*penaltyMiles
 		sx.Desc = fmt.Sprintf("%v %v %v > %v ", MileagePenaltyIcon, Miles, mklit, penaltyMaxMiles)
 		sx.PointsDesc = fmt.Sprintf("%v x %v", penaltyMiles, penaltyPoints)
 	default:
-		sx.Points = penaltyPoints
+		sx.Points = 0 - penaltyPoints
 		sx.Desc = fmt.Sprintf("%v %v %v > %v ", MileagePenaltyIcon, Miles, mklit, penaltyMaxMiles)
 	}
 	res = append(res, sx)
 	return res, numx
+}
+
+func calcRallyDistance(last int, this int, isKm bool) int {
+
+	delta := this - last
+	if isKm == CS.RallyUnitKms {
+		return delta
+	}
+	if isKm {
+		delta = int(float64(delta) / KmsPerMile)
+	} else {
+		delta = int(float64(delta) * KmsPerMile)
+	}
+	return delta
 }
 
 // 2nd return is number of multipliers
@@ -359,6 +525,7 @@ func calcTimePenalty(entrant int) ([]ScorexLine, int) {
 		penaltyTime := ft.Sub(tp.PenaltyStart)
 		penaltyMinutes := penaltyTime.Minutes()
 		sx.IsValidLine = true
+		sx.Code = penalty_symbol
 		switch tp.PenaltyMethod {
 		case TPM_PointsPerMin:
 			sx.Points = 0 - tp.PenaltyFactor*int(penaltyMinutes)
@@ -379,6 +546,89 @@ func calcTimePenalty(entrant int) ([]ScorexLine, int) {
 	}
 	return res, numx
 
+}
+
+func checkApplySequences(BC ClaimedBonus, LastBonusClaimed ClaimedBonus) ScorexLine {
+
+	var sx ScorexLine
+
+	// Check for sequence bonus
+	for _, CR := range CompoundRules {
+		if CR.Ruletype != CAT_OrdinaryScoringSequence {
+			continue
+		}
+
+		if LastBonusClaimed.Bonusid == "" {
+			continue
+		}
+
+		Cat := ScorecardBonuses[BC.BonusScorecardIX].CatValue[CR.Axis-1]
+		LastCat := ScorecardBonuses[LastBonusClaimed.BonusScorecardIX].CatValue[CR.Axis-1]
+		// If this bonus is in the same category as the last one
+		if Cat == LastCat {
+			// Still building the sequence so
+
+			continue
+		}
+
+		if CatCounts[CR.Axis].sameCatCount < CR.Min {
+			continue
+		}
+
+		// Trigger sequential bonus
+
+		sqlx := fmt.Sprintf("SELECT BriefDesc FROM categories WHERE Axis=%d AND Cat=%d", CR.Axis, LastCat)
+		defaultValue := fmt.Sprintf("%d/%d", CR.Axis, LastCat)
+		BonusDesc := fmt.Sprintf("%s %d x %s", sequential_bonus_symbol, CatCounts[CR.Axis].sameCatCount, getStringFromDB(sqlx, defaultValue))
+
+		PointsDesc := ""
+		ExtraBonusPoints := 0
+		if CR.PointsMults == CAT_ResultPoints { // Result is specified number of points
+			ExtraBonusPoints = CR.Power
+		} else { // Result is sequence length * multiplier
+			ExtraBonusPoints = CatCounts[CR.Axis].sameCatPoints * CR.Power
+			if CR.Power != 1 && CR.Power != 0 {
+				PointsDesc = fmt.Sprintf(" (+ %dx%d)", CatCounts[CR.Axis].sameCatPoints, CR.Power)
+			}
+		}
+		sx.Desc = BonusDesc
+		sx.PointsDesc = PointsDesc
+		sx.Points = ExtraBonusPoints
+		sx.IsValidLine = true
+		break // Only apply the first matching rule
+
+	}
+
+	return sx
+}
+
+func checkerr(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
+func excludeClaim(BC ClaimedBonus) ScorexLine {
+
+	var res ScorexLine
+
+	fmt.Println("excludeClaim called")
+	if !CS.ShowExcludedClaims {
+		return res
+	}
+	res.IsValidLine = true
+	res.Code = BC.Bonusid
+	SB := ScorecardBonuses[BC.BonusScorecardIX] // Convenient shorthand
+
+	res.Desc = fmt.Sprintf("%v<br>*** CLAIM EXCLUDED ***", SB.BriefDesc)
+	return res
+
+}
+
+func fetchCatDesc(axis int, cat int) string {
+
+	sqlx := fmt.Sprintf("SELECT BriefDesc FROM categories WHERE Axis=%d AND Cat=%d", axis, cat)
+	return getStringFromDB(sqlx, strconv.Itoa(cat))
 }
 
 func htmlScorex(sx []ScorexLine, e int, es int, tp int) string {
@@ -424,46 +674,79 @@ func htmlScorex(sx []ScorexLine, e int, es int, tp int) string {
 
 	return res
 }
-func checkerr(err error) {
-	if err != nil {
-		panic(err)
+
+func loadCombos(comboid string) []ComboBonus {
+
+	const cbFieldsB4Cats = 8
+
+	var cb ComboBonus
+	res := make([]ComboBonus, 0)
+
+	sqlx := "SELECT ComboID,BriefDesc,ScoreMethod,MinimumTicks,ScorePoints,Bonuses,Compulsory,Cat1"
+	for i := 2; i <= NumCategoryAxes; i++ {
+		sqlx += fmt.Sprintf(",Cat%d", i)
 	}
-}
-
-func recalc_all() {
-
-	/* 	_, err := DBH.Exec("BEGIN TRANSACTION")
-	   	checkerr(err)
-	   	defer DBH.Exec("COMMIT")
-	*/
-	sqlx := "SELECT EntrantID FROM entrants ORDER BY EntrantID"
+	sqlx += " FROM combinations"
+	if comboid != "" {
+		sqlx += " WHERE ComboID='" + comboid + "'"
+	}
+	sqlx += " ORDER BY ComboID"
+	log.Println(sqlx)
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
 	defer rows.Close()
-	n := 3
-	entrants := make([]int, 0)
-	for rows.Next() {
-		var entrant int
-		rows.Scan(&entrant)
-		entrants = append(entrants, entrant)
-		//		recalc_scorecard(entrant)
-		n--
-		if n < 1 {
-			break
+
+	s := reflect.ValueOf(&cb).Elem()
+	numCols := cbFieldsB4Cats + NumCategoryAxes - 1
+	columns := make([]interface{}, numCols)
+	for i := 0; i < cbFieldsB4Cats; i++ {
+		field := s.Field(i)
+
+		if field.Kind() == reflect.Array {
+			for j := 0; j < field.Len(); j++ {
+				columns[i+j] = field.Index(j).Addr().Interface()
+			}
+		} else {
+			columns[i] = field.Addr().Interface()
 		}
 	}
-	rows.Close()
-	for _, e := range entrants {
-		recalc_scorecard(e)
+	for rows.Next() {
+		err := rows.Scan(columns...)
+		checkerr(err)
+		x := strings.Split(cb.BonusList, ",")
+		cb.Bonuses = make([]string, len(x))
+		k := len(x)
+		for i := 0; i < k; i++ {
+			cb.Bonuses[i] = x[i]
+		}
+		cb.Points = make([]int, k)
+		x = strings.Split(cb.PointsList, ",")
+		if cb.MinTicks > k {
+			cb.MinTicks = k
+		}
+		if cb.MinTicks < 1 {
+			cb.MinTicks = k
+		}
+		j := 0
+		n := 0
+		for i := cb.MinTicks - 1; i < k; i++ {
+			if j < len(x) {
+				n, _ = strconv.Atoi(x[j])
+			}
+			cb.Points[i] = n
+			j++
+		}
+		res = append(res, cb)
 	}
+	return res
 
 }
 
-func loadRejectReasons() RejectReasons {
+func loadRejectReasons() RejectReasonsMap {
 
 	const useScoreMasterDB = true
 
-	res := make(RejectReasons, 0)
+	res := make(RejectReasonsMap, 0)
 
 	if useScoreMasterDB {
 		sqlx := "SELECT RejectReasons FROM rallyparams"
@@ -538,261 +821,6 @@ func processCombos() ([]ScorexLine, int) {
 	}
 	return res, mults
 
-}
-func loadCombos(comboid string) []ComboBonus {
-
-	const cbFieldsB4Cats = 8
-
-	var cb ComboBonus
-	res := make([]ComboBonus, 0)
-
-	sqlx := "SELECT ComboID,BriefDesc,ScoreMethod,MinimumTicks,ScorePoints,Bonuses,Compulsory,Cat1"
-	for i := 2; i <= NumCategoryAxes; i++ {
-		sqlx += fmt.Sprintf(",Cat%d", i)
-	}
-	sqlx += " FROM combinations"
-	if comboid != "" {
-		sqlx += " WHERE ComboID='" + comboid + "'"
-	}
-	sqlx += " ORDER BY ComboID"
-	log.Println(sqlx)
-	rows, err := DBH.Query(sqlx)
-	checkerr(err)
-	defer rows.Close()
-
-	s := reflect.ValueOf(&cb).Elem()
-	numCols := cbFieldsB4Cats + NumCategoryAxes - 1
-	columns := make([]interface{}, numCols)
-	for i := 0; i < cbFieldsB4Cats; i++ {
-		field := s.Field(i)
-
-		if field.Kind() == reflect.Array {
-			for j := 0; j < field.Len(); j++ {
-				columns[i+j] = field.Index(j).Addr().Interface()
-			}
-		} else {
-			columns[i] = field.Addr().Interface()
-		}
-	}
-	for rows.Next() {
-		err := rows.Scan(columns...)
-		checkerr(err)
-		x := strings.Split(cb.BonusList, ",")
-		cb.Bonuses = make([]string, len(x))
-		k := len(x)
-		for i := 0; i < k; i++ {
-			cb.Bonuses[i] = x[i]
-		}
-		cb.Points = make([]int, k)
-		x = strings.Split(cb.PointsList, ",")
-		if cb.MinTicks > k {
-			cb.MinTicks = k
-		}
-		if cb.MinTicks < 1 {
-			cb.MinTicks = k
-		}
-		j := 0
-		n := 0
-		for i := cb.MinTicks - 1; i < k; i++ {
-			if j < len(x) {
-				n, _ = strconv.Atoi(x[j])
-			}
-			cb.Points[i] = n
-			j++
-		}
-		res = append(res, cb)
-	}
-	return res
-
-}
-
-func build_compoundRuleArray(CurrentLeg int) []CompoundRule {
-
-	var res []CompoundRule
-	sqlx := "SELECT rowid AS id,IfNull(Axis,1),IfNull(Cat,0),IfNull(NMethod,0),IfNull(ModBonus,0),IfNull(NMin,1),IfNull(PointsMults,0),IfNull(NPower,0),IfNull(Ruletype,0)"
-	sqlx += " FROM catcompound WHERE Leg=0 OR Leg=" + strconv.Itoa(CurrentLeg)
-	sqlx += " ORDER BY Axis,NMin DESC"
-	rows, err := DBH.Query(sqlx)
-	checkerr(err)
-	defer rows.Close()
-	for rows.Next() {
-		var cr CompoundRule
-		rows.Scan(&cr.Ruleid, &cr.Axis, &cr.Cat, &cr.Method, &cr.Target, &cr.Min, &cr.PointsMults, &cr.Power, &cr.Ruletype)
-		res = append(res, cr)
-	}
-	return res
-}
-
-// Build array of all bonuses for use with this scorecard
-func build_scorecardBonusArray(CurrentLeg int) []ScorecardBonusDetail {
-
-	var res []ScorecardBonusDetail
-	var b ScorecardBonusDetail
-
-	s := reflect.ValueOf(&b).Elem()
-	numCols := s.NumField() - 2 + NumCategoryAxes - 1
-	columns := make([]interface{}, numCols)
-	for i := 0; i < s.NumField()-2; i++ { // -2 limit to avoid Scored, MultiplyLast
-		field := s.Field(i)
-
-		if field.Kind() == reflect.Array {
-			for j := 0; j < field.Len(); j++ {
-				columns[i+j] = field.Index(j).Addr().Interface()
-			}
-		} else {
-			columns[i] = field.Addr().Interface()
-		}
-	}
-
-	//	log.Println("Got here")
-	sqlx := "SELECT Bonusid, BriefDesc, Compulsory, Points, AskPoints, RestMinutes"
-	for i := 1; i <= NumCategoryAxes; i++ {
-		sqlx += ", Cat" + strconv.Itoa(i)
-	}
-	sqlx += " FROM bonuses"
-	sqlx += " WHERE Leg=0 OR Leg<=" + strconv.Itoa(CurrentLeg)
-	sqlx += " ORDER BY Bonusid"
-	//log.Println(sqlx)
-	rows, err := DBH.Query(sqlx)
-	checkerr(err)
-	defer rows.Close()
-	for rows.Next() {
-		err = rows.Scan(columns...)
-		checkerr(err)
-		b.MultiplyLast = b.AskPoints == PointsCalcMethod_MultiplyLast
-		res = append(res, b)
-	}
-	//log.Printf("BonusArray is %v\n", res)
-	return res
-
-}
-
-// Build list of bonuses claimed
-func build_bonusclaim_array(entrant int) ClaimedBonusMap {
-
-	Bid := make(map[string]int)
-	B := make(ClaimedBonusMap, 0)
-
-	sqlx := "SELECT claims.Bonusid, Decision, claims.Points, claims.RestMinutes, claims.QuestionAnswered"
-	sqlx += " FROM claims"
-	sqlx += " LEFT JOIN bonuses ON claims.Bonusid=bonuses.Bonusid"
-	sqlx += " WHERE EntrantID=" + strconv.Itoa(entrant)
-	sqlx += " AND Decision >= " + strconv.Itoa(ClaimDecision_GoodClaim) // Decided claim
-	sqlx += " AND Decision != " + strconv.Itoa(ClaimDecision_ClaimExcluded)
-	sqlx += " ORDER BY ClaimTime, OdoReading"
-
-	rows, err := DBH.Query(sqlx)
-	checkerr(err)
-	defer rows.Close()
-	bix := 0
-	for rows.Next() {
-		var bonus ClaimedBonus
-		var qs int
-		rows.Scan(&bonus.Bonusid, &bonus.Decision, &bonus.Points, &bonus.RestMinutes, &qs)
-		bonus.QuestionScored = qs != 0
-		if bonus.Decision == ClaimDecision_ClaimExcluded {
-			//log.Printf("Excluding %v\n", bonus.Bonusid)
-			continue
-		}
-		//log.Printf("Including %v\n", bonus.Bonusid)
-		ix, ok := Bid[bonus.Bonusid]
-		if ok { // Supersede the earlier claim
-			B[ix] = bonus
-		} else {
-			B = append(B, bonus)
-			Bid[bonus.Bonusid] = bix
-			bix++
-		}
-
-	}
-	return B
-}
-
-func build_emptyCatCountsArray() axisCounts {
-
-	res := make(axisCounts, 0)
-	for i := 0; i <= NumberOfAxes; i++ {
-		var cf catFields
-		cf.catCounts = make(map[int]int, 0)
-		res[i] = cf
-	}
-	return res
-}
-
-func build_axisLabels() []string {
-
-	sqlx := "SELECT IfNull(Cat1Label,'')"
-	for i := 2; i <= NumberOfAxes; i++ {
-		sqlx += ",IfNull(Cat" + strconv.Itoa(i) + "Label,'')"
-	}
-	sqlx += " FROM rallyparams"
-	rows, err := DBH.Query(sqlx)
-	checkerr(err)
-	defer rows.Close()
-	var res []string
-	s := make([]string, NumberOfAxes)
-	for rows.Next() {
-		err = rows.Scan(&s[0], &s[1], &s[2], &s[3], &s[4], &s[5], &s[6], &s[7], &s[8])
-		checkerr(err)
-	}
-	res = append(res, s...)
-	//log.Printf("AxisLabels = %v\n", res)
-	return res
-
-}
-
-func checkApplySequences(BC ClaimedBonus, LastBonusClaimed ClaimedBonus) ScorexLine {
-
-	var sx ScorexLine
-
-	// Check for sequence bonus
-	for _, CR := range CompoundRules {
-		if CR.Ruletype != CAT_OrdinaryScoringSequence {
-			continue
-		}
-
-		if LastBonusClaimed.Bonusid == "" {
-			continue
-		}
-
-		Cat := ScorecardBonuses[BC.BonusScorecardIX].CatValue[CR.Axis-1]
-		LastCat := ScorecardBonuses[LastBonusClaimed.BonusScorecardIX].CatValue[CR.Axis-1]
-		// If this bonus is in the same category as the last one
-		if Cat == LastCat {
-			// Still building the sequence so
-
-			continue
-		}
-
-		if CatCounts[CR.Axis].sameCatCount < CR.Min {
-			continue
-		}
-
-		// Trigger sequential bonus
-
-		sqlx := fmt.Sprintf("SELECT BriefDesc FROM categories WHERE Axis=%d AND Cat=%d", CR.Axis, LastCat)
-		defaultValue := fmt.Sprintf("%d/%d", CR.Axis, LastCat)
-		BonusDesc := fmt.Sprintf("%s %d x %s", sequential_bonus_symbol, CatCounts[CR.Axis].sameCatCount, getStringFromDB(sqlx, defaultValue))
-
-		PointsDesc := ""
-		ExtraBonusPoints := 0
-		if CR.PointsMults == CAT_ResultPoints { // Result is specified number of points
-			ExtraBonusPoints = CR.Power
-		} else { // Result is sequence length * multiplier
-			ExtraBonusPoints = CatCounts[CR.Axis].sameCatPoints * CR.Power
-			if CR.Power != 1 && CR.Power != 0 {
-				PointsDesc = fmt.Sprintf(" (+ %dx%d)", CatCounts[CR.Axis].sameCatPoints, CR.Power)
-			}
-		}
-		sx.Desc = BonusDesc
-		sx.PointsDesc = PointsDesc
-		sx.Points = ExtraBonusPoints
-		sx.IsValidLine = true
-		break // Only apply the first matching rule
-
-	}
-
-	return sx
 }
 
 func powInt(x, y int) int {
@@ -964,15 +992,42 @@ func processCompoundNZ() ([]ScorexLine, int) {
 
 }
 
+func recalc_all() {
+
+	/* 	_, err := DBH.Exec("BEGIN TRANSACTION")
+	   	checkerr(err)
+	   	defer DBH.Exec("COMMIT")
+	*/
+	sqlx := "SELECT EntrantID FROM entrants ORDER BY EntrantID"
+	rows, err := DBH.Query(sqlx)
+	checkerr(err)
+	defer rows.Close()
+	n := 3
+	entrants := make([]int, 0)
+	for rows.Next() {
+		var entrant int
+		rows.Scan(&entrant)
+		entrants = append(entrants, entrant)
+		//		recalc_scorecard(entrant)
+		n--
+		if n < 1 {
+			break
+		}
+	}
+	rows.Close()
+	for _, e := range entrants {
+		recalc_scorecard(e)
+	}
+
+}
+
 // This recalculates the value of the specified scorecard using as
 // input the relevant claims records. The results are updated totals
 // and score explanation.
 func recalc_scorecard(entrant int) {
 
-	const Leg = 1
-
 	// Multipliers can accrue from combos or compound rules
-	// The final points score is multiplied by this value
+	// The final points score, after penalties, is multiplied by this value
 	Multipliers := 0
 
 	log.Printf("recalc for %v\n", entrant)
@@ -981,29 +1036,20 @@ func recalc_scorecard(entrant int) {
 	   	checkerr(err)
 	   	defer DBH.Exec("COMMIT")
 	*/
-	ScorecardBonuses = build_scorecardBonusArray(Leg)
+
+	BuildRallyParameters(CS.CurrentLeg)
 
 	BonusesClaimed = build_bonusclaim_array(entrant)
 
-	CompoundRules = build_compoundRuleArray(Leg)
-
-	AxisLabels = build_axisLabels()
-
-	CatCounts = build_emptyCatCountsArray()
-
-	ComboBonuses = loadCombos("")
-
-	RejectReasons := loadRejectReasons()
-
-	build_timePenaltyArray()
-
-	//	log.Printf("\nCombos = %v\n", ComboBonuses)
+	CorrectedMiles := 0
+	StartOdo := getIntegerFromDB("SELECT ifnull(OdoRallyStart,0) FROM entrants WHERE EntrantID="+strconv.Itoa(entrant), 0)
+	LastOdo := StartOdo
+	FinishOdo := getIntegerFromDB("SELECT ifnull(OdoRallyFinish,0) FROM entrants WHERE EntrantID="+strconv.Itoa(entrant), 0)
+	OdoIsKm := getIntegerFromDB("SELECT OdoKms FROM entrants WHERE EntrantID="+strconv.Itoa(entrant), 0) != 0
 
 	var sx ScorexLine
 	TotalPoints := 0
 	var Scorex []ScorexLine
-
-	//log.Printf("BonusesClaimed == %v\n", BonusesClaimed)
 
 	var LastBonusClaimed ClaimedBonus
 	for _, BC := range BonusesClaimed {
@@ -1011,6 +1057,11 @@ func recalc_scorecard(entrant int) {
 		// ClaimExcluded means ignore it, treat it as if it didn't exist
 		// This might need to be a switchable response
 		if BC.Decision == ClaimDecision_ClaimExcluded {
+			sx = excludeClaim(BC)
+			if sx.IsValidLine {
+				TotalPoints += sx.Points
+				Scorex = append(Scorex, sx)
+			}
 			continue
 		}
 
@@ -1019,8 +1070,9 @@ func recalc_scorecard(entrant int) {
 
 		SB := ScorecardBonuses[BC.BonusScorecardIX] // Convenient shorthand
 
-		//log.Printf("ScorecardIX = %v\n", BC.BonusScorecardIX)
 		ScorecardBonuses[BC.BonusScorecardIX].Scored = BC.Decision == ClaimDecision_GoodClaim // Only good claims count against "must score" flag
+
+		LastOdo = BC.OdoReading
 
 		sx = checkApplySequences(BC, LastBonusClaimed)
 		if sx.IsValidLine {
@@ -1029,7 +1081,6 @@ func recalc_scorecard(entrant int) {
 		}
 
 		if BC.Decision != ClaimDecision_GoodClaim {
-			var sx ScorexLine
 
 			// Firstly, let's zap any sequence in progress
 			for i := 1; i <= NumCategoryAxes; i++ {
@@ -1048,7 +1099,7 @@ func recalc_scorecard(entrant int) {
 			}
 
 			sx.Desc = fmt.Sprintf("%v<br>CLAIM REJECTED - %v", SB.BriefDesc, errmsg)
-
+			sx.PointsDesc = ""
 			Scorex = append(Scorex, sx)
 			continue
 		}
@@ -1058,7 +1109,6 @@ func recalc_scorecard(entrant int) {
 		// Handle multipliers
 
 		if SB.MultiplyLast {
-			//log.Printf("%v is mult %v\n", SB.Bonusid, SB.Points)
 			if ScorecardBonuses[LastBonusClaimed.BonusScorecardIX].MultiplyLast {
 				BC.Points = 0
 			} else {
@@ -1088,7 +1138,6 @@ func recalc_scorecard(entrant int) {
 			if cr.Target != CAT_ModifyBonusScore {
 				continue
 			}
-			//log.Printf("%s (%v) == %v %d\n", SB.Bonusid, BasicPoints, cr, SB.CatValue[cr.Axis-1])
 			if cr.Cat > 0 { // Rule applies only to one category
 				if SB.CatValue[cr.Axis-1] != cr.Cat { // not this one
 					continue
@@ -1096,17 +1145,14 @@ func recalc_scorecard(entrant int) {
 			}
 
 			// Check how many hits
-			//log.Printf("CatCounts==%v\n", CatCounts)
 			catcount := 0
 			if cr.Cat == 0 {
 				for _, cc := range CatCounts[cr.Axis].catCounts {
 					catcount += cc
 				}
 			} else {
-				//log.Printf("cc[A%d].cc[C%d]=%d\n", cr.Axis, cr.Cat, CatCounts[cr.Axis].catCounts[cr.Cat])
 				catcount += CatCounts[cr.Axis].catCounts[cr.Cat]
 			}
-			//log.Printf("catcount: %d Min: %d Axis: %d\n", catcount, cr.Min, cr.Axis)
 			if catcount < cr.Min {
 				continue
 			}
@@ -1126,7 +1172,6 @@ func recalc_scorecard(entrant int) {
 		updateBonusCatPoints(SB, BasicPoints) // Updating here gets wrong counts but correctly upgraded points
 
 		TotalPoints += BasicPoints
-		var sx ScorexLine
 		sx.IsValidLine = true
 		sx.Code = SB.Bonusid
 		sx.Desc = SB.BriefDesc
@@ -1185,7 +1230,16 @@ func recalc_scorecard(entrant int) {
 	Multipliers += nm
 	Scorex = append(Scorex, ntp...)
 
-	ntp, nm = calcMileagePenalty(entrant)
+	if CS.UseCheckinForOdo && FinishOdo > StartOdo {
+		LastOdo = FinishOdo
+	}
+	if !CS.UseCheckinForOdo {
+		FinishOdo = LastOdo
+	}
+
+	CorrectedMiles = calcRallyDistance(StartOdo, LastOdo, OdoIsKm)
+
+	ntp, nm = calcMileagePenalty(CorrectedMiles)
 	for _, px := range ntp {
 		TotalPoints += px.Points
 	}
@@ -1206,20 +1260,18 @@ func recalc_scorecard(entrant int) {
 	status := calcEntrantStatus()
 	htmlSX := htmlScorex(Scorex, entrant, status, TotalPoints)
 
-	//log.Println(htmlSX)
-
 	/* 	_, err = DBH.Exec("COMMIT")
 	   	checkerr(err)
 	*/
-	sqlx := "UPDATE entrants SET ScoreX=?,EntrantStatus=?,TotalPoints=? WHERE EntrantID=?"
+	sqlx := "UPDATE entrants SET ScoreX=?,EntrantStatus=?,TotalPoints=?,CorrectedMiles=?,OdoRallyFinish=? WHERE EntrantID=?"
 	stmt, err := DBH.Prepare(sqlx)
 	checkerr(err)
 	defer stmt.Close()
 
-	_, err = stmt.Exec(htmlSX, status, TotalPoints, entrant)
+	_, err = stmt.Exec(htmlSX, status, TotalPoints, CorrectedMiles, FinishOdo, entrant)
 	checkerr(err)
-	//log.Printf("Scorex == %v\n", Scorex)
 
+	// Debugging code below
 	for x := range Scorex {
 		log.Printf("%-3s %-20s %-10s %7d\n", Scorex[x].Code, html.UnescapeString(Scorex[x].Desc), html.UnescapeString(Scorex[x].PointsDesc), Scorex[x].Points)
 	}
@@ -1233,17 +1285,12 @@ func updateBonusCatCounts(BS ScorecardBonusDetail) {
 
 }
 
-func updateComboCatCounts(CB ComboBonus) {
+func updateBonusCatPoints(BS ScorecardBonusDetail, Points int) {
 
-	updateCatCounts(CB.Cat[:])
-
-}
-
-func updateComboCatPoints(CB ComboBonus, Points int) {
-
-	updateCatPoints(CB.Cat[:], Points)
+	updateCatPoints(BS.CatValue[:], Points)
 
 }
+
 func updateCatCounts(CatValue []int) {
 
 	for i := 1; i <= NumCategoryAxes; i++ {
@@ -1285,12 +1332,6 @@ func updateCatCounts(CatValue []int) {
 	//debugCatCounts()
 }
 
-func updateBonusCatPoints(BS ScorecardBonusDetail, Points int) {
-
-	updateCatPoints(BS.CatValue[:], Points)
-
-}
-
 func updateCatPoints(CatValue []int, Points int) {
 
 	for i := 1; i <= NumCategoryAxes; i++ {
@@ -1312,8 +1353,14 @@ func updateCatPoints(CatValue []int, Points int) {
 	}
 }
 
-func debugCatCounts() {
-	for i := 0; i <= NumCategoryAxes; i++ {
-		log.Printf("CatCounts: Axis=%d == %v\n", i, CatCounts[i])
-	}
+func updateComboCatCounts(CB ComboBonus) {
+
+	updateCatCounts(CB.Cat[:])
+
+}
+
+func updateComboCatPoints(CB ComboBonus, Points int) {
+
+	updateCatPoints(CB.Cat[:], Points)
+
 }

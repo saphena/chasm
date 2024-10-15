@@ -25,6 +25,15 @@ var runOnline *bool = flag.Bool("online", false, "act as webserver")
 // DBH provides access to the database
 var DBH *sql.DB
 
+func getIntegerFromDB(sqlx string, defval int) int {
+
+	str := getStringFromDB(sqlx, strconv.Itoa(defval))
+	res, err := strconv.Atoi(str)
+	if err == nil {
+		return res
+	}
+	return defval
+}
 func getStringFromDB(sqlx string, defval string) string {
 
 	rows, err := DBH.Query(sqlx)
@@ -42,7 +51,6 @@ func getStringFromDB(sqlx string, defval string) string {
 
 func main() {
 
-	log.Println("Hello sailor")
 	flag.Parse()
 
 	dbx, _ := filepath.Abs(*DBNAME)
@@ -60,6 +68,11 @@ func main() {
 		fmt.Println("Duff database")
 		return
 	}
+
+	err = json.Unmarshal([]byte(defaultCS), &CS)
+	checkerr(err)
+	fmt.Printf("%v\n", CS)
+
 	recalc_all()
 	//recalc_scorecard(2)
 
