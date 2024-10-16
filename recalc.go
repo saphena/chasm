@@ -9,10 +9,12 @@ Cat is a non-zero integer but -1 when used to access arrays
 */
 
 import (
+	"encoding/json"
 	"fmt"
 	"html"
 	"log"
 	"math"
+	"os"
 	"reflect"
 	"slices"
 	"strconv"
@@ -36,7 +38,7 @@ const CAT_OrdinaryScoringSequence = 4
 
 const checkmark_symbol = "&#x2713;"
 const sequential_bonus_symbol = "&#8752;"
-
+const compoundrule_symbol = "&#9783;"
 const penalty_symbol = "&#9785;"
 
 const ClaimDecision_ClaimExcluded = 9
@@ -131,15 +133,15 @@ type ScorexLine struct {
 }
 
 type catFields struct {
-	catCounts     map[int]int
-	sameCatCount  int
-	sameCatPoints int
-	lastCatScored int
+	CatCounts     map[int]int
+	SameCatCount  int
+	SameCatPoints int
+	LastCatScored int
 }
 
 type axisCounts map[int]catFields
 
-var CatCounts axisCounts
+var AxisCounts axisCounts
 var AxisLabels []string
 
 type ScorexParams struct {
@@ -272,12 +274,12 @@ func build_compoundRuleArray(CurrentLeg int) []CompoundRule {
 	return res
 }
 
-func build_emptyCatCountsArray() axisCounts {
+func build_emptyAxisCountsArray() axisCounts {
 
 	res := make(axisCounts, 0)
-	for i := 0; i <= NumberOfAxes; i++ {
+	for i := 1; i <= NumberOfAxes; i++ {
 		var cf catFields
-		cf.catCounts = make(map[int]int, 0)
+		cf.CatCounts = make(map[int]int, 0)
 		res[i] = cf
 	}
 	return res
@@ -376,7 +378,6 @@ func BuildRallyParameters(Leg int) {
 	ScorecardBonuses = build_scorecardBonusArray(Leg)
 	CompoundRules = build_compoundRuleArray(Leg)
 	AxisLabels = build_axisLabels()
-	CatCounts = build_emptyCatCountsArray()
 	ComboBonuses = loadCombos("")
 	RejectReasons = loadRejectReasons()
 	TimePenalties = build_timePenaltyArray()
@@ -385,9 +386,30 @@ func BuildRallyParameters(Leg int) {
 
 }
 
-func calcEntrantStatus() int {
+func calcEntrantStatus(Miles int) (ScorexLine, int) {
 
-	return EntrantFinisher
+	const DNF_icon = "&#9760;"
+
+	var sx ScorexLine
+
+	mklit := CS.UnitMilesLit
+	if CS.RallyUnitKms {
+		mklit = CS.UnitKmsLit
+	}
+	if Miles < CS.RallyMinMiles {
+		sx.IsValidLine = true
+		sx.Code = DNF_icon
+		sx.Desc = fmt.Sprintf("%v < %v", mklit, CS.RallyMinMiles)
+		return sx, EntrantDNF
+	}
+	if Miles > CS.PenaltyMilesDNF {
+		sx.IsValidLine = true
+		sx.Code = DNF_icon
+		sx.Desc = fmt.Sprintf("%v > %v", mklit, CS.PenaltyMilesDNF)
+		return sx, EntrantDNF
+	}
+
+	return sx, EntrantFinisher
 }
 
 // Miles is either miles or kilometres depending on rally setting, ridden by the current entrant
@@ -424,7 +446,7 @@ func calcMileagePenalty(Miles int) ([]ScorexLine, int) {
 	case MMM_Multipliers:
 		numx = 0 - penaltyPoints
 		sx.Desc = fmt.Sprintf("%v %v %v > %v ", MileagePenaltyIcon, Miles, mklit, penaltyMaxMiles)
-		sx.PointsDesc = fmt.Sprintf("-%vX", numx)
+		sx.PointsDesc = fmt.Sprintf("-&sum;&times;%v", numx)
 	case MMM_PointsPerMile:
 		sx.Points = 0 - penaltyPoints*penaltyMiles
 		sx.Desc = fmt.Sprintf("%v %v %v > %v ", MileagePenaltyIcon, Miles, mklit, penaltyMaxMiles)
@@ -536,11 +558,12 @@ func calcTimePenalty(entrant int) ([]ScorexLine, int) {
 			sx.Desc = fmt.Sprintf("%v %v &ge; %v", TimePenaltyIcon, FinishTimeIcon, tp.PenaltyStart.Format(myTimestampX))
 		case TPM_FixedMult:
 			numx -= tp.PenaltyFactor
-			sx.Desc = fmt.Sprintf("%v %v &ge; %v -%vX", TimePenaltyIcon, FinishTimeIcon, tp.PenaltyStart.Format(myTimestampX), tp.PenaltyFactor)
+			sx.Desc = fmt.Sprintf("%v %v &ge; %v", TimePenaltyIcon, FinishTimeIcon, tp.PenaltyStart.Format(myTimestampX))
+			sx.PointsDesc = fmt.Sprintf(" -&sum;&times;%v", tp.PenaltyFactor)
 		case TPM_MultPerMin:
 			numx -= tp.PenaltyFactor * int(penaltyMinutes)
 			sx.Desc = fmt.Sprintf("%v %v &ge; %v", TimePenaltyIcon, FinishTimeIcon, tp.PenaltyStart.Format(myTimestampX))
-			sx.PointsDesc = fmt.Sprintf("%vm @ -%vX/m", int(penaltyMinutes), tp.PenaltyFactor)
+			sx.PointsDesc = fmt.Sprintf("%vm @ -&sum;&times;%v/m", int(penaltyMinutes), tp.PenaltyFactor)
 		}
 		res = append(res, sx)
 	}
@@ -571,7 +594,7 @@ func checkApplySequences(BC ClaimedBonus, LastBonusClaimed ClaimedBonus) ScorexL
 			continue
 		}
 
-		if CatCounts[CR.Axis].sameCatCount < CR.Min {
+		if AxisCounts[CR.Axis].SameCatCount < CR.Min {
 			continue
 		}
 
@@ -579,16 +602,16 @@ func checkApplySequences(BC ClaimedBonus, LastBonusClaimed ClaimedBonus) ScorexL
 
 		sqlx := fmt.Sprintf("SELECT BriefDesc FROM categories WHERE Axis=%d AND Cat=%d", CR.Axis, LastCat)
 		defaultValue := fmt.Sprintf("%d/%d", CR.Axis, LastCat)
-		BonusDesc := fmt.Sprintf("%s %d x %s", sequential_bonus_symbol, CatCounts[CR.Axis].sameCatCount, getStringFromDB(sqlx, defaultValue))
+		BonusDesc := fmt.Sprintf("%s %d x %s", sequential_bonus_symbol, AxisCounts[CR.Axis].SameCatCount, getStringFromDB(sqlx, defaultValue))
 
 		PointsDesc := ""
 		ExtraBonusPoints := 0
 		if CR.PointsMults == CAT_ResultPoints { // Result is specified number of points
 			ExtraBonusPoints = CR.Power
 		} else { // Result is sequence length * multiplier
-			ExtraBonusPoints = CatCounts[CR.Axis].sameCatPoints * CR.Power
+			ExtraBonusPoints = AxisCounts[CR.Axis].SameCatPoints * CR.Power
 			if CR.Power != 1 && CR.Power != 0 {
-				PointsDesc = fmt.Sprintf(" (+ %dx%d)", CatCounts[CR.Axis].sameCatPoints, CR.Power)
+				PointsDesc = fmt.Sprintf("= %d&times;%d", AxisCounts[CR.Axis].SameCatPoints, CR.Power)
 			}
 		}
 		sx.Desc = BonusDesc
@@ -633,6 +656,8 @@ func fetchCatDesc(axis int, cat int) string {
 
 func htmlScorex(sx []ScorexLine, e int, es int, tp int) string {
 
+	const NoScoreIcon = "&#10007;"
+
 	var sp ScorexParams
 
 	KmsRally := getStringFromDB("SELECT MilesKms FROM rallyparams", "0") == "1"
@@ -664,7 +689,11 @@ func htmlScorex(sx []ScorexLine, e int, es int, tp int) string {
 		}
 		pv := strconv.Itoa(sl.Points)
 		if sl.Points == 0 {
-			pv = ""
+			if sl.PointsDesc == "" {
+				pv = NoScoreIcon
+			} else {
+				pv = ""
+			}
 		}
 		res += fmt.Sprintf(`<tr><td class="sxcode">%s</td><td class="sxdesc">%s<span class="sxdescx">%s</span></td><td class="sxitempoints">%s</td></tr>`, sl.Code, sl.Desc, sl.PointsDesc, pv)
 	}
@@ -809,7 +838,7 @@ func processCombos() ([]ScorexLine, int) {
 			sx.PointsDesc = fmt.Sprintf("(%v/%v)", scoredbonuses, len(cb.Bonuses))
 			if cb.ScoreMethod == ScoreMethodMults {
 				mults += cb.Points[scoredbonuses-1]
-				sx.PointsDesc += fmt.Sprintf(" = &times;%d", cb.Points[scoredbonuses-1])
+				sx.PointsDesc += fmt.Sprintf(" = &sum;&times;%d", cb.Points[scoredbonuses-1])
 			} else {
 				sx.Points = cb.Points[scoredbonuses-1]
 			}
@@ -851,7 +880,7 @@ func processCompoundCats() ([]ScorexLine, int) {
 			continue
 		}
 
-		myCount := CatCounts[cr.Axis].catCounts[cr.Cat]
+		myCount := AxisCounts[cr.Axis].CatCounts[cr.Cat]
 
 		if myCount < cr.Min {
 			lastMin = cr.Min
@@ -881,11 +910,15 @@ func processCompoundCats() ([]ScorexLine, int) {
 		} else if cr.PointsMults == CAT_ResultMults {
 			mults = Points
 			Points = 0
-			Pointsdesc = fmt.Sprintf("&times;%d", mults)
+			Pointsdesc = fmt.Sprintf("= &sum;&times;%d", mults)
 		}
 		var sx ScorexLine
 		sx.IsValidLine = true
+		sx.Code = compoundrule_symbol
 		sx.Desc = fmt.Sprintf("%s: <em>n</em>=%d", AxisLabels[cr.Axis-1], myCount)
+
+		sx.Desc += fmt.Sprintf(" rc%v ", cr.Ruleid)
+
 		if cr.Cat > 0 {
 			catx := fetchCatDesc(cr.Axis, cr.Cat)
 			sx.Desc += fmt.Sprintf(" [%s]", catx)
@@ -908,14 +941,16 @@ func processCompoundNZ() ([]ScorexLine, int) {
 
 	res := make([]ScorexLine, 0)
 	mults := 0
-	nzAxisCounts := make([]int, NumCategoryAxes)
-	for i := 1; i <= NumCategoryAxes; i++ {
-		for j, n := range CatCounts[i].catCounts {
-			if j > 0 && n > 0 { // Skip j=0 as that is sum of other cols
-				nzAxisCounts[i]++
+	/*
+		nzAxisCounts := make([]int, NumCategoryAxes)
+		for i := 1; i <= NumCategoryAxes; i++ {
+			for j, n := range AxisCounts[i].catCounts {
+				if j > 0 && n > 0 { // Skip j=0 as that is sum of other cols
+					nzAxisCounts[i]++
+				}
 			}
 		}
-	}
+	*/
 
 	lastAxis := -1
 	lastMin := 0
@@ -936,12 +971,15 @@ func processCompoundNZ() ([]ScorexLine, int) {
 
 		nzCount := 0
 		if cr.Axis > 0 {
-			nzCount = nzAxisCounts[cr.Axis]
+			nzCount = AxisCounts[cr.Axis].CatCounts[0]
 		} else {
 			for i := 1; i <= NumCategoryAxes; i++ {
-				nzCount += nzAxisCounts[i]
+				nzCount += AxisCounts[i].CatCounts[0]
 			}
 		}
+
+		dbg, _ := json.Marshal(AxisCounts)
+		fmt.Printf("A=%v Cnt=%v, Counts=%v\n", cr.Axis, nzCount, string(dbg))
 		if nzCount < cr.Min {
 			lastMin = cr.Min
 			continue
@@ -970,11 +1008,14 @@ func processCompoundNZ() ([]ScorexLine, int) {
 		} else if cr.PointsMults == CAT_ResultMults {
 			mults = Points
 			Points = 0
-			Pointsdesc = fmt.Sprintf("&times%d", mults)
+			Pointsdesc = fmt.Sprintf("= &sum;&times%d", mults)
 		}
 		var sx ScorexLine
 		sx.IsValidLine = true
-		sx.Desc = fmt.Sprintf("%s %s <em>n</em>=%d", AxisLabels[cr.Axis-1], checkmark_symbol, nzCount)
+		sx.Code = compoundrule_symbol
+		sx.Desc = fmt.Sprintf("%s: <em>n</em>=%d", AxisLabels[cr.Axis-1], nzCount)
+
+		sx.Desc += fmt.Sprintf(" rz%v ", cr.Ruleid)
 		if cr.Cat > 0 {
 			catx := fetchCatDesc(cr.Axis, cr.Cat)
 			sx.Desc += fmt.Sprintf(" [%s]", catx)
@@ -1039,6 +1080,8 @@ func recalc_scorecard(entrant int) {
 
 	BuildRallyParameters(CS.CurrentLeg)
 
+	AxisCounts = build_emptyAxisCountsArray()
+
 	BonusesClaimed = build_bonusclaim_array(entrant)
 
 	CorrectedMiles := 0
@@ -1053,6 +1096,8 @@ func recalc_scorecard(entrant int) {
 
 	var LastBonusClaimed ClaimedBonus
 	for _, BC := range BonusesClaimed {
+
+		//fmt.Printf("%v d==%v\n", BC.Bonusid, BC.Decision)
 
 		// ClaimExcluded means ignore it, treat it as if it didn't exist
 		// This might need to be a switchable response
@@ -1084,11 +1129,11 @@ func recalc_scorecard(entrant int) {
 
 			// Firstly, let's zap any sequence in progress
 			for i := 1; i <= NumCategoryAxes; i++ {
-				cc := CatCounts[i]
-				cc.sameCatCount = 0
-				cc.sameCatPoints = 0
-				cc.lastCatScored = -1
-				CatCounts[i] = cc
+				cc := AxisCounts[i]
+				cc.SameCatCount = 0
+				cc.SameCatPoints = 0
+				cc.LastCatScored = -1
+				AxisCounts[i] = cc
 			}
 			sx.IsValidLine = true
 			sx.Code = SB.Bonusid
@@ -1099,6 +1144,7 @@ func recalc_scorecard(entrant int) {
 			}
 
 			sx.Desc = fmt.Sprintf("%v<br>CLAIM REJECTED - %v", SB.BriefDesc, errmsg)
+			sx.Points = 0
 			sx.PointsDesc = ""
 			Scorex = append(Scorex, sx)
 			continue
@@ -1112,7 +1158,7 @@ func recalc_scorecard(entrant int) {
 			if ScorecardBonuses[LastBonusClaimed.BonusScorecardIX].MultiplyLast {
 				BC.Points = 0
 			} else {
-				PointsDesc = fmt.Sprintf("(%vx%v)", BC.Points, LastBonusClaimed.Points)
+				PointsDesc = fmt.Sprintf("= %v &times;%v", LastBonusClaimed.Points, BC.Points)
 				BC.Points = LastBonusClaimed.Points * BC.Points
 			}
 		}
@@ -1124,6 +1170,8 @@ func recalc_scorecard(entrant int) {
 		}
 
 		updateBonusCatCounts(SB) // Updating here gets the counts right but not points upgraded below
+
+		fmt.Printf("Feature Cat is %v %v\n", SB.CatValue[0], SB.CatValue)
 		LastBonusClaimed = BC
 
 		BasicPoints := BC.Points
@@ -1147,15 +1195,17 @@ func recalc_scorecard(entrant int) {
 			// Check how many hits
 			catcount := 0
 			if cr.Cat == 0 {
-				for _, cc := range CatCounts[cr.Axis].catCounts {
+				for _, cc := range AxisCounts[cr.Axis].CatCounts {
 					catcount += cc
 				}
 			} else {
-				catcount += CatCounts[cr.Axis].catCounts[cr.Cat]
+				catcount += AxisCounts[cr.Axis].CatCounts[cr.Cat]
 			}
 			if catcount < cr.Min {
 				continue
 			}
+			dbg, _ := json.Marshal(cr)
+			fmt.Printf("%v [[ %v ]] %v\n", BC.Bonusid, string(dbg), catcount)
 			if cr.Power == 0 {
 				PointsDesc = fmt.Sprintf("%d x %d", BasicPoints, catcount-1)
 				BasicPoints = BasicPoints * (catcount - 1)
@@ -1166,6 +1216,7 @@ func recalc_scorecard(entrant int) {
 				PointsDesc = fmt.Sprintf("%d x %d^%d", BasicPoints, cr.Power, catcount-1)
 				BasicPoints = BasicPoints * powInt(cr.Power, catcount-1)
 			}
+			PointsDesc += fmt.Sprintf("r%v", cr.Ruleid)
 			break // Only apply the first matching rule
 		}
 
@@ -1178,7 +1229,6 @@ func recalc_scorecard(entrant int) {
 		sx.Points = BasicPoints
 		sx.PointsDesc = PointsDesc
 		Scorex = append(Scorex, sx)
-		//log.Printf("counts=%v\n", CatCounts)
 	}
 
 	// Final check for a sequence
@@ -1200,7 +1250,7 @@ func recalc_scorecard(entrant int) {
 	// Now let's calculate the axis scores - starting with non-zero numbers of categories
 	nzAxisCounts := make([]int, NumCategoryAxes)
 	for i := 0; i < NumCategoryAxes; i++ {
-		for _, n := range CatCounts[i].catCounts {
+		for _, n := range AxisCounts[i].CatCounts {
 			if n > 0 {
 				nzAxisCounts[i]++
 			}
@@ -1250,14 +1300,17 @@ func recalc_scorecard(entrant int) {
 		var sx ScorexLine
 		sx.IsValidLine = true
 		n := TotalPoints * Multipliers
-		sx.Desc = fmt.Sprintf("%d x %d = %d", TotalPoints, Multipliers, n)
-		sx.Points = n - TotalPoints
+		sx.Desc = fmt.Sprintf("%d &times; %d", TotalPoints, Multipliers)
+		sx.PointsDesc = fmt.Sprintf("= %v", n)
+		sx.Points = 0 //n - TotalPoints
 		TotalPoints = n
 
 		Scorex = append(Scorex, sx)
 	}
 
-	status := calcEntrantStatus()
+	sx, status := calcEntrantStatus(CorrectedMiles)
+	Scorex = append(Scorex, sx)
+
 	htmlSX := htmlScorex(Scorex, entrant, status, TotalPoints)
 
 	/* 	_, err = DBH.Exec("COMMIT")
@@ -1272,6 +1325,16 @@ func recalc_scorecard(entrant int) {
 	checkerr(err)
 
 	// Debugging code below
+	const dbgstyle = `<style>
+    .sxitempoints { text-align: right;}
+    .sxdescx { padding-left: 1em; font-style: italic;}
+    </style>
+`
+	f, err := os.Create("crap.md")
+	checkerr(err)
+	f.WriteString(dbgstyle)
+	f.WriteString(htmlSX)
+	f.Close()
 	for x := range Scorex {
 		log.Printf("%-3s %-20s %-10s %7d\n", Scorex[x].Code, html.UnescapeString(Scorex[x].Desc), html.UnescapeString(Scorex[x].PointsDesc), Scorex[x].Points)
 	}
@@ -1297,39 +1360,40 @@ func updateCatCounts(CatValue []int) {
 
 		cat := CatValue[i-1]
 
-		cc := CatCounts[i]
+		cc := AxisCounts[i]
 		if cat <= 0 {
-			cc.sameCatCount = 0
-			cc.sameCatPoints = 0
-			cc.lastCatScored = cat
-			CatCounts[i] = cc
+			cc.SameCatCount = 0
+			cc.SameCatPoints = 0
+			cc.LastCatScored = cat
+			AxisCounts[i] = cc
 			continue
-		} else if cat == CatCounts[i].lastCatScored {
-			cc.sameCatCount++
-			CatCounts[i] = cc
+
+		} else if cat == cc.LastCatScored {
+			cc.SameCatCount++
 		} else {
-			cc.sameCatCount = 1
-			cc.sameCatPoints = 0
-			cc.lastCatScored = cat
-			CatCounts[i] = cc
+			cc.SameCatCount = 1
+			cc.SameCatPoints = 0
+			cc.LastCatScored = cat
+			// Now accrue overall axis totals
+			_, ok := cc.CatCounts[0]
+			if ok {
+				cc.CatCounts[0]++
+			} else {
+				cc.CatCounts[0] = 1
+			}
 		}
-		_, ok := CatCounts[i].catCounts[cat]
+		AxisCounts[i] = cc
+
+		_, ok := AxisCounts[i].CatCounts[cat]
 
 		if ok {
-			CatCounts[i].catCounts[cat]++
+			AxisCounts[i].CatCounts[cat]++
 		} else {
-			CatCounts[i].catCounts[cat] = 1
+			AxisCounts[i].CatCounts[cat] = 1
 		}
 
-		// Now accrue overall axis totals
-		_, ok = CatCounts[i].catCounts[0]
-		if ok {
-			CatCounts[i].catCounts[0]++
-		} else {
-			CatCounts[i].catCounts[0] = 1
-		}
 	}
-	//debugCatCounts()
+
 }
 
 func updateCatPoints(CatValue []int, Points int) {
@@ -1338,18 +1402,17 @@ func updateCatPoints(CatValue []int, Points int) {
 
 		cat := CatValue[i-1]
 
-		cc := CatCounts[i]
+		cc := AxisCounts[i]
 		if cat <= 0 {
-			cc.sameCatPoints = 0
-			CatCounts[i] = cc
+			cc.SameCatPoints = 0
+			AxisCounts[i] = cc
 			continue
-		} else if cat == CatCounts[i].lastCatScored {
-			cc.sameCatPoints += Points
-			CatCounts[i] = cc
+		} else if cat == cc.LastCatScored {
+			cc.SameCatPoints += Points
 		} else {
-			cc.sameCatPoints = Points
-			CatCounts[i] = cc
+			cc.SameCatPoints = Points
 		}
+		AxisCounts[i] = cc
 	}
 }
 
