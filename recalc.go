@@ -9,7 +9,6 @@ Cat is a non-zero integer but -1 when used to access arrays
 */
 
 import (
-	"encoding/json"
 	"fmt"
 	"html"
 	"log"
@@ -917,7 +916,7 @@ func processCompoundCats() ([]ScorexLine, int) {
 		sx.Code = compoundrule_symbol
 		sx.Desc = fmt.Sprintf("%s: <em>n</em>=%d", AxisLabels[cr.Axis-1], myCount)
 
-		sx.Desc += fmt.Sprintf(" rc%v ", cr.Ruleid)
+		//		sx.Desc += fmt.Sprintf(" rc%v ", cr.Ruleid)
 
 		if cr.Cat > 0 {
 			catx := fetchCatDesc(cr.Axis, cr.Cat)
@@ -978,8 +977,8 @@ func processCompoundNZ() ([]ScorexLine, int) {
 			}
 		}
 
-		dbg, _ := json.Marshal(AxisCounts)
-		fmt.Printf("A=%v Cnt=%v, Counts=%v\n", cr.Axis, nzCount, string(dbg))
+		//		dbg, _ := json.Marshal(AxisCounts)
+		//		fmt.Printf("A=%v Cnt=%v, Counts=%v\n", cr.Axis, nzCount, string(dbg))
 		if nzCount < cr.Min {
 			lastMin = cr.Min
 			continue
@@ -1015,7 +1014,7 @@ func processCompoundNZ() ([]ScorexLine, int) {
 		sx.Code = compoundrule_symbol
 		sx.Desc = fmt.Sprintf("%s: <em>n</em>=%d", AxisLabels[cr.Axis-1], nzCount)
 
-		sx.Desc += fmt.Sprintf(" rz%v ", cr.Ruleid)
+		//		sx.Desc += fmt.Sprintf(" rz%v ", cr.Ruleid)
 		if cr.Cat > 0 {
 			catx := fetchCatDesc(cr.Axis, cr.Cat)
 			sx.Desc += fmt.Sprintf(" [%s]", catx)
@@ -1171,7 +1170,7 @@ func recalc_scorecard(entrant int) {
 
 		updateBonusCatCounts(SB) // Updating here gets the counts right but not points upgraded below
 
-		fmt.Printf("Feature Cat is %v %v\n", SB.CatValue[0], SB.CatValue)
+		//		fmt.Printf("Feature Cat is %v %v\n", SB.CatValue[0], SB.CatValue)
 		LastBonusClaimed = BC
 
 		BasicPoints := BC.Points
@@ -1204,8 +1203,8 @@ func recalc_scorecard(entrant int) {
 			if catcount < cr.Min {
 				continue
 			}
-			dbg, _ := json.Marshal(cr)
-			fmt.Printf("%v [[ %v ]] %v\n", BC.Bonusid, string(dbg), catcount)
+			//			dbg, _ := json.Marshal(cr)
+			//			fmt.Printf("%v [[ %v ]] %v\n", BC.Bonusid, string(dbg), catcount)
 			if cr.Power == 0 {
 				PointsDesc = fmt.Sprintf("%d x %d", BasicPoints, catcount-1)
 				BasicPoints = BasicPoints * (catcount - 1)
@@ -1361,6 +1360,7 @@ func updateCatCounts(CatValue []int) {
 		cat := CatValue[i-1]
 
 		cc := AxisCounts[i]
+
 		if cat <= 0 {
 			cc.SameCatCount = 0
 			cc.SameCatPoints = 0
@@ -1374,13 +1374,6 @@ func updateCatCounts(CatValue []int) {
 			cc.SameCatCount = 1
 			cc.SameCatPoints = 0
 			cc.LastCatScored = cat
-			// Now accrue overall axis totals
-			_, ok := cc.CatCounts[0]
-			if ok {
-				cc.CatCounts[0]++
-			} else {
-				cc.CatCounts[0] = 1
-			}
 		}
 		AxisCounts[i] = cc
 
@@ -1391,6 +1384,17 @@ func updateCatCounts(CatValue []int) {
 		} else {
 			AxisCounts[i].CatCounts[cat] = 1
 		}
+
+		// Now accrue overall axis totals
+		AxisCounts[i].CatCounts[0] = 0
+		for j, _ := range AxisCounts[i].CatCounts {
+			if j > 0 {
+				AxisCounts[i].CatCounts[0]++
+			}
+		}
+
+		//		dbg, _ := json.Marshal(AxisCounts[i])
+		//		fmt.Printf("Building %v\n", string(dbg))
 
 	}
 
