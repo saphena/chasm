@@ -377,7 +377,7 @@ func build_timePenaltyArray() []TimePenalty {
 
 func BuildRallyParameters(Leg int) {
 
-	if RallyParametersLoaded {
+	if RallyParametersLoaded && false {
 		return
 	}
 
@@ -392,9 +392,11 @@ func BuildRallyParameters(Leg int) {
 
 }
 
-func calcEntrantStatus(Miles int, et EntrantTimes) (ScorexLine, int) {
+func calcEntrantStatus(Miles int, et EntrantTimes, TotalPoints int) (ScorexLine, int) {
 
 	const DNF_icon = "&#9760;"
+
+	const MissedCompulsory_icon = "&#10008;"
 
 	var sx ScorexLine
 
@@ -420,6 +422,40 @@ func calcEntrantStatus(Miles int, et EntrantTimes) (ScorexLine, int) {
 		sx.IsValidLine = true
 		sx.Code = DNF_icon
 		sx.Desc = fmt.Sprintf("%v > %v", et.FinishTime.Format(myTimestampX), et.DNFTime.Format(myTimestampX))
+		return sx, EntrantDNF
+	}
+
+	for _, sb := range ScorecardBonuses {
+		if sb.Compulsory && !sb.Scored {
+			sx.IsValidLine = true
+			sx.Code = DNF_icon
+			sx.Desc = fmt.Sprintf("%v %v [ %v ]", MissedCompulsory_icon, sb.BriefDesc, sb.Bonusid)
+			return sx, EntrantDNF
+		}
+	}
+
+	for _, cb := range ComboBonuses {
+		if cb.Compulsory && !cb.Scored {
+			sx.IsValidLine = true
+			sx.Code = DNF_icon
+			sx.Desc = fmt.Sprintf("%v %v [ %v ]", MissedCompulsory_icon, cb.BriefDesc, cb.Comboid)
+			return sx, EntrantDNF
+		}
+	}
+
+	for _, cr := range CompoundRules {
+		if (cr.Ruletype == CAT_DNF_Unless_Triggered && !cr.Triggered) || cr.Ruletype == CAT_DNF_If_Triggered && cr.Triggered {
+			sx.IsValidLine = true
+			sx.Code = DNF_icon
+			sx.Desc = compoundRuleTestFail(cr)
+			return sx, EntrantDNF
+		}
+	}
+
+	if TotalPoints < CS.RallyMinPoints {
+		sx.IsValidLine = true
+		sx.Code = DNF_icon
+		sx.Desc = fmt.Sprintf("points < %v", CS.RallyMinPoints)
 		return sx, EntrantDNF
 	}
 
@@ -468,7 +504,7 @@ func calcEntrantTimes(entrant int) EntrantTimes {
 	}
 	et.IsDNF = et.DNFTime.Before(et.FinishTime)
 
-	fmt.Printf("et == %v\n", et)
+	//fmt.Printf("et == %v\n", et)
 	return et
 
 }
@@ -673,6 +709,25 @@ func checkerr(err error) {
 	}
 }
 
+func compoundRuleTestFail(cr CompoundRule) string {
+
+	const GE_symbol = " &#8805; "
+	const LT_symbol = " &lt; "
+
+	msg := fmt.Sprintf("%v: <em>n</em>", AxisLabels[cr.Axis])
+	if cr.Cat > 0 {
+		msg += fmt.Sprintf("[%v]", fetchCatDesc(cr.Axis, cr.Cat))
+	}
+	if cr.Ruletype != CAT_DNF_If_Triggered {
+		msg += LT_symbol
+	} else { // DNF UNLESS
+		msg += GE_symbol
+	}
+	msg += fmt.Sprintf("%v", cr.Min)
+
+	return msg
+}
+
 func excludeClaim(SB ScorecardBonusDetail) ScorexLine {
 
 	var res ScorexLine
@@ -808,6 +863,7 @@ func loadCombos(comboid string) []ComboBonus {
 		}
 		res = append(res, cb)
 	}
+	fmt.Printf("Combos %v", res)
 	return res
 
 }
@@ -849,6 +905,12 @@ func processCombos() ([]ScorexLine, int) {
 
 	mults := 0
 	res := make([]ScorexLine, 0)
+
+	/*
+		for cix, _ := range ComboBonuses {
+			ComboBonuses[cix].Scored = false
+		}
+	*/
 
 	for cix, cb := range ComboBonuses {
 		scoredbonuses := 0
@@ -1351,7 +1413,7 @@ func recalc_scorecard(entrant int) {
 		Scorex = append(Scorex, sx)
 	}
 
-	sx, status := calcEntrantStatus(CorrectedMiles, et)
+	sx, status := calcEntrantStatus(CorrectedMiles, et, TotalPoints)
 	Scorex = append(Scorex, sx)
 
 	htmlSX := htmlScorex(Scorex, entrant, status, TotalPoints)

@@ -11,6 +11,7 @@ type chasmSettings struct {
 	RallyMinMiles      int
 	DebugRules         bool
 	AutoLateDNF        bool
+	RallyMinPoints     int
 }
 
 var CS chasmSettings
@@ -25,5 +26,6 @@ const defaultCS = `{
 	"PenaltyMilesDNF":		99999,
 	"RallyMinMiles":		0,
 	"DebugRules":			true,
-	"AutoLateDNF": 			true
+	"AutoLateDNF": 			true,
+	"RallyMinPoints":		-99999
 }`
