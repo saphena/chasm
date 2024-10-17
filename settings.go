@@ -9,6 +9,8 @@ type chasmSettings struct {
 	UnitKmsLit         string
 	PenaltyMilesDNF    int
 	RallyMinMiles      int
+	DebugRules         bool
+	AutoLateDNF        bool
 }
 
 var CS chasmSettings
@@ -21,5 +23,7 @@ const defaultCS = `{
 	"UnitMilesLit":			"miles",
 	"UnitKmsLit":			"km",
 	"PenaltyMilesDNF":		99999,
-	"RallyMinMiles":		0
+	"RallyMinMiles":		0,
+	"DebugRules":			true,
+	"AutoLateDNF": 			true
 }`

@@ -62,6 +62,6 @@ function showRule(obj) {
 }
 
 function setupForm() {
-  chgRuleType(document.getElementById("RuleType"));
-  chgAxis(document.getElementById("Axis"));
+  //chgRuleType(document.getElementById("RuleType"));
+  //chgAxis(document.getElementById("Axis"));
 }

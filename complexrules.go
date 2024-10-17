@@ -82,6 +82,7 @@ setupForm()
 
 func optsSingleAxisCats(axis int, selcat int) []string {
 
+	fmt.Printf("SAC %v %v\n", axis, selcat)
 	sqlx := fmt.Sprintf("SELECT Cat,BriefDesc FROM categories WHERE Axis=%d", axis)
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
@@ -123,6 +124,7 @@ func selectOptionArray(vals []int, lbls []string, sel int) []string {
 
 func showSingleRule(w http.ResponseWriter, r CompoundRule) {
 
+	fmt.Printf("SSR = %v\n", r)
 	axisopts := make([]string, 0)
 	for ix, axis := range AxisLabels {
 		if axis == "" {
@@ -167,7 +169,7 @@ func show_rules(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `<script>%s</script>`, script)
 	fmt.Fprint(w, `<div class="ruleset">`)
 	for _, cr := range rules {
-		fmt.Fprintf(w, `<fieldset class="row target" data-rowid="%d" onclick="showRule(this);">`, cr.Ruleid)
+		fmt.Fprintf(w, `<fieldset class="row target" data-rowid="%d" title="%v" onclick="showRule(this);">`, cr.Ruleid, cr.Ruleid)
 		fmt.Fprintf(w, `<fieldset class="col">%s</fieldset>`, axes[cr.Axis-1])
 		sqlx := fmt.Sprintf("SELECT BriefDesc FROM categories WHERE Axis=%d AND Cat=%d", cr.Axis, cr.Cat)
 		fmt.Fprintf(w, `<fieldset class="col">%s</fieldset>`, getStringFromDB(sqlx, "any"))

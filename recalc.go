@@ -178,6 +178,13 @@ const (
 	TPM_MultPerMin   = 3
 )
 
+type EntrantTimes struct {
+	StartTime   time.Time
+	FinishTime  time.Time
+	DNFTime     time.Time
+	RallyFinish time.Time
+	IsDNF       bool
+}
 type TimePenalty struct {
 	TimeSpec       int
 	PenaltyStartX  string
@@ -385,7 +392,7 @@ func BuildRallyParameters(Leg int) {
 
 }
 
-func calcEntrantStatus(Miles int) (ScorexLine, int) {
+func calcEntrantStatus(Miles int, et EntrantTimes) (ScorexLine, int) {
 
 	const DNF_icon = "&#9760;"
 
@@ -408,7 +415,62 @@ func calcEntrantStatus(Miles int) (ScorexLine, int) {
 		return sx, EntrantDNF
 	}
 
+	if et.IsDNF {
+
+		sx.IsValidLine = true
+		sx.Code = DNF_icon
+		sx.Desc = fmt.Sprintf("%v > %v", et.FinishTime.Format(myTimestampX), et.DNFTime.Format(myTimestampX))
+		return sx, EntrantDNF
+	}
+
 	return sx, EntrantFinisher
+}
+
+func calcEntrantTimes(entrant int) EntrantTimes {
+
+	var et EntrantTimes
+	var err error
+
+	rallyFinishtimex := getStringFromDB("SELECT FinishTime FROM rallyparams", "")
+
+	starttimex := getStringFromDB(fmt.Sprintf("SELECT StartTime FROM entrants WHERE EntrantID=%v", entrant), "")
+	if starttimex == "" {
+		starttimex = getStringFromDB("SELECT StartTime FROM rallyparams", "")
+	}
+	if starttimex == "" {
+		return et
+	}
+	finishtimex := getStringFromDB(fmt.Sprintf("SELECT FinishTime FROM entrants WHERE EntrantID=%v", entrant), "")
+	if finishtimex == "" {
+		finishtimex = rallyFinishtimex
+	}
+	if finishtimex == "" {
+		return et
+	}
+
+	et.RallyFinish, err = time.Parse(myTimestamp, rallyFinishtimex)
+	if err != nil {
+		return et
+	}
+	et.StartTime, err = time.Parse(myTimestamp, starttimex)
+	if err != nil {
+		return et
+	}
+	et.FinishTime, err = time.Parse(myTimestamp, finishtimex)
+	if err != nil {
+		return et
+	}
+
+	maxhrs, _ := strconv.Atoi(getStringFromDB("SELECT MaxHours FROM rallyparams", "999"))
+	et.DNFTime = et.StartTime.Add(time.Hour * time.Duration(maxhrs))
+	if et.DNFTime.Compare(et.RallyFinish) > 0 {
+		et.DNFTime = et.RallyFinish
+	}
+	et.IsDNF = et.DNFTime.Before(et.FinishTime)
+
+	fmt.Printf("et == %v\n", et)
+	return et
+
 }
 
 // Miles is either miles or kilometres depending on rally setting, ridden by the current entrant
@@ -473,7 +535,7 @@ func calcRallyDistance(last int, this int, isKm bool) int {
 }
 
 // 2nd return is number of multipliers
-func calcTimePenalty(entrant int) ([]ScorexLine, int) {
+func calcTimePenalty(entrant int) ([]ScorexLine, int, EntrantTimes) {
 
 	const TimePenaltyIcon = "&#x23F0;"
 	const FinishTimeIcon = "" // Blank for now
@@ -481,69 +543,37 @@ func calcTimePenalty(entrant int) ([]ScorexLine, int) {
 	res := make([]ScorexLine, 0)
 	var numx int
 
-	rallyFinishtimex := getStringFromDB("SELECT FinishTime FROM rallyparams", "")
+	et := calcEntrantTimes(entrant)
 
-	starttimex := getStringFromDB(fmt.Sprintf("SELECT StartTime FROM entrants WHERE EntrantID=%v", entrant), "")
-	if starttimex == "" {
-		starttimex = getStringFromDB("SELECT StartTime FROM rallyparams", "")
-	}
-	if starttimex == "" {
-		return res, numx
-	}
-	finishtimex := getStringFromDB(fmt.Sprintf("SELECT FinishTime FROM entrants WHERE EntrantID=%v", entrant), "")
-	if finishtimex == "" {
-		finishtimex = rallyFinishtimex
-	}
-	if finishtimex == "" {
-		return res, numx
-	}
-
-	rft, err := time.Parse(myTimestamp, rallyFinishtimex)
-	if err != nil {
-		return res, numx
-	}
-	st, err := time.Parse(myTimestamp, starttimex)
-	if err != nil {
-		return res, numx
-	}
-	ft, err := time.Parse(myTimestamp, finishtimex)
-	if err != nil {
-		return res, numx
-	}
-	if ft.Compare(rft) > 0 {
-		ft = rft
-	}
-
-	maxhrs, _ := strconv.Atoi(getStringFromDB("SELECT MaxHours FROM rallyparams", "999"))
-	myDNF := st.Add(time.Hour * time.Duration(maxhrs))
 	//fmt.Printf("%v: %v << %v [%v]\n", entrant, starttimex, finishtimex, myDNF.Format(myTimestamp))
 
 	for _, tp := range TimePenalties {
 		switch tp.TimeSpec {
 		case TimeSpecEntrantDNF:
 			ps, _ := strconv.Atoi(tp.PenaltyStartX)
-			tp.PenaltyStart = myDNF.Add(time.Minute * time.Duration(0-ps))
+			tp.PenaltyStart = et.DNFTime.Add(time.Minute * time.Duration(0-ps))
 			pf, _ := strconv.Atoi(tp.PenaltyFinishX)
-			tp.PenaltyFinish = myDNF.Add(time.Minute * time.Duration(0-pf))
+			tp.PenaltyFinish = et.DNFTime.Add(time.Minute * time.Duration(0-pf))
 		case TimeSpecRallyDNF:
 			ps, _ := strconv.Atoi(tp.PenaltyStartX)
-			tp.PenaltyStart = rft.Add(time.Minute * time.Duration(0-ps))
+			tp.PenaltyStart = et.RallyFinish.Add(time.Minute * time.Duration(0-ps))
 			pf, _ := strconv.Atoi(tp.PenaltyFinishX)
-			tp.PenaltyFinish = rft.Add(time.Minute * time.Duration(0-pf))
+			tp.PenaltyFinish = et.RallyFinish.Add(time.Minute * time.Duration(0-pf))
 		default:
 			// Was specified as actual date/time stamps
 			// so already done
 		}
 		//fmt.Printf("pstart=%v pfinish=%v\n", tp.PenaltyStart.Format(myTimestamp), tp.PenaltyFinish.Format(myTimestamp))
-		if ft.Before(tp.PenaltyStart) {
+		if et.FinishTime.Before(tp.PenaltyStart) {
 			continue
 		}
-		if ft.After(tp.PenaltyFinish) {
-			ft = tp.PenaltyFinish
+		endtime := et.FinishTime
+		if et.FinishTime.After(tp.PenaltyFinish) {
+			endtime = tp.PenaltyFinish
 		}
 		//fmt.Println("Hello sailor")
 		var sx ScorexLine
-		penaltyTime := ft.Sub(tp.PenaltyStart)
+		penaltyTime := endtime.Sub(tp.PenaltyStart)
 		penaltyMinutes := penaltyTime.Minutes()
 		sx.IsValidLine = true
 		sx.Code = penalty_symbol
@@ -566,7 +596,7 @@ func calcTimePenalty(entrant int) ([]ScorexLine, int) {
 		}
 		res = append(res, sx)
 	}
-	return res, numx
+	return res, numx, et
 
 }
 
@@ -585,7 +615,15 @@ func checkApplySequences(BC ClaimedBonus, LastBonusClaimed ClaimedBonus) ScorexL
 		}
 
 		Cat := ScorecardBonuses[BC.BonusScorecardIX].CatValue[CR.Axis-1]
+
 		LastCat := ScorecardBonuses[LastBonusClaimed.BonusScorecardIX].CatValue[CR.Axis-1]
+
+		//fmt.Printf("dbg: cas %v %v %v %v=%v\n", CR.Ruleid, BC.Bonusid, CR.Axis, CR.Cat, LastCat)
+
+		if LastCat != CR.Cat && CR.Cat != 0 {
+			continue
+		}
+
 		// If this bonus is in the same category as the last one
 		if Cat == LastCat {
 			// Still building the sequence so
@@ -614,6 +652,11 @@ func checkApplySequences(BC ClaimedBonus, LastBonusClaimed ClaimedBonus) ScorexL
 			}
 		}
 		sx.Desc = BonusDesc
+
+		if CS.DebugRules {
+			sx.Desc += fmt.Sprintf(" {cas%v} ", CR.Ruleid)
+		}
+
 		sx.PointsDesc = PointsDesc
 		sx.Points = ExtraBonusPoints
 		sx.IsValidLine = true
@@ -630,7 +673,7 @@ func checkerr(err error) {
 	}
 }
 
-func excludeClaim(BC ClaimedBonus) ScorexLine {
+func excludeClaim(SB ScorecardBonusDetail) ScorexLine {
 
 	var res ScorexLine
 
@@ -639,8 +682,7 @@ func excludeClaim(BC ClaimedBonus) ScorexLine {
 		return res
 	}
 	res.IsValidLine = true
-	res.Code = BC.Bonusid
-	SB := ScorecardBonuses[BC.BonusScorecardIX] // Convenient shorthand
+	res.Code = SB.Bonusid
 
 	res.Desc = fmt.Sprintf("%v<br>*** CLAIM EXCLUDED ***", SB.BriefDesc)
 	return res
@@ -1098,21 +1140,21 @@ func recalc_scorecard(entrant int) {
 
 		//fmt.Printf("%v d==%v\n", BC.Bonusid, BC.Decision)
 
+		// Need to flag the bonus as having been scored
+		BC.BonusScorecardIX = slices.IndexFunc(ScorecardBonuses, func(c ScorecardBonusDetail) bool { return c.Bonusid == BC.Bonusid })
+
+		SB := ScorecardBonuses[BC.BonusScorecardIX] // Convenient shorthand
+
 		// ClaimExcluded means ignore it, treat it as if it didn't exist
 		// This might need to be a switchable response
 		if BC.Decision == ClaimDecision_ClaimExcluded {
-			sx = excludeClaim(BC)
+			sx = excludeClaim(SB)
 			if sx.IsValidLine {
 				TotalPoints += sx.Points
 				Scorex = append(Scorex, sx)
 			}
 			continue
 		}
-
-		// Need to flag the bonus as having been scored
-		BC.BonusScorecardIX = slices.IndexFunc(ScorecardBonuses, func(c ScorecardBonusDetail) bool { return c.Bonusid == BC.Bonusid })
-
-		SB := ScorecardBonuses[BC.BonusScorecardIX] // Convenient shorthand
 
 		ScorecardBonuses[BC.BonusScorecardIX].Scored = BC.Decision == ClaimDecision_GoodClaim // Only good claims count against "must score" flag
 
@@ -1122,6 +1164,8 @@ func recalc_scorecard(entrant int) {
 		if sx.IsValidLine {
 			TotalPoints += sx.Points
 			Scorex = append(Scorex, sx)
+
+			fmt.Println("dbg: CAS applied")
 		}
 
 		if BC.Decision != ClaimDecision_GoodClaim {
@@ -1272,7 +1316,7 @@ func recalc_scorecard(entrant int) {
 	Multipliers += nm
 	Scorex = append(Scorex, nc...)
 
-	ntp, nm := calcTimePenalty(entrant)
+	ntp, nm, et := calcTimePenalty(entrant)
 	for _, px := range ntp {
 		TotalPoints += px.Points
 	}
@@ -1307,7 +1351,7 @@ func recalc_scorecard(entrant int) {
 		Scorex = append(Scorex, sx)
 	}
 
-	sx, status := calcEntrantStatus(CorrectedMiles)
+	sx, status := calcEntrantStatus(CorrectedMiles, et)
 	Scorex = append(Scorex, sx)
 
 	htmlSX := htmlScorex(Scorex, entrant, status, TotalPoints)
@@ -1387,7 +1431,7 @@ func updateCatCounts(CatValue []int) {
 
 		// Now accrue overall axis totals
 		AxisCounts[i].CatCounts[0] = 0
-		for j, _ := range AxisCounts[i].CatCounts {
+		for j := range AxisCounts[i].CatCounts {
 			if j > 0 {
 				AxisCounts[i].CatCounts[0]++
 			}

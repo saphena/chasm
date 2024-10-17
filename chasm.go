@@ -118,6 +118,7 @@ func json_requests(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			ss = 0
 		}
+		fmt.Printf("json: %v %v\n", aa, ss)
 		res.Msg = strings.Join(optsSingleAxisCats(aa, ss), "")
 		res.OK = true
 
