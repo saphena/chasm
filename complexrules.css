@@ -31,6 +31,9 @@
 .row.combo {
     grid-template-columns: 8em 8em 2em 8em 1fr;
 }
+.row.ebc {
+  grid-template-columns: 18em 9em 8em 1fr;
+}
 .target:hover {
     cursor: pointer;
     background: lightblue;

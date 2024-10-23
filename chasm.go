@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -24,6 +25,8 @@ var runOnline *bool = flag.Bool("online", false, "act as webserver")
 
 // DBH provides access to the database
 var DBH *sql.DB
+
+var RallyTimezone *time.Location
 
 func getIntegerFromDB(sqlx string, defval int) int {
 
@@ -73,6 +76,9 @@ func main() {
 	checkerr(err)
 	fmt.Printf("%v\n", CS)
 
+	RallyTimezone, err = time.LoadLocation(CS.RallyTimezone)
+	checkerr(err)
+
 	recalc_all()
 	//recalc_scorecard(2)
 
@@ -84,6 +90,8 @@ func main() {
 	http.HandleFunc("/about", about_chasm)
 	http.HandleFunc("/combo", show_combo)
 	http.HandleFunc("/combos", show_combos)
+	http.HandleFunc("/ebc", showEBC)
+	http.HandleFunc("/ebclist", list_EBC_claims)
 	http.HandleFunc("/recalc", recalc_handler)
 	http.HandleFunc("/rule", show_rule)
 	http.HandleFunc("/rules", show_rules)

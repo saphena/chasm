@@ -65,3 +65,7 @@ function setupForm() {
   //chgRuleType(document.getElementById("RuleType"));
   //chgAxis(document.getElementById("Axis"));
 }
+
+function showEBC(obj) {
+  window.location.href = "/ebc?c=" + obj.getAttribute("data-claimid");
+}

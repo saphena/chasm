@@ -392,74 +392,89 @@ func BuildRallyParameters(Leg int) {
 
 }
 
-func calcEntrantStatus(Miles int, et EntrantTimes, TotalPoints int) (ScorexLine, int) {
+func calcEntrantStatus(Miles int, et EntrantTimes, TotalPoints int) ([]ScorexLine, int) {
 
-	const DNF_icon = "&#9760;"
+	const DNF_icon = "DNF" //"&#9760;"
 
 	const MissedCompulsory_icon = "&#10008;"
 
-	var sx ScorexLine
+	res := make([]ScorexLine, 0)
+
+	var es int = EntrantFinisher
 
 	mklit := CS.UnitMilesLit
 	if CS.RallyUnitKms {
 		mklit = CS.UnitKmsLit
 	}
 	if Miles < CS.RallyMinMiles {
+		var sx ScorexLine
 		sx.IsValidLine = true
 		sx.Code = DNF_icon
 		sx.Desc = fmt.Sprintf("%v < %v", mklit, CS.RallyMinMiles)
-		return sx, EntrantDNF
+		es = EntrantDNF
+		res = append(res, sx)
 	}
 	if Miles > CS.PenaltyMilesDNF {
+		var sx ScorexLine
 		sx.IsValidLine = true
 		sx.Code = DNF_icon
 		sx.Desc = fmt.Sprintf("%v > %v", mklit, CS.PenaltyMilesDNF)
-		return sx, EntrantDNF
+		es = EntrantDNF
+		res = append(res, sx)
 	}
 
 	if et.IsDNF {
-
+		var sx ScorexLine
 		sx.IsValidLine = true
 		sx.Code = DNF_icon
 		sx.Desc = fmt.Sprintf("%v > %v", et.FinishTime.Format(myTimestampX), et.DNFTime.Format(myTimestampX))
-		return sx, EntrantDNF
+		es = EntrantDNF
+		res = append(res, sx)
 	}
 
 	for _, sb := range ScorecardBonuses {
 		if sb.Compulsory && !sb.Scored {
+			var sx ScorexLine
 			sx.IsValidLine = true
 			sx.Code = DNF_icon
 			sx.Desc = fmt.Sprintf("%v %v [ %v ]", MissedCompulsory_icon, sb.BriefDesc, sb.Bonusid)
-			return sx, EntrantDNF
+			es = EntrantDNF
+			res = append(res, sx)
 		}
 	}
 
 	for _, cb := range ComboBonuses {
 		if cb.Compulsory && !cb.Scored {
+			var sx ScorexLine
 			sx.IsValidLine = true
 			sx.Code = DNF_icon
 			sx.Desc = fmt.Sprintf("%v %v [ %v ]", MissedCompulsory_icon, cb.BriefDesc, cb.Comboid)
-			return sx, EntrantDNF
+			es = EntrantDNF
+			res = append(res, sx)
 		}
 	}
 
 	for _, cr := range CompoundRules {
 		if (cr.Ruletype == CAT_DNF_Unless_Triggered && !cr.Triggered) || cr.Ruletype == CAT_DNF_If_Triggered && cr.Triggered {
+			var sx ScorexLine
 			sx.IsValidLine = true
 			sx.Code = DNF_icon
 			sx.Desc = compoundRuleTestFail(cr)
-			return sx, EntrantDNF
+			es = EntrantDNF
+			res = append(res, sx)
 		}
 	}
 
 	if TotalPoints < CS.RallyMinPoints {
+		var sx ScorexLine
 		sx.IsValidLine = true
 		sx.Code = DNF_icon
 		sx.Desc = fmt.Sprintf("points < %v", CS.RallyMinPoints)
-		return sx, EntrantDNF
+		es = EntrantDNF
+		res = append(res, sx)
 	}
 
-	return sx, EntrantFinisher
+	return res, es
 }
 
 func calcEntrantTimes(entrant int) EntrantTimes {
@@ -1138,23 +1153,23 @@ func processCompoundNZ() ([]ScorexLine, int) {
 
 func recalc_all() {
 
-	/* 	_, err := DBH.Exec("BEGIN TRANSACTION")
-	   	checkerr(err)
-	   	defer DBH.Exec("COMMIT")
-	*/
-	sqlx := "SELECT EntrantID FROM entrants ORDER BY EntrantID"
+	DebugCount := 33 // For debugging purposes, only recalc the first n records
+
+	_, err := DBH.Exec("BEGIN TRANSACTION")
+	checkerr(err)
+	defer DBH.Exec("COMMIT")
+
+	sqlx := fmt.Sprintf("SELECT EntrantID FROM entrants WHERE EntrantStatus <> %v ORDER BY EntrantID", EntrantDNS)
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
 	defer rows.Close()
-	n := 3
 	entrants := make([]int, 0)
 	for rows.Next() {
 		var entrant int
 		rows.Scan(&entrant)
 		entrants = append(entrants, entrant)
-		//		recalc_scorecard(entrant)
-		n--
-		if n < 1 {
+		DebugCount--
+		if DebugCount < 1 {
 			break
 		}
 	}
@@ -1175,11 +1190,6 @@ func recalc_scorecard(entrant int) {
 	Multipliers := 0
 
 	log.Printf("recalc for %v\n", entrant)
-
-	/* 	_, err := DBH.Exec("BEGIN TRANSACTION")
-	   	checkerr(err)
-	   	defer DBH.Exec("COMMIT")
-	*/
 
 	BuildRallyParameters(CS.CurrentLeg)
 
@@ -1413,8 +1423,9 @@ func recalc_scorecard(entrant int) {
 		Scorex = append(Scorex, sx)
 	}
 
-	sx, status := calcEntrantStatus(CorrectedMiles, et, TotalPoints)
-	Scorex = append(Scorex, sx)
+	sxs, status := calcEntrantStatus(CorrectedMiles, et, TotalPoints)
+
+	Scorex = append(Scorex, sxs...)
 
 	htmlSX := htmlScorex(Scorex, entrant, status, TotalPoints)
 

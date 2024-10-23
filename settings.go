@@ -12,6 +12,7 @@ type chasmSettings struct {
 	DebugRules         bool
 	AutoLateDNF        bool
 	RallyMinPoints     int
+	RallyTimezone      string
 }
 
 var CS chasmSettings
@@ -27,5 +28,6 @@ const defaultCS = `{
 	"RallyMinMiles":		0,
 	"DebugRules":			true,
 	"AutoLateDNF": 			true,
-	"RallyMinPoints":		-99999
+	"RallyMinPoints":		-99999,
+	"RallyTimezone":		"Europe/London"
 }`
