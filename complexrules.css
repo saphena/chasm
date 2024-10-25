@@ -52,3 +52,30 @@
 .hide {
   display: none;
 }
+
+fieldset.inline {
+  display: inline;
+  border: none;
+}
+
+.bold {
+  font-weight: bold;
+}
+
+img.flagicon {
+
+  width: 44px;
+  padding: 3px;
+}
+.bonusnotes {
+  display: inline-block;
+  min-width: 20em;
+}
+
+.closebutton {
+
+  min-width: 10em;
+  padding: 5px;
+  margin: 1em 1em 0 0;
+
+}

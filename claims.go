@@ -1,10 +1,36 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 )
+
+//go:embed images/alertteam.b64
+var flag_team string
+
+//go:embed images/alertalert.b64
+var flag_alert string
+
+//go:embed images/alertbike.b64
+var flag_bike string
+
+//go:embed images/alertdaylight.b64
+var flag_daylight string
+
+//go:embed images/alertface.b64
+var flag_face string
+
+//go:embed images/alertnight.b64
+var flag_night string
+
+//go:embed images/alertrestricted.b64
+var flag_restricted string
+
+//go:embed images/alertreceipt.b64
+var flag_receipt string
 
 type ElectronicBonusClaim struct {
 	Claimid        int
@@ -22,6 +48,17 @@ type ElectronicBonusClaim struct {
 	DateTime       string
 	FirstTime      string
 	FinalTime      string
+}
+
+func emitImage(img string, alt string, title string) string {
+
+	res := fmt.Sprintf(`<img alt="%v", title="%v" class="flagicon" src="data:image/png;base64,`, alt, title)
+	for _, xl := range strings.Split(img, "\n") {
+		res += xl
+	}
+	res += `">`
+	return res
+
 }
 
 // Show judgeable claims submitted electronically
@@ -68,6 +105,8 @@ func logtime(stamp string) string {
 
 func showEBC(w http.ResponseWriter, r *http.Request) {
 
+	const email_icon = "&#9993;"
+
 	/*
 		sqlx := `SELECT ebclaims.rowid,ebclaims.EntrantID,RiderName,PillionName,ebclaims.BonusID,xbonus.BriefDesc
 			    ,OdoReading,ClaimTime,ExtraField,StrictOK,xphoto.Image,Notes,Flags,TeamID
@@ -111,6 +150,63 @@ func showEBC(w http.ResponseWriter, r *http.Request) {
 	if x != "" {
 		team += " &amp; " + x
 	}
+	teamneeded := x != ""
+	if !teamneeded {
+		teamneeded = getIntegerFromDB("SELECT TeamID FROM entrants WHERE EntrantID="+strconv.Itoa(ebc.EntrantID), 0) > 0
+	}
+	fmt.Fprint(w, `<div>`)
+	fmt.Fprintf(w, `Entrant <span class="bold">%v %v</span>`, ebc.EntrantID, team)
+	x = getStringFromDB("SELECT BriefDesc FROM bonuses WHERE BonusID='"+ebc.Bonusid+"'", ebc.Bonusid)
+	fmt.Fprintf(w, ` Bonus <span class="bold">%v" %v</span>`, ebc.Bonusid, x)
+	fmt.Fprint(w, ` Claimed @ `)
+	evidence := "Photo: " + ebc.AttachmentTime + "\n"
+	evidence += "Claim: " + ebc.ClaimTime + "\n"
+	evidence += "Email: " + ebc.DateTime + "\n"
+	evidence += "Recvd: " + ebc.FinalTime + "\n"
+	fmt.Fprintf(w, `<span class="bold" title="%v" onclick="alert(this.getAttribute('title'))">%v, %v %v</span>`, evidence, ebc.OdoReading, logtime(ebc.ClaimTime), email_icon)
+	fmt.Fprint(w, `</div>`) // row
+	x = getStringFromDB("SELECT ifnull(Notes,'') FROM bonuses WHERE BonusID='"+ebc.Bonusid+"'", "")
+	fmt.Fprint(w, `<div>`)
+	fmt.Fprintf(w, `<span class="bonusnotes">%v</span>`, x)
 
-	fmt.Fprintf(w, `<fieldset>%v</fieldset>`, team)
+	x = getStringFromDB("SELECT ifnull(Flags,'') FROM bonuses WHERE BonusID='"+ebc.Bonusid+"'", "")
+
+	if teamneeded && !strings.ContainsRune(x, '2') {
+		x += "2"
+	}
+	for _, c := range x {
+		switch c {
+		case '2':
+			fmt.Fprint(w, emitImage(flag_team, string(c), CS.FlagTeamTitle))
+		case 'A':
+			fmt.Fprint(w, emitImage(flag_alert, string(c), CS.FlagAlertTitle))
+		case 'B':
+			fmt.Fprint(w, emitImage(flag_bike, string(c), CS.FlagBikeTitle))
+		case 'D':
+			fmt.Fprint(w, emitImage(flag_daylight, string(c), CS.FlagDaylightTitle))
+		case 'F':
+			fmt.Fprint(w, emitImage(flag_face, string(c), CS.FlagFaceTitle))
+		case 'N':
+			fmt.Fprint(w, emitImage(flag_night, string(c), CS.FlagNightTitle))
+		case 'R':
+			fmt.Fprint(w, emitImage(flag_restricted, string(c), CS.FlagRestrictedTitle))
+		case 'T':
+			fmt.Fprint(w, emitImage(flag_receipt, string(c), CS.FlagReceiptTitle))
+		}
+	}
+	fmt.Fprint(w, `</div>`) // row
+
+	fmt.Fprint(w, `<div>`)
+
+	fmt.Fprintf(w, `<input type="button" data-result="-1" onclick="closeEBC(this)" class="closebutton" value="%v">`, CS.CloseEBCUndecided)
+	fmt.Fprintf(w, `<input type="button" data-result="0" onclick="closeEBC(this)" class="closebutton" value="%v">`, CS.CloseEBC[0])
+	x = "***"
+	fmt.Fprintf(w, `<input type="text" id="judgesnotes" name="judgesnotes" class="judgesnotes" value="%v">`, x)
+	fmt.Fprint(w, `</div>`)
+	fmt.Fprint(w, `<div>`)
+	for i := 1; i < 10; i++ {
+		fmt.Fprintf(w, `<input type="button" data-result="%v" onclick="closeEBC(this)" class="closebutton" value="%v">`, i, CS.CloseEBC[i])
+	}
+	fmt.Fprint(w, `</div>`)
+
 }
