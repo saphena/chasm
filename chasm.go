@@ -86,7 +86,8 @@ func main() {
 		return
 	}
 
-	http.HandleFunc("/", central_dispatch)
+	fileserver := http.FileServer(http.Dir("."))
+	http.Handle("/", fileserver)
 	http.HandleFunc("/about", about_chasm)
 	http.HandleFunc("/combo", show_combo)
 	http.HandleFunc("/combos", show_combos)

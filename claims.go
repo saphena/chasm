@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"fmt"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -48,6 +49,7 @@ type ElectronicBonusClaim struct {
 	DateTime       string
 	FirstTime      string
 	FinalTime      string
+	EmailID        int
 }
 
 func emitImage(img string, alt string, title string) string {
@@ -128,7 +130,7 @@ func showEBC(w http.ResponseWriter, r *http.Request) {
 	}
 	sqlx := `SELECT ebclaims.EntrantID,ebclaims.BonusID,ebclaims.OdoReading,ebclaims.ClaimTime,ifnull(ebclaims.Subject,''),ifnull(ebclaims.ExtraField,'')
 	,ifnull(AttachmentTime,ebclaims.ClaimTime),ifnull(DateTime,ebclaims.ClaimTime),ifnull(FirstTime,ebclaims.ClaimTime),ifnull(FinalTime,ebclaims.ClaimTime)
-	
+	,EmailID
 	 FROM ebclaims WHERE Processed=0 AND rowid=` + claimid
 
 	rows, err := DBH.Query(sqlx)
@@ -138,11 +140,12 @@ func showEBC(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	fmt.Fprint(w, `<!DOCTYPE html>`)
 	fmt.Fprintf(w, `<style>%s</style>`, css)
 	fmt.Fprintf(w, `<script>%s</script>`, script)
 
 	var ebc ElectronicBonusClaim
-	err = rows.Scan(&ebc.EntrantID, &ebc.Bonusid, &ebc.OdoReading, &ebc.ClaimTime, &ebc.Subject, &ebc.ExtraField, &ebc.AttachmentTime, &ebc.DateTime, &ebc.FirstTime, &ebc.FinalTime)
+	err = rows.Scan(&ebc.EntrantID, &ebc.Bonusid, &ebc.OdoReading, &ebc.ClaimTime, &ebc.Subject, &ebc.ExtraField, &ebc.AttachmentTime, &ebc.DateTime, &ebc.FirstTime, &ebc.FinalTime, &ebc.EmailID)
 	checkerr(err)
 
 	team := getStringFromDB("SELECT RiderName FROM entrants WHERE EntrantID="+strconv.Itoa(ebc.EntrantID), "***")
@@ -208,5 +211,53 @@ func showEBC(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `<input type="button" data-result="%v" onclick="closeEBC(this)" class="closebutton" value="%v">`, i, CS.CloseEBC[i])
 	}
 	fmt.Fprint(w, `</div>`)
+	showPhotos(w, ebc.EmailID, ebc.Bonusid)
 
+}
+
+func showPhotos(w http.ResponseWriter, emailid int, BonusID string) {
+
+	const maximg = 3
+	bimg := strings.ReplaceAll(filepath.Join(CS.ImgBonusFolder, filepath.Base(getStringFromDB("SELECT ifnull(Image,'') FROM bonuses WHERE BonusID='"+BonusID+"'", ""))), `\`, `/`)
+
+	sqlx := "SELECT Image FROM ebcphotos WHERE EmailID=" + strconv.Itoa(emailid)
+	rows, err := DBH.Query(sqlx)
+	checkerr(err)
+	defer rows.Close()
+	fmt.Fprint(w, `<div class="imgcomparediv">`)
+
+	// "if(this.width=='50%')this.width='100%';else this.width='50%'"
+	fmt.Fprint(w, `<div class="ebcimgdiv" id="ebcimgdiv" onclick="cycleImgSize(this)">`)
+	var showimg [maximg]string
+
+	ix := 0
+	for rows.Next() {
+		var img string
+		err := rows.Scan(&img)
+		checkerr(err)
+		if img != "" {
+			showimg[ix] = strings.ReplaceAll(filepath.Join(CS.ImgEbcFolder, filepath.Base(img)), `\`, `/`)
+			ix++
+		}
+		if ix >= maximg {
+			break
+		}
+	}
+	fmt.Fprintf(w, `<img id="imgdivimg" alt="*" src="%v"/>`, showimg[0])
+
+	fmt.Fprint(w, `<div id="imgdivs">`)
+
+	for ix = 1; ix < maximg; ix++ {
+		if showimg[ix] != "" {
+			fmt.Fprintf(w, `<img src="%v" alt="*" onclick="swapimg(this)">`, showimg[ix])
+		}
+	}
+	fmt.Fprint(w, `</div>`) // imgdivs
+	fmt.Fprint(w, `</div>`) // ebcimgdiv
+
+	fmt.Fprint(w, `<div class="bonusimgdiv" id="bonusimgdiv">`)
+	fmt.Fprintf(w, `<img src="%v">`, bimg)
+	fmt.Fprint(w, `</div>`)
+
+	fmt.Fprint(w, `</div>`)
 }

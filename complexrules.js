@@ -69,3 +69,33 @@ function setupForm() {
 function showEBC(obj) {
   window.location.href = "/ebc?c=" + obj.getAttribute("data-claimid");
 }
+
+function cycleImgSize(obj) {
+  let img = obj.id;
+  let sz = obj.style.width;
+  console.log('sz == '+sz)
+  let otherimg = ""
+  if (img == "ebcimgdiv") {
+    otherimg = "bonusimgdiv";
+  } else {
+    otherimg = "ebcimgdiv";
+  }
+  let other = document.getElementById(otherimg);
+  if (sz == "50%" || sz == '') {
+    other.style.width = "100px";
+    obj.style.width = "99%";
+  } else {
+    other.style.width = "50%";
+    obj.style.width = "50%";
+  }
+}
+
+function swapimg(img) {
+
+  let me = img.getAttribute('src')
+  let main = document.getElementById('imgdivimg')
+  let mainsrc = main.getAttribute('src')
+  main.setAttribute('src',me)
+  img.setAttribute('src',mainsrc)
+
+}

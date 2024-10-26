@@ -23,6 +23,8 @@ type chasmSettings struct {
 	FlagReceiptTitle    string
 	CloseEBCUndecided   string
 	CloseEBC            []string
+	ImgBonusFolder      string // Holds rally book bonus photos
+	ImgEbcFolder        string // Holds images captured from emails
 }
 
 var CS chasmSettings
@@ -49,5 +51,7 @@ const defaultCS = `{
 	"FlagRestrictedTitle": 	"Restricted access",
 	"FlagReceiptTitle":		"Need a receipt (ticket)",
 	"CloseEBCUndecided":	"Leave undecided",
-	"CloseEBC":				["Accept good claim","No photo","Wrong/unclear photo","Out of hours/disallowed","Face not in photo","Bike not in photo","Flag not in photo","Missing rider/pillion","Missing receipt","Claim excluded" ]
+	"CloseEBC":				["Accept good claim","No photo","Wrong/unclear photo","Out of hours/disallowed","Face not in photo","Bike not in photo","Flag not in photo","Missing rider/pillion","Missing receipt","Claim excluded" ],
+	"ImgBonusFolder":		"images/bonuses/",
+	"ImgEbcFolder":			"images/ebcimg/"
 }`

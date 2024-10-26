@@ -79,3 +79,33 @@ img.flagicon {
   margin: 1em 1em 0 0;
 
 }
+.judgesnotes {
+
+  width: 50em;
+  
+}
+
+#imgdivimg {
+  width: 100%;
+}
+#ebcimgdiv {
+
+  width: 50%;
+  float: left;
+}
+
+#imgdivs {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto;
+}
+
+#imgdivs img {
+  width: 100%;
+}
+.bonusimgdiv {
+
+  width: 50%;
+  float: right;
+}
