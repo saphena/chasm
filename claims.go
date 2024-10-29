@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 )
 
 //go:embed images/alertteam.b64
@@ -157,10 +158,18 @@ func showEBC(w http.ResponseWriter, r *http.Request) {
 	if !teamneeded {
 		teamneeded = getIntegerFromDB("SELECT TeamID FROM entrants WHERE EntrantID="+strconv.Itoa(ebc.EntrantID), 0) > 0
 	}
+	fmt.Fprint(w, `<form id="ebcform" action="saveebc" method="post">`)
 	fmt.Fprint(w, `<div>`)
+	fmt.Fprintf(w, `<input type="hidden" name="EntrantID" value="%v">`, ebc.EntrantID)
+	fmt.Fprintf(w, `<input type="hidden" name="BonusID" value="%v">`, ebc.Bonusid)
+	fmt.Fprintf(w, `<input type="hidden" name="ClaimTime" value="%v">`, ebc.ClaimTime)
+	fmt.Fprintf(w, `<input type="hidden" name="OdoReading" value="%v">`, ebc.OdoReading)
+	fmt.Fprintf(w, `<input type="hidden" name="claimid" value="%v">`, claimid)
+	fmt.Fprint(w, `<input type="hidden" id="chosenDecision" name="Decision" value="-1">`)
+
 	fmt.Fprintf(w, `Entrant <span class="bold">%v %v</span>`, ebc.EntrantID, team)
 	x = getStringFromDB("SELECT BriefDesc FROM bonuses WHERE BonusID='"+ebc.Bonusid+"'", ebc.Bonusid)
-	fmt.Fprintf(w, ` Bonus <span class="bold">%v" %v</span>`, ebc.Bonusid, x)
+	fmt.Fprintf(w, ` Bonus <span class="bold">%v %v</span>`, ebc.Bonusid, x)
 	fmt.Fprint(w, ` Claimed @ `)
 	evidence := "Photo: " + ebc.AttachmentTime + "\n"
 	evidence += "Claim: " + ebc.ClaimTime + "\n"
@@ -201,17 +210,19 @@ func showEBC(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprint(w, `<div>`)
 
-	fmt.Fprintf(w, `<input type="button" data-result="-1" onclick="closeEBC(this)" class="closebutton" value="%v">`, CS.CloseEBCUndecided)
-	fmt.Fprintf(w, `<input type="button" data-result="0" onclick="closeEBC(this)" class="closebutton" value="%v">`, CS.CloseEBC[0])
+	fmt.Fprintf(w, `<input type="button" data-result="-1" name="Decision" onclick="closeEBC(this)" class="closebutton" value="%v">`, CS.CloseEBCUndecided)
+	fmt.Fprintf(w, `<input type="button" data-result="0"  name="Decision" onclick="closeEBC(this)" class="closebutton" value="%v">`, CS.CloseEBC[0])
 	x = "***"
-	fmt.Fprintf(w, `<input type="text" id="judgesnotes" name="judgesnotes" class="judgesnotes" value="%v">`, x)
+	fmt.Fprintf(w, `<input type="text" id="judgesnotes" name="JudgesNotes" class="judgesnotes" value="%v">`, x)
 	fmt.Fprint(w, `</div>`)
 	fmt.Fprint(w, `<div>`)
 	for i := 1; i < 10; i++ {
-		fmt.Fprintf(w, `<input type="button" data-result="%v" onclick="closeEBC(this)" class="closebutton" value="%v">`, i, CS.CloseEBC[i])
+		fmt.Fprintf(w, `<input type="button" data-result="%v"  name="Decision" onclick="closeEBC(this)" class="closebutton" value="%v">`, i, CS.CloseEBC[i])
 	}
 	fmt.Fprint(w, `</div>`)
 	showPhotos(w, ebc.EmailID, ebc.Bonusid)
+
+	fmt.Fprint(w, `</form>`)
 
 }
 
@@ -243,21 +254,77 @@ func showPhotos(w http.ResponseWriter, emailid int, BonusID string) {
 			break
 		}
 	}
-	fmt.Fprintf(w, `<img id="imgdivimg" alt="*" src="%v"/>`, showimg[0])
+	fmt.Fprintf(w, `<img id="imgdivimg" alt="*" name="Photo" src="%v" title="%v">`, showimg[0], CS.EBCImgTitle)
 
 	fmt.Fprint(w, `<div id="imgdivs">`)
 
 	for ix = 1; ix < maximg; ix++ {
 		if showimg[ix] != "" {
-			fmt.Fprintf(w, `<img src="%v" alt="*" onclick="swapimg(this)">`, showimg[ix])
+			fmt.Fprintf(w, `<img src="%v" alt="*" onclick="swapimg(this)" title="%v">`, showimg[ix], CS.EBCImgSwapTitle)
 		}
 	}
 	fmt.Fprint(w, `</div>`) // imgdivs
 	fmt.Fprint(w, `</div>`) // ebcimgdiv
 
 	fmt.Fprint(w, `<div class="bonusimgdiv" id="bonusimgdiv">`)
-	fmt.Fprintf(w, `<img src="%v">`, bimg)
+	fmt.Fprintf(w, `<img src="%v" title="%v">`, bimg, CS.RallyBookImgTitle)
 	fmt.Fprint(w, `</div>`)
 
 	fmt.Fprint(w, `</div>`)
+}
+
+func intval(x string) int {
+
+	res, err := strconv.Atoi(x)
+	if err != nil {
+		return 0
+	}
+	return res
+}
+
+func saveEBC(w http.ResponseWriter, r *http.Request) {
+
+	r.ParseForm()
+	fmt.Println(r)
+
+	decision := intval(r.FormValue("Decision"))
+	processed := 0
+	if decision >= 0 {
+		processed = 1
+	}
+	claimid := intval(r.FormValue("claimid"))
+
+	sqlx := fmt.Sprintf("UPDATE ebclaims SET Processed=%v, Decision=%v WHERE Processed=0 AND rowid=%v", processed, decision, claimid)
+	fmt.Println(sqlx)
+	res, err := DBH.Exec(sqlx)
+	checkerr(err)
+	n, err := res.RowsAffected()
+	checkerr(err)
+	if n == 0 {
+		fmt.Fprint(w, `<p>Nowt happened</p>`)
+
+	}
+
+	sqlx = "INSERT INTO claims (LoggedAt, ClaimTime, EntrantID, BonusID, OdoReading, Decision, Photo, Points, RestMinutes, AskPoints, AskMinutes, Leg"
+	sqlx += ",Evidence,QuestionAsked, AnswerSupplied, QuestionAnswered, JudgesNotes, PercentPenalty) "
+	sqlx += "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+
+	stmt, err := DBH.Prepare(sqlx)
+	checkerr(err)
+	defer stmt.Close()
+
+	tn := time.Now()
+	LoggedAt := tn.Format(time.RFC3339)
+	points := intval(r.FormValue("Points"))
+	restmins := intval(r.FormValue("RestMinutes"))
+	askpoints := intval(r.FormValue("AskPoints"))
+	askmins := intval(r.FormValue("AskMinutes"))
+	qasked := intval(r.FormValue("QuestionAsked"))
+	qanswered := intval(r.FormValue("QuestionAnswered"))
+	percent := intval(r.FormValue("PercentPenalty"))
+	_, err = stmt.Exec(LoggedAt, r.FormValue("ClaimTime"), r.FormValue("EntrantID"), r.FormValue("BonusID"),
+		r.FormValue("OdoReading"), decision, r.FormValue("Photo"), points, restmins, askpoints, askmins, CS.CurrentLeg,
+		r.FormValue("Evidence"), qasked, r.FormValue("AnswerSupplied"), qanswered, r.FormValue("JudgesNotes"), percent)
+	checkerr(err)
+
 }

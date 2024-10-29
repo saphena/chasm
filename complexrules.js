@@ -99,3 +99,13 @@ function swapimg(img) {
   img.setAttribute('src',mainsrc)
 
 }
+
+
+function closeEBC(obj) {
+
+  let frm = document.getElementById("ebcform")
+  let dec = document.getElementById("chosenDecision")
+  dec.value = obj.getAttribute("data-result")
+  frm.submit()
+
+}

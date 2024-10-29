@@ -199,7 +199,11 @@ CREATE TABLE IF NOT EXISTS "claims" (
 	"AskMinutes"	INTEGER NOT NULL DEFAULT 0,
 	"QuestionAsked"	INTEGER NOT NULL DEFAULT 0,
 	"QuestionAnswered"	INTEGER NOT NULL DEFAULT 0,
-	"AnswerSupplied"	TEXT
+	"AnswerSupplied"	TEXT,
+	"JudgesNotes" TEXT,
+	"PercentPenalty" INTEGER NOT NULL DEFAULT 0,
+	"Evidence" TEXT,
+	"Leg" INTEGER NOT NULL DEFAULT 1
 );
 DROP TABLE IF EXISTS "categories";
 CREATE TABLE IF NOT EXISTS "categories" (

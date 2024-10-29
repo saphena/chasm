@@ -1,16 +1,20 @@
 package main
 
 type chasmSettings struct {
-	ShowExcludedClaims  bool // If a claim is marked 'excluded' and is not superseded, show it on the scoresheet
-	CurrentLeg          int
-	UseCheckinForOdo    bool // If true, OdoRallyFinish updated only by check-in, not by individual claims
-	RallyUnitKms        bool // Report in Kms(true) or Miles(false)
-	UnitMilesLit        string
-	UnitKmsLit          string
-	PenaltyMilesDNF     int
-	RallyMinMiles       int
-	DebugRules          bool
-	AutoLateDNF         bool
+	ShowExcludedClaims bool // If a claim is marked 'excluded' and is not superseded, show it on the scoresheet
+	CurrentLeg         int
+	UseCheckinForOdo   bool // If true, OdoRallyFinish updated only by check-in, not by individual claims
+	RallyUnitKms       bool // Report in Kms(true) or Miles(false)
+	UnitMilesLit       string
+	UnitKmsLit         string
+	PenaltyMilesDNF    int
+	RallyMinMiles      int
+	DebugRules         bool
+	AutoLateDNF        bool
+	Rally              struct {
+		A1 string
+		A2 string
+	}
 	RallyMinPoints      int
 	RallyTimezone       string
 	FlagTeamTitle       string
@@ -25,6 +29,9 @@ type chasmSettings struct {
 	CloseEBC            []string
 	ImgBonusFolder      string // Holds rally book bonus photos
 	ImgEbcFolder        string // Holds images captured from emails
+	RallyBookImgTitle   string
+	EBCImgTitle         string
+	EBCImgSwapTitle     string
 }
 
 var CS chasmSettings
@@ -53,5 +60,13 @@ const defaultCS = `{
 	"CloseEBCUndecided":	"Leave undecided",
 	"CloseEBC":				["Accept good claim","No photo","Wrong/unclear photo","Out of hours/disallowed","Face not in photo","Bike not in photo","Flag not in photo","Missing rider/pillion","Missing receipt","Claim excluded" ],
 	"ImgBonusFolder":		"images/bonuses/",
-	"ImgEbcFolder":			"images/ebcimg/"
+	"ImgEbcFolder":			"images/ebcimg/",
+	"RallyBookImgTitle":	"Rally book photo",
+	"EBCImgTitle":			"Entrant's image - click to resize",
+	"EBCImgSwapTitle":		"Click to view this image",
+	"Rally":				{"A1":"AAAAAAAAAAAAAA","A2":"22222222222222"}
+}`
+
+const secondDefault = `{
+"CloseEBCUndecided":		"Not on your nellie"
 }`

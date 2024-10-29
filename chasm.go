@@ -74,6 +74,8 @@ func main() {
 
 	err = json.Unmarshal([]byte(defaultCS), &CS)
 	checkerr(err)
+	err = json.Unmarshal([]byte(secondDefault), &CS)
+	checkerr(err)
 	fmt.Printf("%v\n", CS)
 
 	RallyTimezone, err = time.LoadLocation(CS.RallyTimezone)
@@ -87,7 +89,8 @@ func main() {
 	}
 
 	fileserver := http.FileServer(http.Dir("."))
-	http.Handle("/", fileserver)
+	http.HandleFunc("/", central_dispatch)
+	http.Handle("/images/", fileserver)
 	http.HandleFunc("/about", about_chasm)
 	http.HandleFunc("/combo", show_combo)
 	http.HandleFunc("/combos", show_combos)
@@ -96,6 +99,7 @@ func main() {
 	http.HandleFunc("/recalc", recalc_handler)
 	http.HandleFunc("/rule", show_rule)
 	http.HandleFunc("/rules", show_rules)
+	http.HandleFunc("/saveebc", saveEBC)
 	http.HandleFunc("/x", json_requests)
 	http.HandleFunc("/updtcrule", update_rule)
 	http.ListenAndServe(":"+*HTTPPort, nil)

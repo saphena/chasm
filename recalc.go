@@ -39,6 +39,7 @@ const checkmark_symbol = "&#x2713;"
 const sequential_bonus_symbol = "&#8752;"
 const compoundrule_symbol = "&#9783;"
 const penalty_symbol = "&#9785;"
+const excluded_symbol = " &#9988; &#9988; &#9988; "
 
 const ClaimDecision_ClaimExcluded = 9
 const ClaimDecision_GoodClaim = 0
@@ -754,7 +755,7 @@ func excludeClaim(SB ScorecardBonusDetail) ScorexLine {
 	res.IsValidLine = true
 	res.Code = SB.Bonusid
 
-	res.Desc = fmt.Sprintf("%v<br>*** CLAIM EXCLUDED ***", SB.BriefDesc)
+	res.Desc = fmt.Sprintf("%v<br>"+excluded_symbol+" CLAIM EXCLUDED "+excluded_symbol, SB.BriefDesc)
 	return res
 
 }
@@ -1153,7 +1154,7 @@ func processCompoundNZ() ([]ScorexLine, int) {
 
 func recalc_all() {
 
-	DebugCount := 33 // For debugging purposes, only recalc the first n records
+	DebugCount := 3 // For debugging purposes, only recalc the first n records
 
 	_, err := DBH.Exec("BEGIN TRANSACTION")
 	checkerr(err)
