@@ -53,6 +53,20 @@ type ElectronicBonusClaim struct {
 	EmailID        int
 }
 
+type BonusClaimVars struct {
+	BriefDesc string
+	Points    int
+	Notes     string
+	Flags     string
+	AskPoints bool
+	RestMins  int
+	AskMins   bool
+	Image     string
+	Question  string
+	Answer    string
+	Leg       int
+}
+
 func emitImage(img string, alt string, title string) string {
 
 	res := fmt.Sprintf(`<img alt="%v", title="%v" class="flagicon" src="data:image/png;base64,`, alt, title)
@@ -62,6 +76,29 @@ func emitImage(img string, alt string, title string) string {
 	res += `">`
 	return res
 
+}
+
+func fetchBonusVars(b string) BonusClaimVars {
+
+	var res BonusClaimVars
+	var ap int
+	var am int
+
+	sqlx := "SELECT ifnull(BriefDesc,BonusID),Points,ifnull(Notes,''),ifnull(Flags,''),AskPoints,RestMinutes,AskMinutes,ifnull(Image,''),ifnull(Question,''),ifnull(Answer,'')"
+	sqlx += " FROM bonuses WHERE BonusID='" + b + "'"
+
+	rows, err := DBH.Query(sqlx)
+	checkerr(err)
+	defer rows.Close()
+	if !rows.Next() {
+		res.BriefDesc = b
+		return res
+	}
+	err = rows.Scan(&res.BriefDesc, &res.Points, &res.Notes, &res.Flags, &ap, &res.RestMins, &am, &res.Image, &res.Question, &res.Answer)
+	checkerr(err)
+	res.AskMins = am != 0
+	res.AskPoints = am != 0
+	return res
 }
 
 // Show judgeable claims submitted electronically
@@ -74,15 +111,28 @@ func list_EBC_claims(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
-	defer rows.Close()
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	fmt.Fprintf(w, `<style>%s</style>`, css)
-	fmt.Fprintf(w, `<script>%s</script>`, script)
+
+	startHTML(w, "Process EBC claims")
+
 	fmt.Fprint(w, `<div class="ebclist">`)
+
+	showReloadTicker(w, r.URL.String())
+	fmt.Fprint(w, `<h4>Emailed claims ready to be judged</h4>`)
+
+	fmt.Fprintf(w, `<button autofocus onclick="showFirstClaim()">Judge first claim</button> <span id="fcc"></span>`)
+
+	fmt.Fprint(w, `<fieldset class="row ebc hdr">`)
+	fmt.Fprint(w, `<fieldset class="col ebc hdr">Entrant</fieldset>`)
+	fmt.Fprint(w, `<fieldset class="col ebc hdr">Bonus</fieldset>`)
+	fmt.Fprint(w, `<fieldset class="col ebc hdr">Odo</fieldset>`)
+	fmt.Fprint(w, `<fieldset class="col ebc hdr">Claimtime</fieldset>`)
+	fmt.Fprint(w, `</fieldset>`)
+	n := 0
 	for rows.Next() {
 		var ebc ElectronicBonusClaim
 		err := rows.Scan(&ebc.Claimid, &ebc.EntrantID, &ebc.RiderName, &ebc.PillionName, &ebc.Bonusid, &ebc.BriefDesc, &ebc.OdoReading, &ebc.ClaimTime)
 		checkerr(err)
+		n++
 		fmt.Fprintf(w, `<fieldset class="row ebc" data-claimid="%v" onclick="showEBC(this)">`, ebc.Claimid)
 		team := ebc.RiderName
 		if ebc.PillionName != "" {
@@ -95,6 +145,7 @@ func list_EBC_claims(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `</fieldset>`)
 	}
 	fmt.Fprint(w, `</div>`)
+	fmt.Fprintf(w, `<script>let x = document.getElementById('fcc');x.innerHTML='1/%v';</script>`, n)
 
 }
 
@@ -140,10 +191,8 @@ func showEBC(w http.ResponseWriter, r *http.Request) {
 	if !rows.Next() {
 		return
 	}
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	fmt.Fprint(w, `<!DOCTYPE html>`)
-	fmt.Fprintf(w, `<style>%s</style>`, css)
-	fmt.Fprintf(w, `<script>%s</script>`, script)
+
+	startHTML(w, "EBC claim judging")
 
 	var ebc ElectronicBonusClaim
 	err = rows.Scan(&ebc.EntrantID, &ebc.Bonusid, &ebc.OdoReading, &ebc.ClaimTime, &ebc.Subject, &ebc.ExtraField, &ebc.AttachmentTime, &ebc.DateTime, &ebc.FirstTime, &ebc.FinalTime, &ebc.EmailID)
@@ -158,6 +207,13 @@ func showEBC(w http.ResponseWriter, r *http.Request) {
 	if !teamneeded {
 		teamneeded = getIntegerFromDB("SELECT TeamID FROM entrants WHERE EntrantID="+strconv.Itoa(ebc.EntrantID), 0) > 0
 	}
+
+	bcv := fetchBonusVars(ebc.Bonusid)
+
+	fmt.Fprint(w, `<article class="showebc">`)
+	showReloadTicker(w, r.URL.String())
+	fmt.Fprint(w, `<h4>Judge this bonus claim or leave it undecided</h4>`)
+
 	fmt.Fprint(w, `<form id="ebcform" action="saveebc" method="post">`)
 	fmt.Fprint(w, `<div>`)
 	fmt.Fprintf(w, `<input type="hidden" name="EntrantID" value="%v">`, ebc.EntrantID)
@@ -166,6 +222,8 @@ func showEBC(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `<input type="hidden" name="OdoReading" value="%v">`, ebc.OdoReading)
 	fmt.Fprintf(w, `<input type="hidden" name="claimid" value="%v">`, claimid)
 	fmt.Fprint(w, `<input type="hidden" id="chosenDecision" name="Decision" value="-1">`)
+	fmt.Fprintf(w, `<input type="hidden" name="Points" value="%v">`, bcv.Points)
+	fmt.Fprintf(w, `<input type="hidden" name="NextURL" value="%v">`, r.URL.String())
 
 	fmt.Fprintf(w, `Entrant <span class="bold">%v %v</span>`, ebc.EntrantID, team)
 	x = getStringFromDB("SELECT BriefDesc FROM bonuses WHERE BonusID='"+ebc.Bonusid+"'", ebc.Bonusid)
@@ -224,6 +282,8 @@ func showEBC(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprint(w, `</form>`)
 
+	fmt.Fprint(w, `</article>`)
+
 }
 
 func showPhotos(w http.ResponseWriter, emailid int, BonusID string) {
@@ -254,7 +314,8 @@ func showPhotos(w http.ResponseWriter, emailid int, BonusID string) {
 			break
 		}
 	}
-	fmt.Fprintf(w, `<img id="imgdivimg" alt="*" name="Photo" src="%v" title="%v">`, showimg[0], CS.EBCImgTitle)
+	fmt.Fprintf(w, `<img id="imgdivimg" alt="*" src="%v" title="%v">`, showimg[0], CS.EBCImgTitle)
+	fmt.Fprintf(w, `<input type="hidden" id="chosenPhoto" name="Photo" value="%v">`, showimg[0])
 
 	fmt.Fprint(w, `<div id="imgdivs">`)
 
@@ -285,7 +346,7 @@ func intval(x string) int {
 func saveEBC(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
-	fmt.Println(r)
+	fmt.Println(r.Form)
 
 	decision := intval(r.FormValue("Decision"))
 	processed := 0
@@ -327,4 +388,11 @@ func saveEBC(w http.ResponseWriter, r *http.Request) {
 		r.FormValue("Evidence"), qasked, r.FormValue("AnswerSupplied"), qanswered, r.FormValue("JudgesNotes"), percent)
 	checkerr(err)
 
+	/*
+		url := r.FormValue("NextURL")
+		if url == "" {
+			url = "/"
+		}
+		list_EBC_claims(w, url)
+	*/
 }

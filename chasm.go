@@ -89,9 +89,8 @@ func main() {
 	}
 
 	fileserver := http.FileServer(http.Dir("."))
-	http.HandleFunc("/", central_dispatch)
 	http.Handle("/images/", fileserver)
-	http.HandleFunc("/about", about_chasm)
+	http.HandleFunc("/about", showAboutChasm)
 	http.HandleFunc("/combo", show_combo)
 	http.HandleFunc("/combos", show_combos)
 	http.HandleFunc("/ebc", showEBC)
@@ -102,6 +101,7 @@ func main() {
 	http.HandleFunc("/saveebc", saveEBC)
 	http.HandleFunc("/x", json_requests)
 	http.HandleFunc("/updtcrule", update_rule)
+	http.HandleFunc("/", central_dispatch)
 	http.ListenAndServe(":"+*HTTPPort, nil)
 
 }
@@ -192,47 +192,9 @@ func show_rule(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `OMG`)
 }
 
-func about_chasm(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "Hello there, I say, I say")
-}
-
-const mockupFrontPage = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<title>CHASM</title>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-body {
-	margin: 0;
-	font-size: 14pt;
-	font-family				: Verdana, Arial, Helvetica, sans-serif; 
-
-}
-.topbar {
-	background-color: lightgray;
-	border none none solid 2px none;
-	width: 100%;
-	margin: 0;
-	padding: 5px;
-}
-.about {
-	float: right;
-	padding-right: 1em;
-	font-size: 10pt;
-	vertical-align: middle;
-	display: table-cell;
-}
-</style>
-</head>
-<body>
-`
-const homeIcon = `
-<input title="Return to main menu" style="padding:1px;" type="button" value=" 🏠 " onclick="window.location='admin.php'">`
-
 func central_dispatch(w http.ResponseWriter, r *http.Request) {
 
-	fmt.Fprint(w, mockupFrontPage)
-	fmt.Fprint(w, `<div class="topbar">`+homeIcon+` 12 Days Euro Rally<span class="about">About CHASM</span></div>`)
+	startHTML(w, "")
+
+	showMenu(w, "main")
 }

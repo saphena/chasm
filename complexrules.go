@@ -9,18 +9,12 @@ import (
 	"strings"
 )
 
-//go:embed complexrules.js
-var script string
-
-//go:embed complexrules.css
-var css string
-
 var tmpltOption = `<option value="%s" %s>%s</option>`
 
 var tmpltSingleRule = `
-<style>` + css + `
+<style>` + maincss + `
 </style>
-<script>` + script + `
+<script>` + mainscript + `
 </script>
 <div class="singlerule">
   <form action="updtcrule" method="post">
@@ -165,8 +159,8 @@ func show_rules(w http.ResponseWriter, r *http.Request) {
 	rules := build_compoundRuleArray(leg)
 	axes := build_axisLabels()
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	fmt.Fprintf(w, `<style>%s</style>`, css)
-	fmt.Fprintf(w, `<script>%s</script>`, script)
+	fmt.Fprintf(w, `<style>%s</style>`, maincss)
+	fmt.Fprintf(w, `<script>%s</script>`, mainscript)
 	fmt.Fprint(w, `<div class="ruleset">`)
 	for _, cr := range rules {
 		fmt.Fprintf(w, `<fieldset class="row target" data-rowid="%d" title="%v" onclick="showRule(this);">`, cr.Ruleid, cr.Ruleid)

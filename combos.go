@@ -33,8 +33,8 @@ var tmpltSingleCombo = `
 func show_combos(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	fmt.Fprintf(w, `<style>%s</style>`, css)
-	fmt.Fprintf(w, `<script>%s</script>`, script)
+	fmt.Fprintf(w, `<style>%s</style>`, maincss)
+	fmt.Fprintf(w, `<script>%s</script>`, mainscript)
 
 	ComboBonuses = loadCombos("")
 

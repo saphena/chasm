@@ -70,18 +70,22 @@ function showEBC(obj) {
   window.location.href = "/ebc?c=" + obj.getAttribute("data-claimid");
 }
 
+function showFirstClaim() {
+  let rows = document.querySelectorAll('fieldset.row')
+  showEBC(rows[1]) // 1 not 0; 0 = hdr
+}
 function cycleImgSize(obj) {
   let img = obj.id;
   let sz = obj.style.width;
-  console.log('sz == '+sz)
-  let otherimg = ""
+  console.log("sz == " + sz);
+  let otherimg = "";
   if (img == "ebcimgdiv") {
     otherimg = "bonusimgdiv";
   } else {
     otherimg = "ebcimgdiv";
   }
   let other = document.getElementById(otherimg);
-  if (sz == "50%" || sz == '') {
+  if (sz == "50%" || sz == "") {
     other.style.width = "100px";
     obj.style.width = "99%";
   } else {
@@ -90,22 +94,35 @@ function cycleImgSize(obj) {
   }
 }
 
+function goHome(obj) {
+  window.location.href = "/";
+}
 function swapimg(img) {
-
-  let me = img.getAttribute('src')
-  let main = document.getElementById('imgdivimg')
-  let mainsrc = main.getAttribute('src')
-  main.setAttribute('src',me)
-  img.setAttribute('src',mainsrc)
-
+  let me = img.getAttribute("src");
+  let main = document.getElementById("imgdivimg");
+  let mainsrc = main.getAttribute("src");
+  let inp = document.getElementById("chosenPhoto");
+  main.setAttribute("src", me);
+  img.setAttribute("src", mainsrc);
+  inp.setAttribute("value", me);
 }
 
-
 function closeEBC(obj) {
+  let frm = document.getElementById("ebcform");
+  let dec = document.getElementById("chosenDecision");
+  dec.value = obj.getAttribute("data-result");
+  frm.submit();
+}
 
-  let frm = document.getElementById("ebcform")
-  let dec = document.getElementById("chosenDecision")
-  dec.value = obj.getAttribute("data-result")
-  frm.submit()
-
+function showAboutChasm(obj) {
+  window.location.href = "/about";
+}
+function toggleLicenceMIT(obj) {
+  let mit = document.getElementById("LicenceMIT");
+  if (!mit) return;
+  if (mit.classList.contains("hide")) {
+    mit.classList.remove("hide");
+  } else {
+    mit.classList.add("hide");
+  }
 }

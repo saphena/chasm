@@ -1,20 +1,32 @@
 package main
 
-type chasmSettings struct {
-	ShowExcludedClaims bool // If a claim is marked 'excluded' and is not superseded, show it on the scoresheet
-	CurrentLeg         int
-	UseCheckinForOdo   bool // If true, OdoRallyFinish updated only by check-in, not by individual claims
-	RallyUnitKms       bool // Report in Kms(true) or Miles(false)
-	UnitMilesLit       string
-	UnitKmsLit         string
-	PenaltyMilesDNF    int
-	RallyMinMiles      int
-	DebugRules         bool
-	AutoLateDNF        bool
-	Rally              struct {
-		A1 string
-		A2 string
+type emailSettings struct {
+	SMTP struct {
+		Host          string
+		Port          string
+		UseInboxCreds bool
+		Userid        string
+		Password      string
+		CertName      string // May need to override the certificate name used for TLS
 	}
+	IMAP struct {
+		HostPort string
+		Userid   string
+		Password string
+	}
+}
+type chasmSettings struct {
+	ShowExcludedClaims  bool // If a claim is marked 'excluded' and is not superseded, show it on the scoresheet
+	CurrentLeg          int
+	UseCheckinForOdo    bool // If true, OdoRallyFinish updated only by check-in, not by individual claims
+	RallyUnitKms        bool // Report in Kms(true) or Miles(false)
+	UnitMilesLit        string
+	UnitKmsLit          string
+	PenaltyMilesDNF     int
+	RallyMinMiles       int
+	DebugRules          bool
+	AutoLateDNF         bool
+	RallyTitle          string
 	RallyMinPoints      int
 	RallyTimezone       string
 	FlagTeamTitle       string
@@ -32,6 +44,7 @@ type chasmSettings struct {
 	RallyBookImgTitle   string
 	EBCImgTitle         string
 	EBCImgSwapTitle     string
+	Email               emailSettings
 }
 
 var CS chasmSettings
@@ -44,6 +57,7 @@ const defaultCS = `{
 	"UnitMilesLit":			"miles",
 	"UnitKmsLit":			"km",
 	"PenaltyMilesDNF":		99999,
+	"RallyTitle":			"Brit Butt Rally 2025",
 	"RallyMinMiles":		0,
 	"DebugRules":			true,
 	"AutoLateDNF": 			true,
