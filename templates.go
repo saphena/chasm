@@ -78,6 +78,7 @@ func startHTML(w http.ResponseWriter, currentTask string) {
 	w.Header().Set("Expires", "0")
 
 	fmt.Fprint(w, htmlheader)
+	fmt.Fprint(w, `<header>`)
 	showTopbar(w, currentTask)
 
 }

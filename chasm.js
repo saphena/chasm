@@ -71,8 +71,8 @@ function showEBC(obj) {
 }
 
 function showFirstClaim() {
-  let rows = document.querySelectorAll('fieldset.row')
-  showEBC(rows[1]) // 1 not 0; 0 = hdr
+  let rows = document.querySelectorAll("fieldset.row");
+  showEBC(rows[1]); // 1 not 0; 0 = hdr
 }
 function cycleImgSize(obj) {
   let img = obj.id;
@@ -111,7 +111,49 @@ function closeEBC(obj) {
   let frm = document.getElementById("ebcform");
   let dec = document.getElementById("chosenDecision");
   dec.value = obj.getAttribute("data-result");
-  frm.submit();
+  let url = "/x?f=saveebc";
+  let inps = frm.getElementsByTagName("input");
+  for (let i = 0; i < inps.length; i++) {
+    let nm = inps[i].getAttribute("name");
+    if (nm != "") {
+      url += "&" + nm + "=" + encodeURIComponent(inps[i].getAttribute("value"));
+    }
+  }
+
+  console.log(url);
+  fetch(url)
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then((data) => {
+      if (!data.OK) {
+        window.location.href = "/listebc";
+      }
+    })
+    .catch((error) => {
+      console.error("Fetch error:", error);
+    });
+
+  //frm.submit();
+}
+
+function reloadClaimslog() {
+  let frm = document.getElementById("claimslogfrm");
+
+  let url = "/claims?x=x";
+  let inps = frm.getElementsByTagName("select");
+  for (let i = 0; i < inps.length; i++) {
+    let nm = inps[i].getAttribute("name");
+    if (nm != "") {
+      url += "&" + nm + "=" + encodeURIComponent(inps[i].options[inps[i].selectedIndex].getAttribute("value"));
+    }
+  }
+
+  console.log(url);
+  window.location.href = url;
 }
 
 function showAboutChasm(obj) {

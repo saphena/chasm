@@ -91,6 +91,7 @@ func main() {
 	fileserver := http.FileServer(http.Dir("."))
 	http.Handle("/images/", fileserver)
 	http.HandleFunc("/about", showAboutChasm)
+	http.HandleFunc("/claims", list_claims)
 	http.HandleFunc("/combo", show_combo)
 	http.HandleFunc("/combos", show_combos)
 	http.HandleFunc("/ebc", showEBC)
@@ -139,6 +140,10 @@ func json_requests(w http.ResponseWriter, r *http.Request) {
 		checkerr(err)
 		log.Println(string(b))
 		fmt.Fprint(w, string(b))
+		return
+	case "saveebc":
+		saveEBC(w, r)
+		fmt.Fprint(w, `{"ok":true,"msg":"ok"}`)
 		return
 	}
 

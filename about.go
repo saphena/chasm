@@ -42,6 +42,8 @@ func showAboutChasm(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	startHTML(w, "About "+PROGRAMTITLE)
 
+	fmt.Fprint(w, `</header>`)
+
 	fmt.Fprint(w, `<article class="about">`)
 	fmt.Fprintf(w, `<h1>%v v%v <span class="h2" title="CHasm Ain't ScoreMaster">Powered by CHASM</span><span class="h2"> &amp; EBCFetch</span></h1>`, PROGRAMTITLE, PROGRAMVERSION)
 	fmt.Fprintf(w, `<p>%v</p>`, PROGDESC)

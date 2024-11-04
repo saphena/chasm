@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -67,6 +68,29 @@ type BonusClaimVars struct {
 	Leg       int
 }
 
+type ClaimRecord struct {
+	LoggedAt         string
+	ClaimTime        string
+	EntrantID        int
+	BonusID          string
+	OdoReading       int
+	Decision         int
+	Photo            string
+	Points           int
+	RestMinutes      int
+	AskPoints        bool
+	AskMinutes       bool
+	QuestionAsked    bool
+	QuestionAnswered bool
+	AnswerSupplied   string
+	JudgesNotes      string
+	PercentPenalty   bool
+	Evidence         string
+	Leg              int
+}
+
+var EntrantSelector map[int]string
+
 func emitImage(img string, alt string, title string) string {
 
 	res := fmt.Sprintf(`<img alt="%v", title="%v" class="flagicon" src="data:image/png;base64,`, alt, title)
@@ -101,6 +125,184 @@ func fetchBonusVars(b string) BonusClaimVars {
 	return res
 }
 
+func list_claims(w http.ResponseWriter, r *http.Request) {
+
+	const addnew_icon = "&nbsp;+&nbsp;"
+
+	const tick_icon = "&#10004;"
+	const cross_icon = "&#10006;"
+	const undecided_icon = "?"
+
+	const filter_icon = "" //"&#65509;"
+
+	r.ParseForm()
+
+	loadEntrantsList()
+
+	esel := intval(r.FormValue("esel"))
+
+	startHTML(w, "Claims log")
+
+	fmt.Fprint(w, `<div class="claimslog">`)
+
+	showReloadTicker(w, r.URL.String())
+	fmt.Fprint(w, `<h4>Claims log</h4>`)
+
+	fmt.Fprint(w, `<form id="claimslogfrm">`)
+	sel := ""
+	if esel == 0 {
+		sel = "selected"
+	}
+	fmt.Fprintf(w, `<div class="select"">%v `, filter_icon)
+	fmt.Fprintf(w, `<select name="esel" value="%v" onchange="reloadClaimslog()">`, esel)
+	fmt.Fprintf(w, `<option value="0" %v>all claims</option>`, sel)
+
+	keys := make([]int, 0, len(EntrantSelector))
+
+	for key := range EntrantSelector {
+		keys = append(keys, key)
+	}
+
+	sort.SliceStable(keys, func(i, j int) bool {
+		return EntrantSelector[keys[i]] < EntrantSelector[keys[j]]
+	})
+
+	for _, k := range keys {
+		sel = ""
+		if k == esel {
+			sel = "selected"
+		}
+		fmt.Fprintf(w, `<option value="%v" %v>%v</option>`, k, sel, EntrantSelector[k])
+	}
+	fmt.Fprint(w, `</select>`)
+
+	bsel := r.FormValue("bsel")
+	sel = ""
+	if bsel == "" {
+		sel = "selected"
+	}
+	fmt.Fprintf(w, ` <select name="bsel" value="%v" onchange="reloadClaimslog()">`, bsel)
+	fmt.Fprintf(w, `<option value="" %v>all claims</option>`, sel)
+	sqlx := "SELECT BonusID FROM bonuses ORDER BY BonusID"
+	rows, err := DBH.Query(sqlx)
+	checkerr(err)
+	defer rows.Close()
+	for rows.Next() {
+		var b string
+		sel = ""
+		err = rows.Scan(&b)
+		checkerr(err)
+		if b == bsel {
+			sel = "selected"
+		}
+		fmt.Fprintf(w, `<option value="%v" %v>%v</option>`, b, sel, b)
+	}
+	rows.Close()
+	fmt.Fprint(w, `</select>`)
+
+	dsel := r.FormValue("dsel")
+	sel = ""
+	if dsel == "" {
+		sel = "selected"
+	}
+	fmt.Fprintf(w, ` <select name="dsel" value="%v" onchange="reloadClaimslog()">`, dsel)
+	fmt.Fprintf(w, `<option value="" %v>all claims</option>`, sel)
+
+	sel = ""
+	if dsel == "g" {
+		sel = "selected"
+	}
+	fmt.Fprintf(w, `<option value="g" %v>Good claims only</option>`, sel)
+	sel = ""
+	if dsel == "r" {
+		sel = "selected"
+	}
+	fmt.Fprintf(w, `<option value="r" %v>Rejected claims only</option>`, sel)
+	sel = ""
+	if dsel == "u" {
+		sel = "selected"
+	}
+	fmt.Fprintf(w, `<option value="u" %v>Undecided claims only</option>`, sel)
+	fmt.Fprint(w, `</select>`)
+
+	fmt.Fprint(w, `</form>`)
+
+	fmt.Fprint(w, `</div>`)
+	fmt.Fprintf(w, `<button autofocus title="Add new claim">%v</button> <span id="fcc"></span>`, addnew_icon)
+	sqlx = `SELECT ifnull(LoggedAt,''),ClaimTime,claims.EntrantID,BonusID,OdoReading,Decision,ifnull(JudgesNotes,'') FROM claims`
+	sqlx += " LEFT JOIN entrants ON claims.EntrantID=entrants.EntrantID"
+	where := ""
+	if esel > 0 {
+		where += "  claims.EntrantID=" + strconv.Itoa(esel)
+	}
+	if bsel != "" {
+		if where != "" {
+			where += " AND "
+		}
+		where += "BonusID='" + bsel + "'"
+	}
+	if dsel != "" {
+		if where != "" {
+			where += " AND "
+		}
+		where += " Decision "
+		switch dsel {
+		case "u":
+			where += "< 0"
+		case "g":
+			where += "= 0"
+		default:
+			where += "> 0"
+		}
+	}
+	if where != "" {
+		sqlx += " WHERE " + where
+	}
+	sqlx += " ORDER BY ClaimTime DESC"
+
+	rows, err = DBH.Query(sqlx)
+	checkerr(err)
+	defer rows.Close()
+
+	fmt.Fprint(w, `<fieldset class="row claims hdr">`)
+	fmt.Fprint(w, `<fieldset class="col claims hdr">Entrant</fieldset>`)
+	fmt.Fprint(w, `<fieldset class="col claims hdr">Bonus</fieldset>`)
+	fmt.Fprint(w, `<fieldset class="col claims hdr">Odo</fieldset>`)
+	fmt.Fprint(w, `<fieldset class="col claims hdr">Claimtime</fieldset>`)
+	fmt.Fprint(w, `<fieldset class="col claims hdr">Good?</fieldset>`)
+	fmt.Fprint(w, `</fieldset>`)
+
+	fmt.Fprint(w, `</div>`)
+
+	fmt.Fprint(w, `</header><div class="claimslog">`)
+	for rows.Next() {
+		var cr ClaimRecord
+		err = rows.Scan(&cr.LoggedAt, &cr.ClaimTime, &cr.EntrantID, &cr.BonusID, &cr.OdoReading, &cr.Decision, &cr.JudgesNotes)
+		checkerr(err)
+
+		rname, ok := EntrantSelector[cr.EntrantID]
+		if !ok {
+			rname = strconv.Itoa(cr.EntrantID)
+		}
+		fmt.Fprint(w, `<fieldset class="row claims">`)
+		fmt.Fprintf(w, `<fieldset class="col claims" title="%v">%v</fieldset>`, cr.EntrantID, rname)
+		fmt.Fprintf(w, `<fieldset class="col claims">%v</fieldset>`, cr.BonusID)
+		fmt.Fprintf(w, `<fieldset class="col claims">%v</fieldset>`, cr.OdoReading)
+		fmt.Fprintf(w, `<fieldset class="col claims">%v</fieldset>`, logtime(cr.ClaimTime))
+		decision := tick_icon
+		if cr.Decision > 0 {
+			decision = cross_icon
+		} else if cr.Decision < 0 {
+			decision = undecided_icon
+		}
+		fmt.Fprintf(w, `<fieldset class="col claims">%v</fieldset>`, decision)
+		fmt.Fprint(w, `</fieldset>`)
+	}
+
+	fmt.Fprint(w, `</div>`)
+
+}
+
 // Show judgeable claims submitted electronically
 func list_EBC_claims(w http.ResponseWriter, r *http.Request) {
 
@@ -127,6 +329,8 @@ func list_EBC_claims(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `<fieldset class="col ebc hdr">Odo</fieldset>`)
 	fmt.Fprint(w, `<fieldset class="col ebc hdr">Claimtime</fieldset>`)
 	fmt.Fprint(w, `</fieldset>`)
+
+	fmt.Fprint(w, `</div></header><div class="ebclist">`)
 	n := 0
 	for rows.Next() {
 		var ebc ElectronicBonusClaim
@@ -147,6 +351,26 @@ func list_EBC_claims(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `</div>`)
 	fmt.Fprintf(w, `<script>let x = document.getElementById('fcc');x.innerHTML='1/%v';</script>`, n)
 
+}
+
+func loadEntrantsList() {
+
+	EntrantSelector = make(map[int]string)
+	sqlx := "SELECT EntrantID,RiderName,ifnull(PillionName,'') FROM entrants"
+	rows, err := DBH.Query(sqlx)
+	checkerr(err)
+	defer rows.Close()
+	for rows.Next() {
+		var e int
+		var rn string
+		var pn string
+		err = rows.Scan(&e, &rn, &pn)
+		checkerr(err)
+		if pn != "" {
+			rn += " &amp; " + pn
+		}
+		EntrantSelector[e] = rn
+	}
 }
 
 func logtime(stamp string) string {
@@ -209,6 +433,8 @@ func showEBC(w http.ResponseWriter, r *http.Request) {
 	}
 
 	bcv := fetchBonusVars(ebc.Bonusid)
+
+	fmt.Fprint(w, `</header>`)
 
 	fmt.Fprint(w, `<article class="showebc">`)
 	showReloadTicker(w, r.URL.String())
@@ -346,7 +572,7 @@ func intval(x string) int {
 func saveEBC(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
-	fmt.Println(r.Form)
+	//fmt.Println(r.Form)
 
 	decision := intval(r.FormValue("Decision"))
 	processed := 0
