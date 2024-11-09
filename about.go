@@ -64,7 +64,7 @@ func showAboutChasm(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `<dd>%v</dd>`, Author)
 	ibs := strings.ReplaceAll(strings.ReplaceAll(strings.Join(InspiredBy, ","), " ", "&nbsp;"), ",", ", ")
 	fmt.Fprintf(w, `<dt>Inspired by</dt><dd>%v</dd>`, ibs)
-	fmt.Fprintf(w, `<dt>Chasm [v%v]</dt><dd>github.com/ibauk/chasm</dd>`, ChasmVersion)
+	fmt.Fprintf(w, `<dt>Chasm [v%v]</dt><dd>github.com/saphena/chasm</dd>`, ChasmVersion)
 	fmt.Fprintf(w, `<dt>EBCFetch [v%v]</dt><dd>github.com/ibauk/ebcfetch</dd>`, EBCFetchVersion)
 	fmt.Fprint(w, `<dt>Licence</dt>`)
 	fmt.Fprintf(w, `<dd class="link" onclick="toggleLicenceMIT()">MIT - Copyright &copy; %v %v</dd>`, CopyriteYear, CopyriteHolder)
@@ -95,6 +95,6 @@ func showFreeSpace(path string) string {
 
 	freep := 100.0 - (usage.Usage() * 100.0)
 
-	res += fmt.Sprintf(" (%.2f%%)", freep)
+	res += fmt.Sprintf(" (%.0f%%)", freep)
 	return res
 }

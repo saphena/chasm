@@ -54,10 +54,11 @@ func getStringFromDB(sqlx string, defval string) string {
 
 func main() {
 
+	fmt.Printf("Chasm v%v  Copyright (c) %v %v\n", ChasmVersion, CopyriteYear, CopyriteHolder)
 	flag.Parse()
 
 	dbx, _ := filepath.Abs(*DBNAME)
-	fmt.Printf("Using %v\n\n", dbx)
+	fmt.Printf("Using %v\n", dbx)
 
 	var err error
 	DBH, err = sql.Open("sqlite3", dbx)
@@ -76,32 +77,37 @@ func main() {
 	checkerr(err)
 	err = json.Unmarshal([]byte(secondDefault), &CS)
 	checkerr(err)
-	fmt.Printf("%v\n", CS)
+	//fmt.Printf("%v\n", CS)
 
 	RallyTimezone, err = time.LoadLocation(CS.RallyTimezone)
 	checkerr(err)
 
-	recalc_all()
-	//recalc_scorecard(2)
-
 	if !*runOnline {
 		return
 	}
+	fmt.Printf("Serving on port %v\n", *HTTPPort)
+	fmt.Println()
+
+	// DEBUG PURPOSES ONLY
+	recalc_all()
 
 	fileserver := http.FileServer(http.Dir("."))
 	http.Handle("/images/", fileserver)
 	http.HandleFunc("/about", showAboutChasm)
+	http.HandleFunc("/claim", showClaim)
 	http.HandleFunc("/claims", list_claims)
 	http.HandleFunc("/combo", show_combo)
 	http.HandleFunc("/combos", show_combos)
 	http.HandleFunc("/ebc", showEBC)
 	http.HandleFunc("/ebclist", list_EBC_claims)
+	http.HandleFunc("/help", show_help)
+	http.HandleFunc("/qlist", show_qlist)
 	http.HandleFunc("/recalc", recalc_handler)
 	http.HandleFunc("/rule", show_rule)
 	http.HandleFunc("/rules", show_rules)
 	http.HandleFunc("/saveebc", saveEBC)
-	http.HandleFunc("/x", json_requests)
 	http.HandleFunc("/updtcrule", update_rule)
+	http.HandleFunc("/x", json_requests)
 	http.HandleFunc("/", central_dispatch)
 	http.ListenAndServe(":"+*HTTPPort, nil)
 
@@ -132,7 +138,7 @@ func json_requests(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			ss = 0
 		}
-		fmt.Printf("json: %v %v\n", aa, ss)
+		//fmt.Printf("json: %v %v\n", aa, ss)
 		res.Msg = strings.Join(optsSingleAxisCats(aa, ss), "")
 		res.OK = true
 
@@ -178,6 +184,20 @@ func show_combo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	showSingleCombo(w, cr[0])
+}
+
+func show_help(w http.ResponseWriter, r *http.Request) {
+
+	topic := r.FormValue("topic")
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	fmt.Fprint(w, htmlheader)
+	fmt.Fprint(w, `<p>I'm so sorry, there is no help`)
+	if topic != "" {
+		fmt.Fprintf(w, " for '%v'", topic)
+	}
+	fmt.Fprint(w, `</p>`)
 }
 func show_rule(w http.ResponseWriter, r *http.Request) {
 

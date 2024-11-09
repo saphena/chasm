@@ -10,8 +10,6 @@ Cat is a non-zero integer but -1 when used to access arrays
 
 import (
 	"fmt"
-	"html"
-	"log"
 	"math"
 	"os"
 	"reflect"
@@ -748,7 +746,7 @@ func excludeClaim(SB ScorecardBonusDetail) ScorexLine {
 
 	var res ScorexLine
 
-	fmt.Println("excludeClaim called")
+	//fmt.Println("excludeClaim called")
 	if !CS.ShowExcludedClaims {
 		return res
 	}
@@ -832,7 +830,7 @@ func loadCombos(comboid string) []ComboBonus {
 		sqlx += " WHERE ComboID='" + comboid + "'"
 	}
 	sqlx += " ORDER BY ComboID"
-	log.Println(sqlx)
+	//log.Println(sqlx)
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
 	defer rows.Close()
@@ -879,7 +877,7 @@ func loadCombos(comboid string) []ComboBonus {
 		}
 		res = append(res, cb)
 	}
-	fmt.Printf("Combos %v", res)
+	//fmt.Printf("Combos %v", res)
 	return res
 
 }
@@ -1190,7 +1188,7 @@ func recalc_scorecard(entrant int) {
 	// The final points score, after penalties, is multiplied by this value
 	Multipliers := 0
 
-	log.Printf("recalc for %v\n", entrant)
+	//log.Printf("recalc for %v\n", entrant)
 
 	BuildRallyParameters(CS.CurrentLeg)
 
@@ -1238,7 +1236,7 @@ func recalc_scorecard(entrant int) {
 			TotalPoints += sx.Points
 			Scorex = append(Scorex, sx)
 
-			fmt.Println("dbg: CAS applied")
+			//fmt.Println("dbg: CAS applied")
 		}
 
 		if BC.Decision != ClaimDecision_GoodClaim {
@@ -1452,10 +1450,6 @@ func recalc_scorecard(entrant int) {
 	f.WriteString(dbgstyle)
 	f.WriteString(htmlSX)
 	f.Close()
-	for x := range Scorex {
-		log.Printf("%-3s %-20s %-10s %7d\n", Scorex[x].Code, html.UnescapeString(Scorex[x].Desc), html.UnescapeString(Scorex[x].PointsDesc), Scorex[x].Points)
-	}
-	log.Printf("Total points is %d\n", TotalPoints)
 
 }
 

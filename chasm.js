@@ -57,6 +57,14 @@ function chgAxis(obj) {
     });
 }
 
+function showEvidence(obj) {
+  killReload();
+  let ft = document.getElementById("finetune");
+  let ov = document.getElementById("claimstats");
+  ft.classList.remove("hide");
+  ov.classList.add("hide");
+}
+
 function showRule(obj) {
   window.location.href = "/rule?r=" + obj.getAttribute("data-rowid");
 }
@@ -116,7 +124,7 @@ function closeEBC(obj) {
   for (let i = 0; i < inps.length; i++) {
     let nm = inps[i].getAttribute("name");
     if (nm != "") {
-      url += "&" + nm + "=" + encodeURIComponent(inps[i].getAttribute("value"));
+      url += "&" + nm + "=" + encodeURIComponent(inps[i].value);
     }
   }
 
@@ -148,9 +156,45 @@ function reloadClaimslog() {
   for (let i = 0; i < inps.length; i++) {
     let nm = inps[i].getAttribute("name");
     if (nm != "") {
-      url += "&" + nm + "=" + encodeURIComponent(inps[i].options[inps[i].selectedIndex].getAttribute("value"));
+      url +=
+        "&" +
+        nm +
+        "=" +
+        encodeURIComponent(
+          inps[i].options[inps[i].selectedIndex].getAttribute("value")
+        );
     }
   }
+
+  console.log(url);
+  window.location.href = url;
+}
+
+function reloadRankings(fld, val) {
+  const args = new Map();
+
+  let frm = document.getElementById("rankingsfrm");
+  let inps = frm.getElementsByTagName("input");
+  let url = "/qlist?x=x";
+  for (let i = 0; i < inps.length; i++) {
+    let nm = inps[i].getAttribute("name");
+    if (nm != "") {
+      args.set(nm, inps[i].getAttribute("value"));
+    }
+  }
+  if (args.get("seq") == val && fld == "seq") {
+    if (args.get("desc") == "") {
+      args.set("desc", "desc");
+    } else {
+      args.set("desc", "");
+    }
+  } else {
+    args.set("desc", "");
+  }
+  args.set(fld, val);
+  args.forEach(function (val, key) {
+    url += "&" + key + "=" + encodeURIComponent(val);
+  });
 
   console.log(url);
   window.location.href = url;
@@ -167,4 +211,19 @@ function toggleLicenceMIT(obj) {
   } else {
     mit.classList.add("hide");
   }
+}
+
+function showHelp(topic) {
+  window.open(
+    "/help?topic=" + topic,
+    "smhelp",
+    "location=no,height=800,width=800,scrollbars=yes,status=no"
+  );
+}
+
+// This wil parse a correctly formatted email Subject line into
+// the relevant fields of a blank new claim form
+function pasteNewClaim(obj) {
+
+const re = '\s*[A-Za-z]*(\d+)[A-Za-z]*\s*\,?\s*([a-zA-Z0-9\-]+)\s*\,?\s*(\d+)?\.*\d*\s*\,?\s*(\d\d?[.:]*\d\d)?\s*(.*)'
 }

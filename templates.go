@@ -34,7 +34,7 @@ var htmlheader = `
 var topbar = `
 <nav class="topbar">
 	<span class="flexitem">
-	<button id="main_help_button" class="link" onclick="showMainHelp(this)" title="Help">` + helpicon + `</button>
+	<button id="main_help_button" class="link" onclick="showHelp('')" title="Help">` + helpicon + `</button>
 	<button id="main_home_button" class="link" onclick="goHome(this)" title="Main menu">` + homeicon + `</button>
 	<span id="main_rally_title" class="link" onclick="goHome(this)">%s</span>
 	</span>
@@ -46,15 +46,23 @@ var topbar = `
 `
 var reloadticker = `
 <div class="reloadticker">
-	<progress id="reloadticker" max="30" value="30" title="refreshing soon"></progress>
+	<progress id="reloadticker" data-active="1" max="30" value="30" title="refreshing soon"></progress>
 	<script>
 	setInterval(function() {
 		let p = document.getElementById('reloadticker')
 		let s = p.getAttribute('value')
-		s--
-		if (s < 1) {window.location.href=#url#}
-		p.setAttribute('value',s)
+		let a = p.getAttribute('data-active')
+		if (a=='1') {
+			s--
+			if (s < 1) {window.location.href=#url#}
+			p.setAttribute('value',s)
+		}
 	},1000)
+	function killReload() {
+		let p = document.getElementById('reloadticker')
+		p.setAttribute('data-active','0')
+		p.classList.add('hide')
+	}
 	</script>
 </div>
 `

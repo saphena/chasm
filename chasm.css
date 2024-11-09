@@ -10,11 +10,12 @@
   margin: auto;
   display: grid;
 }
+
 .field {
   margin: 1em;
   border: none;
   display: grid;
-  grid-template-columns: 15em 15em;
+  grid-template-columns: 15em 15em 1fr;
 }
 .field label {
   text-align: right;
@@ -37,11 +38,17 @@
   grid-template-columns: 18em 9em 8em 1fr;
 }
 .row.claims {
-  grid-template-columns: 18em 9em 8em 8em 1fr;
+  grid-template-columns: 18em 9em 8em 8em 4em;
+}
+.row.rankings {
+  grid-template-columns: 5em 16em 6em 6em 1fr;
 }
 .row:not(.hdr):hover {
   background: lightblue;
   cursor: pointer;
+}
+.row.rankings:hover {
+  cursor: default;
 }
 .target:hover {
   cursor: pointer;
@@ -214,7 +221,9 @@ article.about dd {
 }
 
 .ebclist,
-.claimslog {
+.claimslog,
+.rankhead,
+.rankings {
   margin: 0 1em;
 }
 .ebclist button,
@@ -235,4 +244,57 @@ header {
   position: sticky;
   top: 0;
   background-color: white;
+}
+.mid {
+  text-align: center;
+}
+.right {
+  text-align: right;
+}
+
+#finetune {
+  padding: 0.5em;
+  background-color: burlywood;
+}
+.odo {
+  width: 6em;
+}
+
+.ClaimTime {
+  width: 16em;
+}
+
+.EntrantID {
+  width: 4em;
+}
+.evidence {
+  font-size: 0.8em;
+}
+
+/* Individual claim form */
+
+div.claim {
+  display: flex;
+  flex-direction: column;
+  padding: 1em;
+  margin: auto;
+}
+
+.subject {
+  width: 30em;
+}
+
+.claimfield {
+  margin: 1em;
+  display: grid;
+  border: none;
+  grid-template-columns: 10em 16em 1fr;
+}
+.claimfield label {
+  text-align: right;
+  padding-right: 1em;
+}
+
+.claimfield input {
+  margin-right: 1em;
 }

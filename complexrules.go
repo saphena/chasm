@@ -76,7 +76,7 @@ setupForm()
 
 func optsSingleAxisCats(axis int, selcat int) []string {
 
-	fmt.Printf("SAC %v %v\n", axis, selcat)
+	//fmt.Printf("SAC %v %v\n", axis, selcat)
 	sqlx := fmt.Sprintf("SELECT Cat,BriefDesc FROM categories WHERE Axis=%d", axis)
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
@@ -118,7 +118,7 @@ func selectOptionArray(vals []int, lbls []string, sel int) []string {
 
 func showSingleRule(w http.ResponseWriter, r CompoundRule) {
 
-	fmt.Printf("SSR = %v\n", r)
+	//fmt.Printf("SSR = %v\n", r)
 	axisopts := make([]string, 0)
 	for ix, axis := range AxisLabels {
 		if axis == "" {
