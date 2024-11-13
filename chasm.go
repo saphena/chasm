@@ -28,6 +28,43 @@ var DBH *sql.DB
 
 var RallyTimezone *time.Location
 
+func ajaxFetchBonusDetails(w http.ResponseWriter, r *http.Request) {
+
+	b := r.FormValue("b")
+	if b == "" {
+		fmt.Fprint(w, `{"ok":false,"msg":"no b specified"}`)
+		return
+	}
+	bd := fetchBonusVars(b)
+	fmt.Fprintf(w, `{"ok":true,"msg":"ok","name":"%v"`, bd.BriefDesc)
+	fmt.Fprintf(w, `,"flags":"%v","img":"%v"`, bd.Flags, bd.Image)
+	fmt.Fprintf(w, `,"notes":"%v"`, bd.Notes)
+	fmt.Fprintf(w, `,"askpoints":%v`, jsonBool(bd.AskPoints))
+	fmt.Fprintf(w, `,"askmins":%v`, jsonBool(bd.AskMins))
+	fmt.Fprintf(w, `,"points":%v`, bd.Points)
+	fmt.Fprintf(w, `,"question":"%v"`, bd.Question)
+	fmt.Fprintf(w, `,"answer":"%v"`, bd.Answer)
+	fmt.Fprintf(w, `,"restmins":%v`, bd.RestMins)
+	fmt.Fprint(w, `}`)
+}
+
+func ajaxFetchEntrantDetails(w http.ResponseWriter, r *http.Request) {
+
+	e := intval(r.FormValue("e"))
+	if e < 1 {
+		fmt.Fprint(w, `{"ok":false,"msg":"no e specified"}`)
+		return
+	}
+	ed := fetchEntrantDetails(e)
+	if ed.PillionName != "" {
+		ed.RiderName += " &amp; " + ed.PillionName
+	}
+	tr := jsonBool(ed.PillionName != "" || ed.TeamID > 0)
+
+	fmt.Fprintf(w, `{"ok":true,"msg":"ok","name":"%v","team":%v}`, ed.RiderName, tr)
+
+}
+
 func getIntegerFromDB(sqlx string, defval int) int {
 
 	str := getStringFromDB(sqlx, strconv.Itoa(defval))
@@ -50,6 +87,13 @@ func getStringFromDB(sqlx string, defval string) string {
 		return val
 	}
 	return defval
+}
+
+func jsonBool(b bool) string {
+	if b {
+		return "true"
+	}
+	return "false"
 }
 
 func main() {
@@ -147,9 +191,19 @@ func json_requests(w http.ResponseWriter, r *http.Request) {
 		log.Println(string(b))
 		fmt.Fprint(w, string(b))
 		return
+	case "saveclaim":
+		saveClaim(w, r)
+		fmt.Fprint(w, `{"ok":true,"msg":"ok"}`)
+		return
 	case "saveebc":
 		saveEBC(w, r)
 		fmt.Fprint(w, `{"ok":true,"msg":"ok"}`)
+		return
+	case "fetche":
+		ajaxFetchEntrantDetails(w, r)
+		return
+	case "fetchb":
+		ajaxFetchBonusDetails(w, r)
 		return
 	}
 

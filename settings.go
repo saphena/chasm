@@ -29,6 +29,7 @@ type chasmSettings struct {
 	RallyTitle          string
 	RallyMinPoints      int
 	RallyTimezone       string
+	RallyUseQA          bool
 	FlagTeamTitle       string
 	FlagAlertTitle      string
 	FlagBikeTitle       string
@@ -63,6 +64,7 @@ const defaultCS = `{
 	"AutoLateDNF": 			true,
 	"RallyMinPoints":		-99999,
 	"RallyTimezone":		"Europe/London",
+	"RallyUseQA":			false,
 	"FlagTeamTitle":       	"Team rules",
 	"FlagAlertTitle":      	"Read the notes!",
 	"FlagBikeTitle":       	"Bike in photo",
@@ -82,5 +84,6 @@ const defaultCS = `{
 }`
 
 const secondDefault = `{
-"CloseEBCUndecided":		"Not on your nellie"
+"CloseEBCUndecided":		"Not on your nellie",
+"RallyUseQA":				false
 }`

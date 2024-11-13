@@ -89,6 +89,13 @@ type ClaimRecord struct {
 	Leg              int
 }
 
+type EntrantDetails struct {
+	EntrantID   int
+	RiderName   string
+	PillionName string
+	TeamID      int
+}
+
 var EntrantSelector map[int]string
 
 func emitImage(img string, alt string, title string) string {
@@ -155,6 +162,24 @@ func fetchClaimDetails(claimid int) ClaimRecord {
 	cr.PercentPenalty = pp != 0
 
 	return cr
+
+}
+
+func fetchEntrantDetails(entrant int) EntrantDetails {
+
+	var ed EntrantDetails
+
+	ed.EntrantID = entrant
+	if entrant < 1 {
+		return ed
+	}
+
+	e := strconv.Itoa(entrant)
+
+	ed.RiderName = getStringFromDB("SELECT RiderName FROM entrants WHERE EntrantID="+e, e)
+	ed.PillionName = getStringFromDB("SELECT ifnull(PillionName,'') FROM entrants WHERE EntrantID="+e, "")
+	ed.TeamID = getIntegerFromDB("SELECT TeamID FROM entrants WHERE EntrantID="+e, 0)
+	return ed
 
 }
 
@@ -262,7 +287,7 @@ func list_claims(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `</form>`)
 
 	fmt.Fprint(w, `</div>`)
-	sqlx = `SELECT ifnull(LoggedAt,''),ClaimTime,claims.EntrantID,BonusID,OdoReading,Decision,ifnull(JudgesNotes,'') FROM claims`
+	sqlx = `SELECT claims.rowid,ifnull(LoggedAt,''),ClaimTime,claims.EntrantID,BonusID,OdoReading,Decision,ifnull(JudgesNotes,'') FROM claims`
 	sqlx += " LEFT JOIN entrants ON claims.EntrantID=entrants.EntrantID"
 	where := ""
 	if esel > 0 {
@@ -310,14 +335,15 @@ func list_claims(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `</header><div class="claimslog">`)
 	for rows.Next() {
 		var cr ClaimRecord
-		err = rows.Scan(&cr.LoggedAt, &cr.ClaimTime, &cr.EntrantID, &cr.BonusID, &cr.OdoReading, &cr.Decision, &cr.JudgesNotes)
+		var claimid int
+		err = rows.Scan(&claimid, &cr.LoggedAt, &cr.ClaimTime, &cr.EntrantID, &cr.BonusID, &cr.OdoReading, &cr.Decision, &cr.JudgesNotes)
 		checkerr(err)
 
 		rname, ok := EntrantSelector[cr.EntrantID]
 		if !ok {
 			rname = strconv.Itoa(cr.EntrantID)
 		}
-		fmt.Fprint(w, `<fieldset class="row claims">`)
+		fmt.Fprintf(w, `<fieldset class="row claims" onclick="window.location.href='/claim?c=%v'">`, claimid)
 		fmt.Fprintf(w, `<fieldset class="col claims" title="%v">%v</fieldset>`, cr.EntrantID, rname)
 		fmt.Fprintf(w, `<fieldset class="col claims">%v</fieldset>`, cr.BonusID)
 		fmt.Fprintf(w, `<fieldset class="col claims">%v</fieldset>`, cr.OdoReading)
@@ -414,12 +440,34 @@ func logtime(stamp string) string {
 	return fmt.Sprintf(`<span title="%v">%v</span>`, stamp, ts.Format(showformat))
 }
 
+func insertNewClaim(w http.ResponseWriter, r *http.Request) {
+
+}
+func saveClaim(w http.ResponseWriter, r *http.Request) {
+
+	claimid := intval(r.FormValue("claimid"))
+	if claimid < 1 {
+		insertNewClaim(w, r)
+		return
+	}
+	sqlx := "UPDATE claims SET ClaimTime=?,EntrantID=?,BonusID=?,OdoReading=?,AnswerSupplied=?,QuestionAnswered=?,Points=?,RestMinutes=?,Decision=?,JudgesNotes=?"
+	sqlx += " WHERE rowid=?"
+	stmt, err := DBH.Prepare(sqlx)
+	checkerr(err)
+	defer stmt.Close()
+	_, err = stmt.Exec(r.FormValue("ClaimTime"), r.FormValue("EntrantID"), strings.ToUpper(r.FormValue("BonusID")), r.FormValue("OdoReading"), r.FormValue("AnswerSupplied"), r.FormValue("QuestionAnswered"), r.FormValue("Points"), r.FormValue(("RestMinutes")), r.FormValue("Decision"), r.FormValue("JudgesNotes"), claimid)
+	checkerr(err)
+}
+
 func showClaim(w http.ResponseWriter, r *http.Request) {
 
 	var cr ClaimRecord
 
 	var claimdate string
 	var claimtime string
+
+	var ed EntrantDetails
+	var bd BonusClaimVars
 
 	r.ParseForm()
 
@@ -428,17 +476,20 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 	claimid := intval(r.FormValue("c"))
 
 	fmt.Fprint(w, `</header><div class="claim">`)
-	fmt.Fprintf(w, `<form id="iclaim"><input type="hidden" name="claimid" value="%v">`, claimid)
+	fmt.Fprint(w, `<form id="iclaim">`)
 
 	fmt.Fprintf(w, `<input type="hidden" name="claimid" value="%v">`, claimid)
 	if claimid < 1 {
 		fmt.Fprint(w, `<h4>Filing new claim</h4>`)
 		fmt.Fprint(w, `<input type="text" class="subject" placeholder="Paste email Subject line here" oninput="pasteNewClaim(this)">`)
 		cr.Decision = -1 // undecided
+		claimdate = time.Now().Format("2006-01-02")
 	} else {
 		cr = fetchClaimDetails((claimid))
 		claimdate = cr.ClaimTime[0:10]
 		claimtime = cr.ClaimTime[11:16]
+		ed = fetchEntrantDetails(cr.EntrantID)
+		bd = fetchBonusVars(cr.BonusID)
 		fmt.Fprint(w, `<h4>Updating claim details</h4>`)
 	}
 	fmt.Fprint(w, `<fieldset class="claimfield">`)
@@ -448,16 +499,60 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, ` value="%v"`, cr.EntrantID)
 	}
 	fmt.Fprint(w, `>`)
-	fmt.Fprint(w, ` <span id="entrantDetails">some old bollox</span>`)
+	fmt.Fprint(w, `<span>`)
+	fmt.Fprintf(w, ` <span id="entrantDetails">%v</span>`, ed.RiderName)
+	hide := ""
+	fmt.Printf("Pillion='%v', Team=%v\n", ed.PillionName, ed.TeamID)
+	if ed.PillionName == "" && ed.TeamID < 1 {
+		hide = "hide"
+	}
+	fmt.Fprintf(w, ` <span id="edflag" class="%v">`, hide)
+	fmt.Fprint(w, emitImage(flag_team, "TR", CS.FlagTeamTitle))
+	fmt.Fprint(w, `</span>`)
+	fmt.Fprint(w, `</span>`)
 	fmt.Fprint(w, `</fieldset>`)
 
 	fmt.Fprint(w, `<fieldset class="claimfield">`)
 	fmt.Fprint(w, `<label for="BonusID">Bonus code</label>`)
 	fmt.Fprintf(w, `<input type="text" id="BonusID" name="BonusID" class="BonusID" oninput="fetchBonusDetails(this)" value="%v">`, cr.BonusID)
-	fmt.Fprint(w, ` <span id="bonusDetails">more bollox</span>`)
+	fmt.Fprint(w, `<span>`)
+	fmt.Fprintf(w, ` <span id="bonusDetails">%v</span>`, bd.BriefDesc)
+
+	allflags := "ABDFNRT"
+
+	fmt.Printf("%v has [%v]\n", cr.BonusID, bd.Flags)
+
+	for _, c := range allflags {
+		hide := "hide"
+		if strings.Contains(bd.Flags, string(c)) {
+			hide = ""
+		}
+		switch c {
+		case 'A':
+			fmt.Fprintf(w, `<span id="bflagA" class="%v">%v</span>`, hide, emitImage(flag_alert, string(c), CS.FlagAlertTitle))
+		case 'B':
+			fmt.Fprintf(w, `<span id="bflagB" class="%v">%v</span>`, hide, emitImage(flag_bike, string(c), CS.FlagBikeTitle))
+		case 'D':
+			fmt.Fprintf(w, `<span id="bflagD" class="%v">%v</span>`, hide, emitImage(flag_daylight, string(c), CS.FlagDaylightTitle))
+		case 'F':
+			fmt.Fprintf(w, `<span id="bflagF" class="%v">%v</span>`, hide, emitImage(flag_face, string(c), CS.FlagFaceTitle))
+		case 'N':
+			fmt.Fprintf(w, `<span id="bflagN" class="%v">%v</span>`, hide, emitImage(flag_night, string(c), CS.FlagNightTitle))
+		case 'R':
+			fmt.Fprintf(w, `<span id="bflagR" class="%v">%v</span>`, hide, emitImage(flag_restricted, string(c), CS.FlagRestrictedTitle))
+		case 'T':
+			fmt.Fprintf(w, `<span id="bflagT" class="%v">%v</span>`, hide, emitImage(flag_receipt, string(c), CS.FlagReceiptTitle))
+		}
+	}
+
+	fmt.Fprint(w, `</span>`)
 	fmt.Fprint(w, `</fieldset>`)
 
 	fmt.Fprint(w, `<fieldset class="claimphotos">`)
+	ebcimg := strings.ReplaceAll(filepath.Join(CS.ImgEbcFolder, filepath.Base(cr.Photo)), "\\", "/")
+	fmt.Fprintf(w, `<img title="%v" src="%v" alt="%v">`, CS.EBCImgTitle, ebcimg, ebcimg)
+	rbimg := strings.ReplaceAll(filepath.Join(CS.ImgBonusFolder, bd.Image), "\\", "/")
+	fmt.Fprintf(w, `<img title="%v" src="%v" alt="%v">`, CS.RallyBookImgTitle, rbimg, bd.Image)
 	fmt.Fprint(w, `</fieldset>`)
 
 	fmt.Fprint(w, `<fieldset class="claimfield">`)
@@ -469,14 +564,57 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `<label for="ClaimDate">Claim time</label>`)
 	fmt.Fprintf(w, `<input type="hidden" id="ClaimTimeISO" name="ClaimTime" value="%v">`, cr.ClaimTime)
 	fmt.Fprint(w, `<span>`)
-	fmt.Fprintf(w, `<input type="date" id="ClaimDate" value="%v">`, claimdate)
-	fmt.Fprintf(w, ` <input type="time" id="ClaimTime" value="%v">`, claimtime)
+	fmt.Fprintf(w, `<input type="date" id="ClaimDate" value="%v" onchange="fixClaimTimeISO()">`, claimdate)
+	fmt.Fprintf(w, ` <input type="time" id="ClaimTime" value="%v" onchange="fixClaimTimeISO()">`, claimtime)
 	fmt.Fprint(w, `</span>`)
+	fmt.Fprint(w, `</fieldset>`)
+
+	hide = "hide"
+	if CS.RallyUseQA {
+		hide = ""
+	}
+	fmt.Fprintf(w, `<fieldset class="claimfield %v">`, hide)
+
+	const GoodResult = "&#9745;"
+	const BadResult = "&#9746;"
+
+	fmt.Fprint(w, `<label for="AnswerSupplied">Answer</label>`)
+	fmt.Fprintf(w, `<input id="AnswerSupplied" name="AnswerSupplied" class="AnswerSupplied" value="%v">`, cr.AnswerSupplied)
+	checked := ""
+	if cr.QuestionAnswered {
+		checked = "checked"
+	}
+	fmt.Fprintf(w, ` <span>%v <input type="radio" name="QuestionAnswered" id="QuestionAnsweredY" value="1" %v> `, GoodResult, checked)
+	if !cr.QuestionAnswered {
+		checked = "checked"
+	}
+	fmt.Fprintf(w, ` %v <input class="" type="radio" name="QuestionAnswered" id="QuestionAnsweredN" value="0" %v> `, BadResult, checked)
+
+	fmt.Fprintf(w, ` <span id="CorrectAnswer" class="CorrectAnswer">%v</span></span>`, bd.Answer)
+	fmt.Fprint(w, `</fieldset>`)
+
+	hide = "hide"
+	fmt.Printf("bd=%v\n", bd)
+	if bd.AskPoints {
+		hide = ""
+	}
+	fmt.Fprintf(w, `<fieldset id="askpoints" class="claimfield %v">`, hide)
+	fmt.Fprint(w, `<label for="Points">Points</label>`)
+	fmt.Fprintf(w, `<input type="number" id="Points" name="Points" class="Points" value="%v">`, bd.Points)
+	fmt.Fprint(w, `</fieldset>`)
+
+	hide = "hide"
+	if bd.AskMins {
+		hide = ""
+	}
+	fmt.Fprintf(w, `<fieldset class="claimfield %v">`, hide)
+	fmt.Fprint(w, `<label for="RestMinutes">Rest minutes</label>`)
+	fmt.Fprintf(w, `<input type="number" id="RestMinutes" name="RestMinutes" class="RestMinutes" value="%v">`, bd.RestMins)
 	fmt.Fprint(w, `</fieldset>`)
 
 	fmt.Fprint(w, `<fieldset class="claimfield">`)
 	fmt.Fprint(w, `<label for="DecisionSelect">Decision</label>`)
-	fmt.Fprintf(w, `<input type="hidden" id="Decision" name="Decision" value="%v">`, cr.Decision)
+	fmt.Fprintf(w, `<input type="hidden" id="chosenDecision" name="Decision" value="%v">`, cr.Decision)
 	fmt.Fprint(w, `<select id="DecisionSelect" onchange="updateClaimDecision(this)">`)
 	sel := ""
 	if cr.Decision < 0 {
@@ -496,9 +634,10 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprint(w, `<fieldset class="claimfield">`)
 	fmt.Fprint(w, `<label for="JudgesNotes">Notes</label>`)
-	fmt.Fprintf(w, `<input type="text" id="JudgesNotes" name="JudgesNotes" value=%v">`, cr.JudgesNotes)
+	fmt.Fprintf(w, `<input type="text" id="JudgesNotes" name="JudgesNotes" class="judgesnotes" value="%v">`, cr.JudgesNotes)
 	fmt.Fprint(w, `</fieldset>`)
 
+	fmt.Fprint(w, `<button class="closebutton" onclick="saveUpdatedClaim(this);return false">Save updated claim</botton>`)
 	fmt.Fprint(w, `</form>`)
 
 	fmt.Fprint(w, `</div>`)

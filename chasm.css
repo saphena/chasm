@@ -68,9 +68,6 @@
 .singlerule input[type="number"] {
   width: 5em;
 }
-.hide {
-  display: none;
-}
 
 fieldset.inline {
   display: inline;
@@ -283,7 +280,13 @@ div.claim {
 .subject {
   width: 30em;
 }
-
+.BonusID {
+  text-transform: uppercase;
+  width: 6em;
+}
+.Points, .RestMinutes {
+  width: 5em;
+}
 .claimfield {
   margin: 1em;
   display: grid;
@@ -297,4 +300,12 @@ div.claim {
 
 .claimfield input {
   margin-right: 1em;
+}
+
+.claimphotos {
+  display: grid;
+  grid-template-columns: .5fr .5fr;
+}
+.hide {
+  display: none;
 }
