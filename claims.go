@@ -55,17 +55,18 @@ type ElectronicBonusClaim struct {
 }
 
 type BonusClaimVars struct {
-	BriefDesc string
-	Points    int
-	Notes     string
-	Flags     string
-	AskPoints bool
-	RestMins  int
-	AskMins   bool
-	Image     string
-	Question  string
-	Answer    string
-	Leg       int
+	BriefDesc      string
+	Points         int
+	Notes          string
+	Flags          string
+	AskPoints      bool
+	PointsAreMults bool
+	RestMins       int
+	AskMins        bool
+	Image          string
+	Question       string
+	Answer         string
+	Leg            int
 }
 
 type ClaimRecord struct {
@@ -128,7 +129,8 @@ func fetchBonusVars(b string) BonusClaimVars {
 	err = rows.Scan(&res.BriefDesc, &res.Points, &res.Notes, &res.Flags, &ap, &res.RestMins, &am, &res.Image, &res.Question, &res.Answer)
 	checkerr(err)
 	res.AskMins = am != 0
-	res.AskPoints = am != 0
+	res.AskPoints = ap == 1
+	res.PointsAreMults = ap == 2
 	return res
 }
 
@@ -212,7 +214,7 @@ func list_claims(w http.ResponseWriter, r *http.Request) {
 		sel = "selected"
 	}
 	fmt.Fprintf(w, `<div class="select"">%v `, filter_icon)
-	fmt.Fprintf(w, `<button autofocus title="Add new claim">%v</button> <span id="fcc"></span>`, addnew_icon)
+	fmt.Fprintf(w, `<button autofocus title="Add new claim" onclick="window.location.href='/claim?c=0';return false">%v</button> <span id="fcc"></span>`, addnew_icon)
 	fmt.Fprintf(w, ` <select name="esel" value="%v" onchange="reloadClaimslog()">`, esel)
 	fmt.Fprintf(w, `<option value="0" %v>all claims</option>`, sel)
 
@@ -442,20 +444,36 @@ func logtime(stamp string) string {
 
 func insertNewClaim(w http.ResponseWriter, r *http.Request) {
 
+	const Leg = 1
+
+	sqlx := "INSERT INTO claims (LoggedAt, ClaimTime, EntrantID, BonusID, OdoReading, Decision, Photo, Points, RestMinutes, Leg"
+	sqlx += ", AnswerSupplied, QuestionAnswered, JudgesNotes, PercentPenalty) "
+	sqlx += "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)"
+	//r.FormValue("AnswerSupplied"), r.FormValue("QuestionAnswered"),
+	stmt, err := DBH.Prepare(sqlx)
+	checkerr(err)
+	defer stmt.Close()
+	_, err = stmt.Exec(time.Now().Format(time.RFC3339), r.FormValue("ClaimTime"), r.FormValue("EntrantID"), strings.ToUpper(r.FormValue("BonusID")), r.FormValue("OdoReading"), r.FormValue("Decision"), filepath.Base(r.FormValue("Photo")), r.FormValue("Points"), r.FormValue(("RestMinutes")), Leg, r.FormValue("AnswerSupplied"), r.FormValue("QuestionAnswered"), r.FormValue("JudgesNotes"), intval(r.FormValue("PercentPenalty")))
+	checkerr(err)
+
 }
 func saveClaim(w http.ResponseWriter, r *http.Request) {
 
+	//fmt.Printf("saveclaim: %v\n", r)
 	claimid := intval(r.FormValue("claimid"))
+
 	if claimid < 1 {
 		insertNewClaim(w, r)
 		return
 	}
 	sqlx := "UPDATE claims SET ClaimTime=?,EntrantID=?,BonusID=?,OdoReading=?,AnswerSupplied=?,QuestionAnswered=?,Points=?,RestMinutes=?,Decision=?,JudgesNotes=?"
+	sqlx += ",PercentPenalty=?"
 	sqlx += " WHERE rowid=?"
+
 	stmt, err := DBH.Prepare(sqlx)
 	checkerr(err)
 	defer stmt.Close()
-	_, err = stmt.Exec(r.FormValue("ClaimTime"), r.FormValue("EntrantID"), strings.ToUpper(r.FormValue("BonusID")), r.FormValue("OdoReading"), r.FormValue("AnswerSupplied"), r.FormValue("QuestionAnswered"), r.FormValue("Points"), r.FormValue(("RestMinutes")), r.FormValue("Decision"), r.FormValue("JudgesNotes"), claimid)
+	_, err = stmt.Exec(r.FormValue("ClaimTime"), r.FormValue("EntrantID"), strings.ToUpper(r.FormValue("BonusID")), r.FormValue("OdoReading"), r.FormValue("AnswerSupplied"), r.FormValue("QuestionAnswered"), r.FormValue("Points"), r.FormValue(("RestMinutes")), r.FormValue("Decision"), r.FormValue("JudgesNotes"), intval(r.FormValue("PercentPenalty")), claimid)
 	checkerr(err)
 }
 
@@ -481,20 +499,22 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `<input type="hidden" name="claimid" value="%v">`, claimid)
 	if claimid < 1 {
 		fmt.Fprint(w, `<h4>Filing new claim</h4>`)
-		fmt.Fprint(w, `<input type="text" class="subject" placeholder="Paste email Subject line here" oninput="pasteNewClaim(this)">`)
+		fmt.Fprint(w, `<input type="text" autofocus tabindex="1" class="subject" placeholder="Paste email Subject line here" oninput="pasteNewClaim(this)">`)
 		cr.Decision = -1 // undecided
 		claimdate = time.Now().Format("2006-01-02")
 	} else {
 		cr = fetchClaimDetails((claimid))
-		claimdate = cr.ClaimTime[0:10]
-		claimtime = cr.ClaimTime[11:16]
+		if len(cr.ClaimTime) > 12 {
+			claimdate = cr.ClaimTime[0:10]
+			claimtime = cr.ClaimTime[11:16]
+		}
 		ed = fetchEntrantDetails(cr.EntrantID)
 		bd = fetchBonusVars(cr.BonusID)
 		fmt.Fprint(w, `<h4>Updating claim details</h4>`)
 	}
 	fmt.Fprint(w, `<fieldset class="claimfield">`)
 	fmt.Fprint(w, `<label for="EntrantID">Entrant</label>`)
-	fmt.Fprint(w, `<input type="number" id="EntrantID" name="EntrantID" class="EntrantID" oninput="fetchEntrantDetails(this)"`)
+	fmt.Fprint(w, `<input type="number" tabindex="2" id="EntrantID" name="EntrantID" class="EntrantID" oninput="fetchEntrantDetails(this)"`)
 	if claimid > 0 {
 		fmt.Fprintf(w, ` value="%v"`, cr.EntrantID)
 	}
@@ -502,7 +522,7 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `<span>`)
 	fmt.Fprintf(w, ` <span id="entrantDetails">%v</span>`, ed.RiderName)
 	hide := ""
-	fmt.Printf("Pillion='%v', Team=%v\n", ed.PillionName, ed.TeamID)
+	//fmt.Printf("Pillion='%v', Team=%v\n", ed.PillionName, ed.TeamID)
 	if ed.PillionName == "" && ed.TeamID < 1 {
 		hide = "hide"
 	}
@@ -514,13 +534,13 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprint(w, `<fieldset class="claimfield">`)
 	fmt.Fprint(w, `<label for="BonusID">Bonus code</label>`)
-	fmt.Fprintf(w, `<input type="text" id="BonusID" name="BonusID" class="BonusID" oninput="fetchBonusDetails(this)" value="%v">`, cr.BonusID)
+	fmt.Fprintf(w, `<input type="text" tabindex="3" id="BonusID" name="BonusID" class="BonusID" oninput="fetchBonusDetails(this)" value="%v">`, cr.BonusID)
 	fmt.Fprint(w, `<span>`)
 	fmt.Fprintf(w, ` <span id="bonusDetails">%v</span>`, bd.BriefDesc)
 
 	allflags := "ABDFNRT"
 
-	fmt.Printf("%v has [%v]\n", cr.BonusID, bd.Flags)
+	//fmt.Printf("%v has [%v]\n", cr.BonusID, bd.Flags)
 
 	for _, c := range allflags {
 		hide := "hide"
@@ -550,22 +570,25 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprint(w, `<fieldset class="claimphotos">`)
 	ebcimg := strings.ReplaceAll(filepath.Join(CS.ImgEbcFolder, filepath.Base(cr.Photo)), "\\", "/")
-	fmt.Fprintf(w, `<img title="%v" src="%v" alt="%v">`, CS.EBCImgTitle, ebcimg, ebcimg)
+	if cr.Photo == "" {
+		ebcimg = ""
+	}
+	fmt.Fprintf(w, `<img title="%v" src="%v" alt="%v" data-folder="%v">`, CS.EBCImgTitle, ebcimg, ebcimg, CS.ImgEbcFolder)
 	rbimg := strings.ReplaceAll(filepath.Join(CS.ImgBonusFolder, bd.Image), "\\", "/")
-	fmt.Fprintf(w, `<img title="%v" src="%v" alt="%v">`, CS.RallyBookImgTitle, rbimg, bd.Image)
+	fmt.Fprintf(w, `<img id="bonusPhoto" title="%v" src="%v" alt="%v" data-folder="%v">`, CS.RallyBookImgTitle, rbimg, bd.Image, CS.ImgBonusFolder)
 	fmt.Fprint(w, `</fieldset>`)
 
 	fmt.Fprint(w, `<fieldset class="claimfield">`)
 	fmt.Fprint(w, `<label for="OdoReading">Odo reading</label>`)
-	fmt.Fprintf(w, `<input type="number" id="OdoReading" name="OdoReading" class="odo" value="%v">`, cr.OdoReading)
+	fmt.Fprintf(w, `<input type="number" tabindex="4" id="OdoReading" name="OdoReading" class="odo" value="%v">`, cr.OdoReading)
 	fmt.Fprint(w, `</fieldset>`)
 
 	fmt.Fprint(w, `<fieldset class="claimfield">`)
 	fmt.Fprint(w, `<label for="ClaimDate">Claim time</label>`)
 	fmt.Fprintf(w, `<input type="hidden" id="ClaimTimeISO" name="ClaimTime" value="%v">`, cr.ClaimTime)
 	fmt.Fprint(w, `<span>`)
-	fmt.Fprintf(w, `<input type="date" id="ClaimDate" value="%v" onchange="fixClaimTimeISO()">`, claimdate)
-	fmt.Fprintf(w, ` <input type="time" id="ClaimTime" value="%v" onchange="fixClaimTimeISO()">`, claimtime)
+	fmt.Fprintf(w, `<input type="date" tabindex="13" id="ClaimDate" value="%v" onchange="fixClaimTimeISO()">`, claimdate)
+	fmt.Fprintf(w, ` <input type="time" tabindex="5" id="ClaimTime" value="%v" onchange="fixClaimTimeISO()">`, claimtime)
 	fmt.Fprint(w, `</span>`)
 	fmt.Fprint(w, `</fieldset>`)
 
@@ -579,28 +602,33 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 	const BadResult = "&#9746;"
 
 	fmt.Fprint(w, `<label for="AnswerSupplied">Answer</label>`)
-	fmt.Fprintf(w, `<input id="AnswerSupplied" name="AnswerSupplied" class="AnswerSupplied" value="%v">`, cr.AnswerSupplied)
+	fmt.Fprintf(w, `<input id="AnswerSupplied" tabindex="6" name="AnswerSupplied" class="AnswerSupplied" value="%v">`, cr.AnswerSupplied)
 	checked := ""
 	if cr.QuestionAnswered {
 		checked = "checked"
 	}
-	fmt.Fprintf(w, ` <span>%v <input type="radio" name="QuestionAnswered" id="QuestionAnsweredY" value="1" %v> `, GoodResult, checked)
+	fmt.Fprintf(w, ` <span>%v <input type="radio" tabindex="7" name="QuestionAnswered" id="QuestionAnsweredY" value="1" %v> `, GoodResult, checked)
+	checked = ""
 	if !cr.QuestionAnswered {
 		checked = "checked"
 	}
-	fmt.Fprintf(w, ` %v <input class="" type="radio" name="QuestionAnswered" id="QuestionAnsweredN" value="0" %v> `, BadResult, checked)
+	fmt.Fprintf(w, ` %v <input class="" type="radio" tabindex="7" name="QuestionAnswered" id="QuestionAnsweredN" value="0" %v> `, BadResult, checked)
 
 	fmt.Fprintf(w, ` <span id="CorrectAnswer" class="CorrectAnswer">%v</span></span>`, bd.Answer)
 	fmt.Fprint(w, `</fieldset>`)
 
 	hide = "hide"
-	fmt.Printf("bd=%v\n", bd)
+	//fmt.Printf("bd=%v\n", bd)
 	if bd.AskPoints {
 		hide = ""
 	}
+	pm := "p"
+	if bd.PointsAreMults {
+		pm = "m"
+	}
 	fmt.Fprintf(w, `<fieldset id="askpoints" class="claimfield %v">`, hide)
 	fmt.Fprint(w, `<label for="Points">Points</label>`)
-	fmt.Fprintf(w, `<input type="number" id="Points" name="Points" class="Points" value="%v">`, bd.Points)
+	fmt.Fprintf(w, `<input type="number" tabindex="8" id="Points" name="Points" class="Points" data-pm="%v" value="%v">`, pm, cr.Points)
 	fmt.Fprint(w, `</fieldset>`)
 
 	hide = "hide"
@@ -609,13 +637,13 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Fprintf(w, `<fieldset class="claimfield %v">`, hide)
 	fmt.Fprint(w, `<label for="RestMinutes">Rest minutes</label>`)
-	fmt.Fprintf(w, `<input type="number" id="RestMinutes" name="RestMinutes" class="RestMinutes" value="%v">`, bd.RestMins)
+	fmt.Fprintf(w, `<input type="number" tabindex="9" id="RestMinutes" name="RestMinutes" class="RestMinutes" value="%v">`, cr.RestMinutes)
 	fmt.Fprint(w, `</fieldset>`)
 
 	fmt.Fprint(w, `<fieldset class="claimfield">`)
 	fmt.Fprint(w, `<label for="DecisionSelect">Decision</label>`)
 	fmt.Fprintf(w, `<input type="hidden" id="chosenDecision" name="Decision" value="%v">`, cr.Decision)
-	fmt.Fprint(w, `<select id="DecisionSelect" onchange="updateClaimDecision(this)">`)
+	fmt.Fprint(w, `<select id="DecisionSelect" tabindex="10" onchange="updateClaimDecision(this)">`)
 	sel := ""
 	if cr.Decision < 0 {
 		sel = "selected"
@@ -630,14 +658,28 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprint(w, `</select>`)
+
+	hide = "hide"
+	if CS.RallyUsePctPen {
+		hide = ""
+	}
+	fmt.Fprintf(w, ` <span class="%v">&nbsp;&nbsp;&nbsp;`, hide)
+	fmt.Fprintf(w, ` <label for="PercentPenalty">%v%% Penalty</label>`, CS.RallyPctPenVal)
+	fmt.Fprintf(w, `<input type="hidden" id="valPercentPenalty" value="%v">`, CS.RallyPctPenVal)
+	checked = ""
+	if cr.PercentPenalty {
+		checked = "checked"
+	}
+	fmt.Fprintf(w, `<input type="checkbox" tabindex="14" id="PercentPenalty" onchange="applyPercentPenalty(this.checked)" name="PercentPenalty" value="1" %v>`, checked)
+	fmt.Fprint(w, `</span>`)
 	fmt.Fprint(w, `</fieldset>`)
 
 	fmt.Fprint(w, `<fieldset class="claimfield">`)
 	fmt.Fprint(w, `<label for="JudgesNotes">Notes</label>`)
-	fmt.Fprintf(w, `<input type="text" id="JudgesNotes" name="JudgesNotes" class="judgesnotes" value="%v">`, cr.JudgesNotes)
+	fmt.Fprintf(w, `<input type="text" tabindex="11" id="JudgesNotes" name="JudgesNotes" class="judgesnotes" value="%v">`, cr.JudgesNotes)
 	fmt.Fprint(w, `</fieldset>`)
 
-	fmt.Fprint(w, `<button class="closebutton" onclick="saveUpdatedClaim(this);return false">Save updated claim</botton>`)
+	fmt.Fprint(w, `<button class="closebutton" tabindex="12" onclick="saveUpdatedClaim(this);return false">Save updated claim</botton>`)
 	fmt.Fprint(w, `</form>`)
 
 	fmt.Fprint(w, `</div>`)
@@ -646,21 +688,6 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 func showEBC(w http.ResponseWriter, r *http.Request) {
 
 	const email_icon = "&#9993;"
-
-	/*
-		sqlx := `SELECT ebclaims.rowid,ebclaims.EntrantID,RiderName,PillionName,ebclaims.BonusID,xbonus.BriefDesc
-			    ,OdoReading,ClaimTime,ExtraField,StrictOK,xphoto.Image,Notes,Flags,TeamID
-			    ,ebclaims.AttachmentTime As PhotoTS, ebclaims.DateTime As EmailTS,ebclaims.LoggedAt,ebclaims.Subject
-			    ,xbonus.Points,xbonus.AskPoints,xbonus.RestMinutes,xbonus.AskMinutes,xbonus.Image as BImage,Question,Answer
-			     FROM ebclaims LEFT JOIN entrants ON ebclaims.EntrantID=entrants.EntrantID
-			     LEFT JOIN (SELECT BonusID,BriefDesc,Notes,IfNull(Flags,'') AS Flags,Points,AskPoints,RestMinutes,AskMinutes,
-			    IfNull(Image,'') AS Image,IfNull(Question,'') AS Question,IfNull(Answer,'') AS Answer FROM bonuses
-			     ) AS xbonus
-			     ON ebclaims.BonusID=xbonus.BonusID  LEFT JOIN "
-			     (SELECT EmailID,Group_concat(Image) As Image from ebcphotos GROUP BY EmailID) AS xphoto
-				 ON ebclaims.EmailID=xphoto.EmailID WHERE Processed=0 ORDER BY Decision DESC,FinalTime;`
-
-	*/
 
 	claimid := r.FormValue("c")
 	if claimid == "" {
@@ -770,8 +797,42 @@ func showEBC(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `<div>`)
 
 	fmt.Fprintf(w, `<input type="button" data-result="-1" name="Decision" onclick="closeEBC(this)" class="closebutton" value="%v">`, CS.CloseEBCUndecided)
+
+	hide := "hide"
+	//fmt.Printf("bd=%v\n", bd)
+	if bcv.AskPoints {
+		hide = ""
+	}
+	pm := "p"
+	if bcv.PointsAreMults {
+		pm = "m"
+	}
+	fmt.Fprintf(w, `<span id="askpoints" class=" %v">`, hide)
+	fmt.Fprint(w, `<label for="Points">Points</label> `)
+	fmt.Fprintf(w, `<input type="number"id="Points" name="Points" class="Points" data-pm="%v" value="%v"> `, pm, bcv.Points)
+	fmt.Fprint(w, `</span>`)
+
+	hide = "hide"
+	if bcv.AskMins {
+		hide = ""
+	}
+	fmt.Fprintf(w, `<span class=" %v">`, hide)
+	fmt.Fprint(w, `<label for="RestMinutes">Rest minutes</label> `)
+	fmt.Fprintf(w, `<input type="number" id="RestMinutes" name="RestMinutes" class="RestMinutes" value="%v"> `, bcv.RestMins)
+	fmt.Fprint(w, `</span>`)
+
 	fmt.Fprintf(w, `<input type="button" data-result="0"  name="Decision" onclick="closeEBC(this)" class="closebutton" value="%v">`, CS.CloseEBC[0])
-	x = "***"
+
+	hide = "hide"
+	if CS.RallyUsePctPen {
+		hide = ""
+	}
+	fmt.Fprintf(w, ` <span class="%v">`, hide)
+	fmt.Fprintf(w, `<input type="hidden" id="valPercentPenalty" value="%v">`, CS.RallyPctPenVal)
+	fmt.Fprintf(w, `<input type="button" class="closebutton" data-result="0" id="PercentPenalty" onchange="applyPercentPenalty(true)" name="PercentPenalty" value="%v%% Penalty">`, CS.RallyPctPenVal)
+	fmt.Fprint(w, `</span>`)
+
+	x = ""
 	fmt.Fprintf(w, `<input type="text" id="judgesnotes" name="JudgesNotes" oninput="killReload(this)" class="judgesnotes" value="%v">`, x)
 	fmt.Fprint(w, `</div>`)
 	fmt.Fprint(w, `<div>`)
@@ -847,7 +908,7 @@ func intval(x string) int {
 func saveEBC(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
-	fmt.Println(r.Form)
+	//fmt.Println(r.Form)
 
 	decision := intval(r.FormValue("Decision"))
 	processed := 0
@@ -857,7 +918,7 @@ func saveEBC(w http.ResponseWriter, r *http.Request) {
 	claimid := intval(r.FormValue("claimid"))
 
 	sqlx := fmt.Sprintf("UPDATE ebclaims SET Processed=%v, Decision=%v WHERE Processed=0 AND rowid=%v", processed, decision, claimid)
-	fmt.Println(sqlx)
+	//fmt.Println(sqlx)
 	res, err := DBH.Exec(sqlx)
 	checkerr(err)
 	n, err := res.RowsAffected()

@@ -40,6 +40,11 @@ func ajaxFetchBonusDetails(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `,"flags":"%v","img":"%v"`, bd.Flags, bd.Image)
 	fmt.Fprintf(w, `,"notes":"%v"`, bd.Notes)
 	fmt.Fprintf(w, `,"askpoints":%v`, jsonBool(bd.AskPoints))
+	pm := "p"
+	if bd.PointsAreMults {
+		pm = "m"
+	}
+	fmt.Fprintf(w, `,"pointsaremults":'%v'`, pm)
 	fmt.Fprintf(w, `,"askmins":%v`, jsonBool(bd.AskMins))
 	fmt.Fprintf(w, `,"points":%v`, bd.Points)
 	fmt.Fprintf(w, `,"question":"%v"`, bd.Question)

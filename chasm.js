@@ -86,8 +86,16 @@ function fetchBonusDetails(obj) {
             s.classList.add("hide");
           }
         }
+        let pts = document.getElementById("Points");
+        pts.value = data.points;
+        pts.setAttribute('data-pm',data.pointsaremults)
         let qa = document.getElementById("CorrectAnswer");
         if (qa) qa.innerHTML = data.answer;
+
+        let bp = document.getElementById("bonusPhoto");
+        if (bp) {
+          bp.setAttribute("src", bp.getAttribute("data-folder") + data.img);
+        }
         //console.log(data);
         /*
         if (data.team) {
@@ -225,14 +233,12 @@ function closeEBC(obj) {
   //frm.submit();
 }
 
-
 function fixClaimTimeISO() {
+  let iso = document.getElementById("ClaimTimeISO");
+  let dt = document.getElementById("ClaimDate");
+  let tm = document.getElementById("ClaimTime");
 
-  let iso = document.getElementById('ClaimTimeISO')
-  let dt = document.getElementById('ClaimDate')
-  let tm = document.getElementById('ClaimTime')
-
-  iso.value = dt.value+'T'+tm.value+iso.value.substring(16)
+  iso.value = dt.value + "T" + tm.value + iso.value.substring(16);
 }
 function reloadClaimslog() {
   let frm = document.getElementById("claimslogfrm");
@@ -323,9 +329,11 @@ function pasteNewClaim(obj) {
   }
   let e = document.getElementById("EntrantID");
   e.value = x[1];
+  fetchEntrantDetails(e);
 
   let b = document.getElementById("BonusID");
   b.value = x[2];
+  fetchBonusDetails(b);
 
   let o = document.getElementById("OdoReading");
   o.value = x[3];
@@ -342,7 +350,6 @@ function pasteNewClaim(obj) {
   }
 }
 
-
 function saveUpdatedClaim(obj) {
   let frm = document.getElementById("iclaim");
   let url = "/x?f=saveclaim";
@@ -357,7 +364,7 @@ function saveUpdatedClaim(obj) {
   console.log(url);
   //alert(url)
   //return
-  fetch(url,{method: 'POST'})
+  fetch(url, { method: "POST" })
     .then((response) => {
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
@@ -377,9 +384,23 @@ function saveUpdatedClaim(obj) {
 }
 
 function updateClaimDecision(obj) {
+  let dec = document.getElementById("chosenDecision");
 
-  let dec = document.getElementById('chosenDecision')
- 
-  dec.value = obj.options[obj.selectedIndex].value
+  dec.value = obj.options[obj.selectedIndex].value;
+}
 
+function applyPercentPenalty(apply) {
+  let pts = document.getElementById("Points");
+  if (!pts) return;
+  if (pts.getAttribute("data-pm") == "m") return; // Can't discount mulitipliers
+  let pv = parseInt(pts.value);
+  let qv = document.getElementById("valPercentPenalty");
+  if (!qv) return;
+  let qvv = parseInt(qv.value);
+  let points2deduct = Math.floor((qvv / 100) * pv);
+  let points2return = Math.floor((pv * 100) / (100 - qvv));
+
+  if (apply) pv -= points2deduct;
+  else pv = points2return;
+  pts.value = pv;
 }
