@@ -88,22 +88,23 @@ function fetchBonusDetails(obj) {
         }
         let pts = document.getElementById("Points");
         pts.value = data.points;
-        pts.setAttribute('data-pm',data.pointsaremults)
+        pts.setAttribute("data-pm", data.pointsaremults);
+        let qan = document.getElementById("QuestionAnsweredN");
+        if (qan) qan.checked = true;
         let qa = document.getElementById("CorrectAnswer");
         if (qa) qa.innerHTML = data.answer;
 
         let bp = document.getElementById("bonusPhoto");
         if (bp) {
           bp.setAttribute("src", bp.getAttribute("data-folder") + data.img);
+          bp.setAttribute("alt", bp.getAttribute("data-folder") + data.img);
         }
-        //console.log(data);
-        /*
-        if (data.team) {
-          edf.classList.remove('hide')
-        } else {
-          edf.classList.add('hide')
+
+        let pct = document.getElementById("PercentPenalty");
+        if (pct && pct.checked) {
+          console.log("applying 10%");
+          applyPercentPenalty(true);
         }
-          */
       }
     })
     .catch((error) => {
@@ -203,14 +204,28 @@ function swapimg(img) {
 function closeEBC(obj) {
   let frm = document.getElementById("ebcform");
   let dec = document.getElementById("chosenDecision");
-  dec.value = obj.getAttribute("data-result");
+  dec.value = parseInt(obj.getAttribute("data-result"));
+
+  console.log("Closing " + obj.name + " ==" + dec.value);
+  if (dec.value == 0) {
+    applyCorrectAnswerBonus(true);
+    if (obj.getAttribute("id") == "PercentPenalty") {
+      applyPercentPenalty(true);
+    }
+  }
+
   let url = "/x?f=saveebc";
   let inps = frm.getElementsByTagName("input");
   for (let i = 0; i < inps.length; i++) {
     let nm = inps[i].getAttribute("name");
     if (nm && nm != "") {
-      url += "&" + nm + "=" + encodeURIComponent(inps[i].value);
+      if (inps[i].getAttribute("type") != "radio" || inps[i].checked) {
+        url += "&" + nm + "=" + encodeURIComponent(inps[i].value);
+      }
     }
+  }
+  if (obj.getAttribute("id") == "PercentPenalty") {
+    url += "&PercentPenalty=1";
   }
 
   console.log(url);
@@ -223,7 +238,7 @@ function closeEBC(obj) {
     })
     .then((data) => {
       if (!data.OK) {
-        window.location.href = "/listebc";
+        window.location.href = "/ebclist";
       }
     })
     .catch((error) => {
@@ -357,7 +372,17 @@ function saveUpdatedClaim(obj) {
   for (let i = 0; i < inps.length; i++) {
     let nm = inps[i].getAttribute("name");
     if (nm && nm != "") {
-      url += "&" + nm + "=" + encodeURIComponent(inps[i].value);
+      if (inps[i].getAttribute("type") != "radio" || inps[i].checked) {
+        if (inps[i].getAttribute("type") == "checkbox" && !inps[i].checked) {
+          url +=
+            "&" +
+            nm +
+            "=" +
+            encodeURIComponent(inps[i].getAttribute("data-unchecked"));
+        } else {
+          url += "&" + nm + "=" + encodeURIComponent(inps[i].value);
+        }
+      }
     }
   }
 
@@ -398,9 +423,30 @@ function applyPercentPenalty(apply) {
   if (!qv) return;
   let qvv = parseInt(qv.value);
   let points2deduct = Math.floor((qvv / 100) * pv);
-  let points2return = Math.floor((pv * 100) / (100 - qvv));
+  let points2return = pv - Math.ceil(((100 - qvv) / 100) * pv);
 
   if (apply) pv -= points2deduct;
-  else pv = points2return;
+  else pv += points2return;
   pts.value = pv;
+}
+
+function applyCorrectAnswerBonus(apply) {
+  let qa = document.getElementById("QuestionAnswered");
+  let qpts = parseInt(qa.getAttribute("data-pts"));
+  let ptsinp = document.getElementById("Points");
+  let pts = parseInt(ptsinp.value);
+  if (apply) {
+    pts += qpts;
+  } else {
+    pts -= qpts;
+  }
+  ptsinp.value = pts;
+}
+
+// this function is called while processing an EBC claim.
+// its effect is to leave the claim undecided and move it
+// to the end of the queue.
+function leaveUndecided() {
+  let lu = document.getElementById("leavebutton");
+  closeEBC(lu);
 }

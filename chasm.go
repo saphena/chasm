@@ -44,7 +44,7 @@ func ajaxFetchBonusDetails(w http.ResponseWriter, r *http.Request) {
 	if bd.PointsAreMults {
 		pm = "m"
 	}
-	fmt.Fprintf(w, `,"pointsaremults":'%v'`, pm)
+	fmt.Fprintf(w, `,"pointsaremults":"%v"`, pm)
 	fmt.Fprintf(w, `,"askmins":%v`, jsonBool(bd.AskMins))
 	fmt.Fprintf(w, `,"points":%v`, bd.Points)
 	fmt.Fprintf(w, `,"question":"%v"`, bd.Question)
@@ -124,7 +124,7 @@ func main() {
 
 	err = json.Unmarshal([]byte(defaultCS), &CS)
 	checkerr(err)
-	err = json.Unmarshal([]byte(secondDefault), &CS)
+	err = json.Unmarshal([]byte(debugDefaults), &CS)
 	checkerr(err)
 	//fmt.Printf("%v\n", CS)
 

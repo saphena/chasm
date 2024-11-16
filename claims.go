@@ -442,6 +442,19 @@ func logtime(stamp string) string {
 	return fmt.Sprintf(`<span title="%v">%v</span>`, stamp, ts.Format(showformat))
 }
 
+func ImgFromURL(url string) string {
+
+	if len(url) == 0 {
+		return url
+	}
+	res := strings.Split(url, "/")
+	ix := len(res) - 1
+	if ix < 0 {
+		ix = 0
+	}
+	return res[ix]
+}
+
 func insertNewClaim(w http.ResponseWriter, r *http.Request) {
 
 	const Leg = 1
@@ -602,19 +615,19 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 	const BadResult = "&#9746;"
 
 	fmt.Fprint(w, `<label for="AnswerSupplied">Answer</label>`)
-	fmt.Fprintf(w, `<input id="AnswerSupplied" tabindex="6" name="AnswerSupplied" class="AnswerSupplied" value="%v">`, cr.AnswerSupplied)
+	fmt.Fprintf(w, `<input id="AnswerSupplied" tabindex="6" name="AnswerSupplied" title="Answer supplied" class="AnswerSupplied" value="%v">`, cr.AnswerSupplied)
 	checked := ""
 	if cr.QuestionAnswered {
 		checked = "checked"
 	}
-	fmt.Fprintf(w, ` <span>%v <input type="radio" tabindex="7" name="QuestionAnswered" id="QuestionAnsweredY" value="1" %v> `, GoodResult, checked)
+	fmt.Fprintf(w, ` <span>%v <input type="radio" tabindex="7" name="QuestionAnswered" data-pts="%v" onchange="applyCorrectAnswerBonus(this.checked)" id="QuestionAnswered" value="1" %v> `, GoodResult, CS.RallyQAPoints, checked)
 	checked = ""
 	if !cr.QuestionAnswered {
 		checked = "checked"
 	}
-	fmt.Fprintf(w, ` %v <input class="" type="radio" tabindex="7" name="QuestionAnswered" id="QuestionAnsweredN" value="0" %v> `, BadResult, checked)
+	fmt.Fprintf(w, ` %v <input class="" type="radio" tabindex="7" name="QuestionAnswered" onchange="applyCorrectAnswerBonus(!this.checked)" id="QuestionAnsweredN" value="0" %v> `, BadResult, checked)
 
-	fmt.Fprintf(w, ` <span id="CorrectAnswer" class="CorrectAnswer">%v</span></span>`, bd.Answer)
+	fmt.Fprintf(w, ` <span id="CorrectAnswer" title="Correct answer" class="correctanswer">%v</span></span>`, bd.Answer)
 	fmt.Fprint(w, `</fieldset>`)
 
 	hide = "hide"
@@ -670,7 +683,7 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 	if cr.PercentPenalty {
 		checked = "checked"
 	}
-	fmt.Fprintf(w, `<input type="checkbox" tabindex="14" id="PercentPenalty" onchange="applyPercentPenalty(this.checked)" name="PercentPenalty" value="1" %v>`, checked)
+	fmt.Fprintf(w, `<input type="checkbox" tabindex="14" id="PercentPenalty" onchange="applyPercentPenalty(this.checked)" data-unchecked="0" name="PercentPenalty" value="1" %v>`, checked)
 	fmt.Fprint(w, `</span>`)
 	fmt.Fprint(w, `</fieldset>`)
 
@@ -688,6 +701,10 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 func showEBC(w http.ResponseWriter, r *http.Request) {
 
 	const email_icon = "&#9993;"
+
+	const answerGood = "&#10003;"
+	const answerBad = "&#10007;"
+	const answerTest = "&#8773;"
 
 	claimid := r.FormValue("c")
 	if claimid == "" {
@@ -737,13 +754,13 @@ func showEBC(w http.ResponseWriter, r *http.Request) {
 	//fmt.Fprintf(w, `<input type="hidden" name="OdoReading" value="%v">`, ebc.OdoReading)
 	fmt.Fprintf(w, `<input type="hidden" name="claimid" value="%v">`, claimid)
 	fmt.Fprint(w, `<input type="hidden" id="chosenDecision" name="Decision" value="-1">`)
-	fmt.Fprintf(w, `<input type="hidden" name="Points" value="%v">`, bcv.Points)
+	//fmt.Fprintf(w, `<input type="hidden" name="Points" value="%v">`, bcv.Points)
 	fmt.Fprintf(w, `<input type="hidden" name="NextURL" value="%v">`, r.URL.String())
 
 	fmt.Fprintf(w, `Entrant <span class="bold">%v %v</span>`, ebc.EntrantID, team)
 	x = getStringFromDB("SELECT BriefDesc FROM bonuses WHERE BonusID='"+ebc.Bonusid+"'", ebc.Bonusid)
 	fmt.Fprintf(w, ` Bonus <span class="bold">%v %v</span>`, ebc.Bonusid, x)
-	fmt.Fprint(w, ` <span id="claimstats">Claimed @ `)
+	fmt.Fprint(w, ` <span id="claimstats" class="link">Claimed @ `)
 	evidence := "Photo: " + ebc.AttachmentTime + "\n"
 	evidence += "Claim: " + ebc.ClaimTime + "\n"
 	evidence += "Email: " + ebc.DateTime + "\n"
@@ -794,11 +811,32 @@ func showEBC(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprint(w, `</div>`) // row
 
+	hide := "hide"
+	if CS.RallyUseQA && bcv.Answer != "" {
+		hide = ""
+	}
+	fmt.Fprintf(w, `<div class="qa %v">`, hide)
+	fmt.Fprint(w, `<label for="AnswerSupplied">QQQ?</label> `)
+	fmt.Fprintf(w, `<input type="text" id="AnswerSupplied" name="AnswerSupplied" title="Answer supplied by entrant" class="AnswerSupplied" readonly value="%v">`, ebc.ExtraField)
+	answerok := strings.EqualFold(ebc.ExtraField, bcv.Answer) && bcv.Answer != ""
+	checked := ""
+	if answerok {
+		checked = "checked"
+	}
+	fmt.Fprintf(w, ` <input type="radio" id="QuestionAnswered" data-pts="%v" name="QuestionAnswered" value="1" %v> %v &nbsp; `, CS.RallyQAPoints, checked, answerGood)
+	checked = ""
+	if !answerok {
+		checked = "checked"
+	}
+	fmt.Fprintf(w, ` <input type="radio" name="QuestionAnswered" id="QuestionAnsweredN"value="0" %v> %v &nbsp; `, checked, answerBad)
+	fmt.Fprintf(w, ` %v<span class="correctanswer" title="Correct answer">%v</span>`, answerTest, bcv.Answer)
+	fmt.Fprint(w, `</div>`)
+
 	fmt.Fprint(w, `<div>`)
 
-	fmt.Fprintf(w, `<input type="button" data-result="-1" name="Decision" onclick="closeEBC(this)" class="closebutton" value="%v">`, CS.CloseEBCUndecided)
+	fmt.Fprintf(w, `<input type="button" id="leavebutton" data-result="-1" name="Decision" onclick="closeEBC(this)" class="closebutton" value="%v">`, CS.CloseEBCUndecided)
 
-	hide := "hide"
+	hide = "hide"
 	//fmt.Printf("bd=%v\n", bd)
 	if bcv.AskPoints {
 		hide = ""
@@ -821,7 +859,7 @@ func showEBC(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `<input type="number" id="RestMinutes" name="RestMinutes" class="RestMinutes" value="%v"> `, bcv.RestMins)
 	fmt.Fprint(w, `</span>`)
 
-	fmt.Fprintf(w, `<input type="button" data-result="0"  name="Decision" onclick="closeEBC(this)" class="closebutton" value="%v">`, CS.CloseEBC[0])
+	fmt.Fprintf(w, `<input type="button" data-result="0"  name="Decision" autofocus onclick="closeEBC(this)" class="closebutton" value="%v">`, CS.CloseEBC[0])
 
 	hide = "hide"
 	if CS.RallyUsePctPen {
@@ -829,11 +867,11 @@ func showEBC(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Fprintf(w, ` <span class="%v">`, hide)
 	fmt.Fprintf(w, `<input type="hidden" id="valPercentPenalty" value="%v">`, CS.RallyPctPenVal)
-	fmt.Fprintf(w, `<input type="button" class="closebutton" data-result="0" id="PercentPenalty" onchange="applyPercentPenalty(true)" name="PercentPenalty" value="%v%% Penalty">`, CS.RallyPctPenVal)
+	fmt.Fprintf(w, `<input type="button" class="closebutton" data-result="0" id="PercentPenalty" onclick="closeEBC(this)" value="%v%% Penalty">`, CS.RallyPctPenVal)
 	fmt.Fprint(w, `</span>`)
 
 	x = ""
-	fmt.Fprintf(w, `<input type="text" id="judgesnotes" name="JudgesNotes" oninput="killReload(this)" class="judgesnotes" value="%v">`, x)
+	fmt.Fprintf(w, `<input type="text" id="judgesnotes" name="JudgesNotes" oninput="killReload(this)" class="judgesnotes" placeholder="Notes"  value="%v">`, x)
 	fmt.Fprint(w, `</div>`)
 	fmt.Fprint(w, `<div>`)
 	for i := 1; i < 10; i++ {
@@ -845,6 +883,21 @@ func showEBC(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `</form>`)
 
 	fmt.Fprint(w, `</article>`)
+
+	const trapkeys = `
+    document.onkeydown = function(evt) {
+    evt = evt || window.event;
+    var isEscape = false;
+    if ("key" in evt) {
+        isEscape = (evt.key === "Escape" || evt.key === "Esc");
+    } else {
+        isEscape = (evt.keyCode === 27);
+    }
+    if (isEscape) {
+        leaveUndecided();
+	}}
+`
+	fmt.Fprintf(w, `<script>%v</script>`, trapkeys)
 
 }
 
@@ -908,7 +961,8 @@ func intval(x string) int {
 func saveEBC(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
-	//fmt.Println(r.Form)
+	fmt.Println(r.Form)
+	fmt.Println(r.FormValue("Points"))
 
 	decision := intval(r.FormValue("Decision"))
 	processed := 0
@@ -923,9 +977,8 @@ func saveEBC(w http.ResponseWriter, r *http.Request) {
 	checkerr(err)
 	n, err := res.RowsAffected()
 	checkerr(err)
-	if n == 0 {
-		fmt.Fprint(w, `<p>Nowt happened</p>`)
-
+	if n == 0 || decision < 0 {
+		return
 	}
 
 	sqlx = "INSERT INTO claims (LoggedAt, ClaimTime, EntrantID, BonusID, OdoReading, Decision, Photo, Points, RestMinutes, AskPoints, AskMinutes, Leg"
@@ -946,7 +999,7 @@ func saveEBC(w http.ResponseWriter, r *http.Request) {
 	qanswered := intval(r.FormValue("QuestionAnswered"))
 	percent := intval(r.FormValue("PercentPenalty"))
 	_, err = stmt.Exec(LoggedAt, r.FormValue("ClaimTime"), r.FormValue("EntrantID"), r.FormValue("BonusID"),
-		r.FormValue("OdoReading"), decision, r.FormValue("Photo"), points, restmins, askpoints, askmins, CS.CurrentLeg,
+		r.FormValue("OdoReading"), decision, ImgFromURL(r.FormValue("Photo")), points, restmins, askpoints, askmins, CS.CurrentLeg,
 		r.FormValue("Evidence"), qasked, r.FormValue("AnswerSupplied"), qanswered, r.FormValue("JudgesNotes"), percent)
 	checkerr(err)
 

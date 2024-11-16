@@ -30,6 +30,7 @@ type chasmSettings struct {
 	RallyMinPoints      int
 	RallyTimezone       string
 	RallyUseQA          bool
+	RallyQAPoints       int
 	RallyUsePctPen      bool
 	RallyPctPenVal      int
 	FlagTeamTitle       string
@@ -67,7 +68,8 @@ const defaultCS = `{
 	"RallyMinPoints":		-99999,
 	"RallyTimezone":		"Europe/London",
 	"RallyUseQA":			false,
-	"RallyUsePctPen":		true,
+	"RallyQAPoints":		50,
+	"RallyUsePctPen":		false,
 	"RallyPctPenVal":		10,
 	"FlagTeamTitle":       	"Team rules",
 	"FlagAlertTitle":      	"Read the notes!",
@@ -87,6 +89,8 @@ const defaultCS = `{
 	"Rally":				{"A1":"AAAAAAAAAAAAAA","A2":"22222222222222"}
 }`
 
-const secondDefault = `{
-"RallyUseQA":				true
+const debugDefaults = `{
+	"RallyUseQA":			true,
+	"RallyUsePctPen":		true,
+	"RallyPctPenVal":		10
 }`
