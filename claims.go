@@ -455,13 +455,13 @@ func ImgFromURL(url string) string {
 	return res[ix]
 }
 
-func insertNewClaim(w http.ResponseWriter, r *http.Request) {
+func insertNewClaim(r *http.Request) {
 
 	const Leg = 1
 
 	sqlx := "INSERT INTO claims (LoggedAt, ClaimTime, EntrantID, BonusID, OdoReading, Decision, Photo, Points, RestMinutes, Leg"
 	sqlx += ", AnswerSupplied, QuestionAnswered, JudgesNotes, PercentPenalty) "
-	sqlx += "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)"
+	sqlx += "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
 	//r.FormValue("AnswerSupplied"), r.FormValue("QuestionAnswered"),
 	stmt, err := DBH.Prepare(sqlx)
 	checkerr(err)
@@ -470,13 +470,13 @@ func insertNewClaim(w http.ResponseWriter, r *http.Request) {
 	checkerr(err)
 
 }
-func saveClaim(w http.ResponseWriter, r *http.Request) {
+func saveClaim(r *http.Request) {
 
 	//fmt.Printf("saveclaim: %v\n", r)
 	claimid := intval(r.FormValue("claimid"))
 
 	if claimid < 1 {
-		insertNewClaim(w, r)
+		insertNewClaim(r)
 		return
 	}
 	sqlx := "UPDATE claims SET ClaimTime=?,EntrantID=?,BonusID=?,OdoReading=?,AnswerSupplied=?,QuestionAnswered=?,Points=?,RestMinutes=?,Decision=?,JudgesNotes=?"
@@ -1002,12 +1002,4 @@ func saveEBC(w http.ResponseWriter, r *http.Request) {
 		r.FormValue("OdoReading"), decision, ImgFromURL(r.FormValue("Photo")), points, restmins, askpoints, askmins, CS.CurrentLeg,
 		r.FormValue("Evidence"), qasked, r.FormValue("AnswerSupplied"), qanswered, r.FormValue("JudgesNotes"), percent)
 	checkerr(err)
-
-	/*
-		url := r.FormValue("NextURL")
-		if url == "" {
-			url = "/"
-		}
-		list_EBC_claims(w, url)
-	*/
 }

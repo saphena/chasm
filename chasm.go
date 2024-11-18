@@ -15,6 +15,9 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+// Set to true for production builds to suppress debug traps
+const ProductionBuild = false
+
 // DBNAME names the database file
 var DBNAME *string = flag.String("db", "chasm.db", "database file")
 
@@ -197,7 +200,7 @@ func json_requests(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, string(b))
 		return
 	case "saveclaim":
-		saveClaim(w, r)
+		saveClaim(r)
 		fmt.Fprint(w, `{"ok":true,"msg":"ok"}`)
 		return
 	case "saveebc":

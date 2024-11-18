@@ -41,7 +41,7 @@
   grid-template-columns: 18em 9em 8em 8em 4em;
 }
 .row.rankings {
-  grid-template-columns: 5em 16em 6em 6em 1fr;
+  grid-template-columns: 5em 16em 6em 6em 6em 6em 1fr;
 }
 .row:not(.hdr):hover {
   background: lightblue;

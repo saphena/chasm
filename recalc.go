@@ -62,6 +62,11 @@ var EntrantStatusLits = map[int]string{EntrantDNS: "DNS", EntrantOK: "ok", Entra
 
 const KmsPerMile = float64(1.60934)
 
+const RankTeamsAsIndividuals = 0
+const RankTeamsHighest = 1
+const RankTeamsLowest = 2
+const RankTeamsCloning = 3
+
 type ScorecardBonusDetail struct {
 	Bonusid      string
 	BriefDesc    string
@@ -192,6 +197,15 @@ type TimePenalty struct {
 	PenaltyFactor  int
 	PenaltyStart   time.Time
 	PenaltyFinish  time.Time
+}
+
+type RankingRecord struct {
+	EntrantID      int
+	TeamID         int
+	TotalPoints    int
+	CorrectedMiles int
+	PPM            float64
+	Rank           int
 }
 
 var TimePenalties []TimePenalty
@@ -391,6 +405,26 @@ func BuildRallyParameters(Leg int) {
 
 }
 
+func calcEntrantSpeed(Miles int, et EntrantTimes, TotalRest int) string {
+
+	var res string
+
+	if Miles < 1 {
+		return res
+	}
+	if !et.FinishTime.After(et.StartTime) {
+		return res
+	}
+	timediff := et.FinishTime.Sub(et.StartTime)
+	mins := timediff.Minutes() - float64(TotalRest)
+	hrs := mins / 60.0
+	speed := float64(Miles) / hrs
+
+	res = fmt.Sprintf("%5.2f", speed)
+	fmt.Printf("M=%v, Hrs=%v, speed=%v\n", Miles, hrs, res)
+	return res
+
+}
 func calcEntrantStatus(Miles int, et EntrantTimes, TotalPoints int) ([]ScorexLine, int) {
 
 	const DNF_icon = "DNF" //"&#9760;"
@@ -719,7 +753,9 @@ func checkApplySequences(BC ClaimedBonus, LastBonusClaimed ClaimedBonus) ScorexL
 
 func checkerr(err error) {
 	if err != nil {
-		panic(err)
+		if !ProductionBuild {
+			panic(err)
+		}
 	}
 }
 
@@ -1152,11 +1188,14 @@ func processCompoundNZ() ([]ScorexLine, int) {
 
 func recalc_all() {
 
-	DebugCount := 3 // For debugging purposes, only recalc the first n records
+	DebugCount := 33 // For debugging purposes, only recalc the first n records
 
+	//fmt.Println("Attempting transaction")
 	_, err := DBH.Exec("BEGIN TRANSACTION")
 	checkerr(err)
 	defer DBH.Exec("COMMIT")
+
+	//fmt.Println("Transaction ok")
 
 	sqlx := fmt.Sprintf("SELECT EntrantID FROM entrants WHERE EntrantStatus <> %v ORDER BY EntrantID", EntrantDNS)
 	rows, err := DBH.Query(sqlx)
@@ -1177,6 +1216,10 @@ func recalc_all() {
 		recalc_scorecard(e)
 	}
 
+	_, err = DBH.Exec("COMMIT")
+	checkerr(err)
+
+	rankEntrants(false)
 }
 
 // This recalculates the value of the specified scorecard using as
@@ -1204,6 +1247,7 @@ func recalc_scorecard(entrant int) {
 
 	var sx ScorexLine
 	TotalPoints := 0
+	TotalRest := 0
 	var Scorex []ScorexLine
 
 	var LastBonusClaimed ClaimedBonus
@@ -1336,6 +1380,7 @@ func recalc_scorecard(entrant int) {
 
 		updateBonusCatPoints(SB, BasicPoints) // Updating here gets wrong counts but correctly upgraded points
 
+		TotalRest += BC.RestMinutes
 		TotalPoints += BasicPoints
 		sx.IsValidLine = true
 		sx.Code = SB.Bonusid
@@ -1424,6 +1469,8 @@ func recalc_scorecard(entrant int) {
 
 	sxs, status := calcEntrantStatus(CorrectedMiles, et, TotalPoints)
 
+	speed := calcEntrantSpeed(CorrectedMiles, et, TotalRest)
+
 	Scorex = append(Scorex, sxs...)
 
 	htmlSX := htmlScorex(Scorex, entrant, status, TotalPoints)
@@ -1431,12 +1478,15 @@ func recalc_scorecard(entrant int) {
 	/* 	_, err = DBH.Exec("COMMIT")
 	   	checkerr(err)
 	*/
-	sqlx := "UPDATE entrants SET ScoreX=?,EntrantStatus=?,TotalPoints=?,CorrectedMiles=?,OdoRallyFinish=? WHERE EntrantID=?"
+
+	//fmt.Println("attempting update")
+	sqlx := "UPDATE entrants SET ScoreX=?,EntrantStatus=?,TotalPoints=?,CorrectedMiles=?,OdoRallyFinish=?,AvgSpeed=? WHERE EntrantID=?"
 	stmt, err := DBH.Prepare(sqlx)
 	checkerr(err)
 	defer stmt.Close()
+	//fmt.Println("update ok")
 
-	_, err = stmt.Exec(htmlSX, status, TotalPoints, CorrectedMiles, FinishOdo, entrant)
+	_, err = stmt.Exec(htmlSX, status, TotalPoints, CorrectedMiles, FinishOdo, speed, entrant)
 	checkerr(err)
 
 	// Debugging code below

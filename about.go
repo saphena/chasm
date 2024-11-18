@@ -64,7 +64,11 @@ func showAboutChasm(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `<dd>%v</dd>`, Author)
 	ibs := strings.ReplaceAll(strings.ReplaceAll(strings.Join(InspiredBy, ","), " ", "&nbsp;"), ",", ", ")
 	fmt.Fprintf(w, `<dt>Inspired by</dt><dd>%v</dd>`, ibs)
-	fmt.Fprintf(w, `<dt>Chasm [v%v]</dt><dd>github.com/saphena/chasm</dd>`, ChasmVersion)
+	dbg := " DEBUG ERROR TRAPS"
+	if ProductionBuild {
+		dbg = ""
+	}
+	fmt.Fprintf(w, `<dt>Chasm [v%v%v]</dt><dd>github.com/saphena/chasm</dd>`, ChasmVersion, dbg)
 	fmt.Fprintf(w, `<dt>EBCFetch [v%v]</dt><dd>github.com/ibauk/ebcfetch</dd>`, EBCFetchVersion)
 	fmt.Fprint(w, `<dt>Licence</dt>`)
 	fmt.Fprintf(w, `<dd class="link" onclick="toggleLicenceMIT()">MIT - Copyright &copy; %v %v</dd>`, CopyriteYear, CopyriteHolder)

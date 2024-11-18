@@ -33,6 +33,9 @@ type chasmSettings struct {
 	RallyQAPoints       int
 	RallyUsePctPen      bool
 	RallyPctPenVal      int
+	RallyRankEfficiency bool
+	RallySplitTies      bool
+	RallyTeamMethod     int
 	FlagTeamTitle       string
 	FlagAlertTitle      string
 	FlagBikeTitle       string
@@ -71,6 +74,9 @@ const defaultCS = `{
 	"RallyQAPoints":		50,
 	"RallyUsePctPen":		false,
 	"RallyPctPenVal":		10,
+	"RallyRankEfficiency":	false,
+	"RallySplitTies":		true,
+	"RallyTeamMethod":		3,
 	"FlagTeamTitle":       	"Team rules",
 	"FlagAlertTitle":      	"Read the notes!",
 	"FlagBikeTitle":       	"Bike in photo",
