@@ -158,6 +158,7 @@ func main() {
 	http.HandleFunc("/rule", show_rule)
 	http.HandleFunc("/rules", show_rules)
 	http.HandleFunc("/saveebc", saveEBC)
+	http.HandleFunc("/score", showScorecard)
 	http.HandleFunc("/updtcrule", update_rule)
 	http.HandleFunc("/x", json_requests)
 	http.HandleFunc("/", central_dispatch)

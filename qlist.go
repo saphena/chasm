@@ -14,6 +14,7 @@ type RankRecord struct {
 	Points   int
 	Eff      float64
 	Speed    string
+	Entrant  int
 }
 
 func show_qlist(w http.ResponseWriter, r *http.Request) {
@@ -54,7 +55,7 @@ func show_qlist(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `</fieldset>`)
 
 	sqlx := "SELECT ifnull(FinishPosition,0),RiderName,ifnull(PillionName,''),ifnull(CorrectedMiles,0),ifnull(TotalPoints,0),EntrantStatus"
-	sqlx += ",IfNull((TotalPoints*1.0) / CorrectedMiles,0) As PPM,ifnull(AvgSpeed,'')"
+	sqlx += ",IfNull((TotalPoints*1.0) / CorrectedMiles,0) As PPM,ifnull(AvgSpeed,''),EntrantID"
 	sqlx += " FROM entrants"
 	sqlx += " ORDER BY EntrantStatus DESC," + seq + " " + desc
 
@@ -65,12 +66,12 @@ func show_qlist(w http.ResponseWriter, r *http.Request) {
 		var rr RankRecord
 		var pn string
 
-		err = rows.Scan(&rr.Rank, &rr.Name, &pn, &rr.Distance, &rr.Points, &rr.Status, &rr.Eff, &rr.Speed)
+		err = rows.Scan(&rr.Rank, &rr.Name, &pn, &rr.Distance, &rr.Points, &rr.Status, &rr.Eff, &rr.Speed, &rr.Entrant)
 		checkerr(err)
 		if pn != "" {
 			rr.Name += " &amp; " + pn
 		}
-		fmt.Fprint(w, `<fieldset class="row rankings">`)
+		fmt.Fprintf(w, `<fieldset class="row rankings link" onclick="window.location.href='/score?e=%v'">`, rr.Entrant)
 		status := EntrantStatusLits[rr.Status]
 		if rr.Status == EntrantFinisher {
 			status = strconv.Itoa(rr.Rank)

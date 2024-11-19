@@ -98,5 +98,7 @@ const defaultCS = `{
 const debugDefaults = `{
 	"RallyUseQA":			true,
 	"RallyUsePctPen":		true,
-	"RallyPctPenVal":		10
+	"RallyPctPenVal":		10,
+	"RallyRankEfficiency":	false
+
 }`

@@ -314,6 +314,22 @@ div.claim {
 .correctanswer {
   font-style: italic;
 }
+.scorex {
+  margin: auto;
+  padding: 1em;
+  width: 180mm;
+  background-color:lightblue;
+}
+
+table.sxtable { background-color: lightblue; margin: 0 auto 0 auto; padding: 0 .5em 0 .5em; }
+table.sxtable caption { background-color: lightblue; border: solid; padding: .5em; margin: auto auto 0 auto;}
+table.sxtable tr { height: 1.5em; }
+table.sxtable tr:last-of-type td 	{ border-top: solid; }
+table.sxtable td { padding-right: .5em; vertical-align: top; }
+.sxdescx  { font-style: italic; font-size: smaller; }
+td.sxitempoints,
+td.sxtotalpoints { text-align: right; }
+
 .hide {
   display: none;
 }
