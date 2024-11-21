@@ -47,8 +47,13 @@ func showScorecard(w http.ResponseWriter, r *http.Request) {
 
 	startHTML(w, "Scorecard")
 
-	fmt.Fprintf(w, `<div class="scorecard hdr">`)
-	fmt.Fprintf(w, `<div class="topline">#%v %v</div>`, entrant, team)
+	mk := CS.UnitMilesLit
+	if CS.RallyUnitKms {
+		mk = CS.UnitKmsLit
+	}
+
+	fmt.Fprintf(w, `<div class="scorecard">`)
+	fmt.Fprintf(w, `<div class="topline noprint"><span>#%v %v</span><span>%v %v</span><span>%v points</span><span>%v</span></div>`, entrant, team, sr.Miles, mk, sr.Points, EntrantStatusLits[sr.Status])
 	fmt.Fprint(w, `</div>`)
 	fmt.Fprint(w, `</header>`)
 	fmt.Fprintf(w, `<div class="scorex">%v</div>`, sr.Scorex)

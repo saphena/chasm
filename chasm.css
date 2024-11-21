@@ -314,6 +314,21 @@ div.claim {
 .correctanswer {
   font-style: italic;
 }
+
+.topline {
+  margin: -1em 0 2em 0;
+  font-weight: normal;
+  background-color: burlywood;
+  padding: 8px 2em 8px 2em;
+  display: flex;
+  justify-content: space-between;
+}
+.topline.left {
+  justify-content: flex-start;
+}
+.topline span.pushright {
+  margin-right: 2em;
+}
 .scorex {
   margin: auto;
   padding: 1em;
@@ -326,10 +341,20 @@ table.sxtable caption { background-color: lightblue; border: solid; padding: .5e
 table.sxtable tr { height: 1.5em; }
 table.sxtable tr:last-of-type td 	{ border-top: solid; }
 table.sxtable td { padding-right: .5em; vertical-align: top; }
-.sxdescx  { font-style: italic; font-size: smaller; }
+.sxdescx  { margin-left: 3px; font-style: italic; font-size: smaller; }
 td.sxitempoints,
 td.sxtotalpoints { text-align: right; }
 
 .hide {
   display: none;
+}
+
+@media print {
+  * {
+    background-color: white;
+    color: black;
+  }
+  .noprint {
+    display: none;
+  }
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"strconv"
 )
 
@@ -30,7 +29,7 @@ func (a ByMiles) Swap(i, j int)       { a[i], a[j] = a[j], a[i] }
 
 func loadRankTable(sqlx string) []RanktabRecord {
 
-	fmt.Println(sqlx)
+	//fmt.Println(sqlx)
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
 	defer rows.Close()
@@ -126,7 +125,7 @@ func rankEntrants(intransaction bool) {
 
 		SplitNeeded := CS.RallySplitTies && rr.CorrectedMiles != lastCorrectedMiles
 
-		fmt.Printf("%v [%v] = %v (%v)\n", rr.EntrantID, rr.TeamID, rr.TotalPoints, rr.Rank)
+		//fmt.Printf("%v [%v] = %v (%v)\n", rr.EntrantID, rr.TeamID, rr.TotalPoints, rr.Rank)
 		if SplitNeeded {
 			if CS.RallyRankEfficiency {
 				SplitNeeded = rr.PPM == lastPPM

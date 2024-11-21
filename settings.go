@@ -66,7 +66,7 @@ const defaultCS = `{
 	"PenaltyMilesDNF":		99999,
 	"RallyTitle":			"Brit Butt Rally 2025",
 	"RallyMinMiles":		0,
-	"DebugRules":			true,
+	"DebugRules":			false,
 	"AutoLateDNF": 			true,
 	"RallyMinPoints":		-99999,
 	"RallyTimezone":		"Europe/London",

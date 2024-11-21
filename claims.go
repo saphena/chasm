@@ -97,7 +97,7 @@ type EntrantDetails struct {
 	TeamID      int
 }
 
-var EntrantSelector map[int]string
+//var EntrantSelector map[int]string
 
 func emitImage(img string, alt string, title string) string {
 
@@ -197,7 +197,7 @@ func list_claims(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
 
-	loadEntrantsList()
+	EntrantSelector := loadEntrantsList()
 
 	esel := intval(r.FormValue("esel"))
 
@@ -414,9 +414,9 @@ func list_EBC_claims(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func loadEntrantsList() {
+func loadEntrantsList() map[int]string {
 
-	EntrantSelector = make(map[int]string)
+	res := make(map[int]string)
 	sqlx := "SELECT EntrantID,RiderName,ifnull(PillionName,'') FROM entrants"
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
@@ -430,8 +430,9 @@ func loadEntrantsList() {
 		if pn != "" {
 			rn += " &amp; " + pn
 		}
-		EntrantSelector[e] = rn
+		res[e] = rn
 	}
+	return res
 }
 
 func logtime(stamp string) string {

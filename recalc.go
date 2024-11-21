@@ -421,7 +421,7 @@ func calcEntrantSpeed(Miles int, et EntrantTimes, TotalRest int) string {
 	speed := float64(Miles) / hrs
 
 	res = fmt.Sprintf("%5.2f", speed)
-	fmt.Printf("M=%v, Hrs=%v, speed=%v\n", Miles, hrs, res)
+	//fmt.Printf("M=%v, Hrs=%v, speed=%v\n", Miles, hrs, res)
 	return res
 
 }

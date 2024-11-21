@@ -277,12 +277,41 @@ function reloadClaimslog() {
   window.location.href = url;
 }
 
+function showQHotChanged(obj) {
+  let hot = "";
+  if (obj.checked) {
+    hot = "hot";
+  }
+  reloadRankings("hot", hot);
+}
+function showQOkChanged(obj) {
+  let ok = "";
+  if (obj.checked) {
+    ok = "ok";
+  }
+  reloadRankings("ok", ok);
+}
+function showQSpeedChanged(obj) {
+  let speed = "";
+  if (obj.checked) {
+    speed = "speed";
+  }
+  reloadRankings("speed", speed);
+}
 function reloadRankings(fld, val) {
   const args = new Map();
 
   let frm = document.getElementById("rankingsfrm");
   let inps = frm.getElementsByTagName("input");
   let url = "/qlist?x=x";
+  for (let i = 0; i < inps.length; i++) {
+    let nm = inps[i].getAttribute("name");
+    if (nm && nm != "") {
+      args.set(nm, inps[i].getAttribute("value"));
+    }
+  }
+  frm = document.getElementById("optionsfrm");
+  inps = frm.getElementsByTagName("input");
   for (let i = 0; i < inps.length; i++) {
     let nm = inps[i].getAttribute("name");
     if (nm && nm != "") {
