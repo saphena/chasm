@@ -153,12 +153,14 @@ func main() {
 	http.HandleFunc("/ebc", showEBC)
 	http.HandleFunc("/ebclist", list_EBC_claims)
 	http.HandleFunc("/help", show_help)
+	http.HandleFunc("/menu", show_menu)
 	http.HandleFunc("/qlist", show_qlist)
 	http.HandleFunc("/recalc", recalc_handler)
 	http.HandleFunc("/rule", show_rule)
 	http.HandleFunc("/rules", show_rules)
 	http.HandleFunc("/saveebc", saveEBC)
 	http.HandleFunc("/score", showScorecard)
+	http.HandleFunc("/setup", show_setup)
 	http.HandleFunc("/updtcrule", update_rule)
 	http.HandleFunc("/x", json_requests)
 	http.HandleFunc("/", central_dispatch)
@@ -278,6 +280,25 @@ func show_rule(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	fmt.Fprint(w, `OMG`)
+}
+
+func show_menu(w http.ResponseWriter, r *http.Request) {
+
+	menu := r.FormValue("menu")
+	if menu == "" {
+		menu = "main"
+	}
+
+	startHTML(w, menu)
+	showMenu(w, menu)
+
+}
+
+func show_setup(w http.ResponseWriter, r *http.Request) {
+
+	startHTML(w, "setup")
+
+	showMenu(w, "setup")
 }
 
 func central_dispatch(w http.ResponseWriter, r *http.Request) {

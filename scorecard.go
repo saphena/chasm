@@ -56,6 +56,6 @@ func showScorecard(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `<div class="topline noprint"><span>#%v %v</span><span>%v %v</span><span>%v points</span><span>%v</span></div>`, entrant, team, sr.Miles, mk, sr.Points, EntrantStatusLits[sr.Status])
 	fmt.Fprint(w, `</div>`)
 	fmt.Fprint(w, `</header>`)
-	fmt.Fprintf(w, `<div class="scorex">%v</div>`, sr.Scorex)
+	fmt.Fprintf(w, `<div class="scorex" title="Doubleclick to shows claims" ondblclick="window.location.href='/claims?esel=%v'">%v</div>`, entrant, sr.Scorex)
 
 }

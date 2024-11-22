@@ -21,10 +21,35 @@ var mainMenu = menu{
 	{"Review scorecards", "", "/cards", ""},
 	{"Current rankings", "Show state of play", "/qlist", "window.open(#url#,'qlist')"},
 	{"Finisher certificates", "Print Finisher certificates", "/fcerts", "window.open(#url#,'fcerts')"},
-	{"Rally setup &amp; config", "Acess all components", "/setup", ""},
+	{"Rally setup &amp; config", "Access all components", "/setup", ""},
 }
 
-var menus = map[string]*menu{"main": &mainMenu}
+var setupmenu = menu{
+	{"Rally Parameters", "Configuration of this rally", "/config", ""},
+	{"Edit certificate content", "Maintain certificate templates", "/editcert", ""},
+	{"Entrants", "Maintain entrant details", "/menu?menu=entrants", ""},
+	{"Bonuses", "Ordinary and combo bonuses", "/menu?menu=bonuses", ""},
+	{"Time penalties", "Time penalties", "/timep", ""},
+	{"Advanced setup", "Advanced configuration", "/menu?menu=asetup", ""},
+}
+
+var entrantmenu = menu{
+	{"Full entrant records", "All details of entrants", "/entrants", ""},
+	{"Odometer check-OUT", "Check-out at start of rally", "/odos?check=out", ""},
+	{"Odometer check-IN", "Check-in at end of rally", "/odos?check=in", ""},
+	{"Teams", "Maintain teams and membership", "/teams", ""},
+	{"Cohorts", "Split entrants into cohorts", "/cohorts", ""},
+	{"Import entrants", "Load entrants from spreadsheet", "/import?type=entrants", ""},
+}
+
+var bonusmenu = menu{
+	{"Ordinary bonuses", "Ordinary bonuses", "/bonuses", ""},
+	{"Combos", "Combination bonuses", "/combos", ""},
+	{"Import bonuses", "Load ordinary bonuses from spreadsheet", "/import?type=bonuses", ""},
+	{"Import combos", "Load combinations from spreadsheet", "/import?type=combos", ""},
+}
+
+var menus = map[string]*menu{"main": &mainMenu, "setup": &setupmenu, "entrants": &entrantmenu, "bonuses": &bonusmenu}
 
 func showMenu(w http.ResponseWriter, menu string) {
 
