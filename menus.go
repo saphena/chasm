@@ -20,7 +20,7 @@ var mainMenu = menu{
 	{"EBC claims judging", "Process incoming claims from email", "/ebclist", ""},
 	{"Review scorecards", "", "/cards", ""},
 	{"Current rankings", "Show state of play", "/qlist", "window.open(#url#,'qlist')"},
-	{"Finisher certificates", "Print Finisher certificates", "/fcerts", "window.open(#url#,'fcerts')"},
+	{"Finisher certificates", "Print Finisher certificates", "/certs", "window.open(#url#,'certs')"},
 	{"Rally setup &amp; config", "Access all components", "/setup", ""},
 }
 

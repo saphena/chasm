@@ -23,10 +23,8 @@ var htmlheader = `
 <title>chasm</title>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>` + maincss + `
-</style>
-<script>` + mainscript + `
-</script>
+<link rel="stylesheet" href="/css?file=maincss">
+<script src="/js?file=mainscript"></script>
 </head>
 <body>
 `
@@ -66,6 +64,40 @@ var reloadticker = `
 	</script>
 </div>
 `
+
+func send_css(w http.ResponseWriter, r *http.Request) {
+
+	file := r.FormValue("file")
+	if file == "" {
+		file = "maincss"
+	}
+	w.Header().Set("Content-Type", "text/css; charset=utf-8")
+	switch file {
+	case "maincss":
+		fmt.Fprint(w, maincss)
+	case "certscss":
+		fmt.Fprint(w, certscss)
+	case "joditcss":
+		fmt.Fprint(w, joditcss)
+	}
+}
+
+func send_js(w http.ResponseWriter, r *http.Request) {
+
+	file := r.FormValue("file")
+	if file == "" {
+		file = "mainscript"
+	}
+	w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
+	switch file {
+	case "mainscript":
+		fmt.Fprint(w, mainscript)
+	case "certeditjs":
+		fmt.Fprint(w, certeditjs)
+	case "joditjs":
+		fmt.Fprint(w, joditjs)
+	}
+}
 
 func showReloadTicker(w http.ResponseWriter, url string) {
 
