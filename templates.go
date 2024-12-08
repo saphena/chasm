@@ -96,6 +96,8 @@ func send_js(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, certeditjs)
 	case "joditjs":
 		fmt.Fprint(w, joditjs)
+	case "odosjs":
+		fmt.Fprint(w, odosjs)
 	}
 }
 

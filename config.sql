@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS "config" (
 	"Langcode"	TEXT NOT NULL DEFAULT 'en',
 	"Eventname"	TEXT NOT NULL,
 	"DBInitialised"	INTEGER NOT NULL DEFAULT 0,
+	"Settings" TEXT NOT NULL DEFAULT '{}',
 	"DefaultStart"	TEXT NOT NULL DEFAULT '/',
 	"Region"	TEXT NOT NULL DEFAULT 'United Kingdom',
 	"Localtz"	TEXT NOT NULL DEFAULT 'Europe/London',

@@ -201,6 +201,21 @@ article.about dd {
   font-size: inherit;
 }
 
+article.config {
+  width: 50em;
+  margin: auto;
+}
+article.config fieldset {
+  display: block;
+  border: none;
+  margin: 0 0 1em 0;
+}
+article.config label {
+  display: inline-block;
+  min-width: 10em;
+  text-align: right;
+  margin-right: 1em;
+}
 .menu {
   display: flex;
   flex-direction: column;
@@ -248,6 +263,25 @@ header {
 }
 .right {
   text-align: right;
+}
+
+.bignumber {
+  width: 6em;
+}
+
+.odolist, .odohdr {
+  width: 20em;
+  margin: 0 auto 2em auto;
+  text-align: center;
+}
+.odorow span.name {
+  display: inline-block;
+  width: 10em;
+  text-align: left;
+  margin-right: 1em;
+}
+.oi {
+  background-color: yellow;
 }
 
 #finetune {

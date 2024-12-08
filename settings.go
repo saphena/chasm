@@ -1,5 +1,11 @@
 package main
 
+import (
+	"fmt"
+	"net/http"
+	"strings"
+)
+
 type emailSettings struct {
 	SMTP struct {
 		Host          string
@@ -102,3 +108,56 @@ const debugDefaults = `{
 	"RallyRankEfficiency":	false
 
 }`
+
+func ajaxUpdateSettings(w http.ResponseWriter, r *http.Request) {
+
+	r.ParseForm()
+
+	fmt.Printf("ajaxUS %v\n", r.Form)
+
+	if r.FormValue("tab") == "1" {
+		if r.FormValue("RallyTitle") != "" {
+			CS.RallyTitle = r.FormValue("RallyTitle")
+		}
+		stmt, err := DBH.Prepare("UPDATE rallyparams SET RallyTitle=?")
+		checkerr(err)
+		defer stmt.Close()
+	}
+}
+func editConfigMain(w http.ResponseWriter, r *http.Request) {
+
+	startHTML(w, "Rally configuration")
+	fmt.Fprint(w, `</header>`)
+
+	fmt.Fprint(w, `<article class="config">`)
+	fmt.Fprint(w, `<fieldset>`)
+	fmt.Fprint(w, `<label for="RallyTitle">Rally title</label>`)
+	fmt.Fprintf(w, `<input type="text" class="RallyTitle" name="RallyTitle" id="RallyTitle" value="%v">`, CS.RallyTitle)
+	fmt.Fprint(w, `</fieldset>`)
+	fmt.Fprint(w, `<fieldset>`)
+	fmt.Fprint(w, `<label for="RallyStartDate">Rally starts</label>`)
+
+	dt, tm := splitDateTime(getStringFromDB("SELECT StartTime FROM rallyparams", "2000-01-01T08:00"))
+	fmt.Fprintf(w, `<input type="date" name="RallyStartDate" id="RallyStartDate" value="%v">`, dt)
+	fmt.Fprintf(w, ` <input type="time" name="RallyStartTime" value="%v">`, tm)
+	fmt.Fprint(w, `</fieldset>`)
+
+	fmt.Fprint(w, `<fieldset>`)
+	fmt.Fprint(w, `<label for="RallyFinishDate">Rally finishes</label>`)
+
+	dt, tm = splitDateTime(getStringFromDB("SELECT FinishTime FROM rallyparams", "2000-01-01T08:00"))
+	fmt.Fprintf(w, `<input type="date" name="RallyFinishDate" id="RallyFinishDate" value="%v">`, dt)
+	fmt.Fprintf(w, ` <input type="time" name="RallyFinishTime" value="%v">`, tm)
+	fmt.Fprint(w, `</fieldset>`)
+
+	fmt.Fprint(w, `</article>`)
+}
+
+func splitDateTime(iso string) (string, string) {
+
+	b4, af, ok := strings.Cut(iso, "T")
+	if ok {
+		return b4, af
+	}
+	return iso, ""
+}

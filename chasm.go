@@ -24,7 +24,7 @@ var DBNAME *string = flag.String("db", "chasm.db", "database file")
 // HTTPPort is the web port to serve
 var HTTPPort *string = flag.String("port", "8080", "Web port")
 
-var runOnline *bool = flag.Bool("online", false, "act as webserver")
+var runOnline *bool = flag.Bool("online", true, "act as webserver")
 
 // DBH provides access to the database
 var DBH *sql.DB
@@ -129,7 +129,11 @@ func main() {
 	checkerr(err)
 	err = json.Unmarshal([]byte(debugDefaults), &CS)
 	checkerr(err)
-	//fmt.Printf("%v\n", CS)
+	err = json.Unmarshal([]byte(getStringFromDB("SELECT ifnull(Settings,'{}') FROM config", "{}")), &CS)
+	checkerr(err)
+	//	fmt.Printf("%v\n", CS)
+	//	x, _ := json.Marshal(CS)
+	//	fmt.Printf("%v\n", string(x))
 
 	RallyTimezone, err = time.LoadLocation(CS.RallyTimezone)
 	checkerr(err)
@@ -151,6 +155,7 @@ func main() {
 	http.HandleFunc("/claims", list_claims)
 	http.HandleFunc("/combo", show_combo)
 	http.HandleFunc("/combos", show_combos)
+	http.HandleFunc("/config", editConfigMain)
 	http.HandleFunc("/css", send_css)
 	http.HandleFunc("/ebc", showEBC)
 	http.HandleFunc("/ebclist", list_EBC_claims)
@@ -158,6 +163,7 @@ func main() {
 	http.HandleFunc("/help", show_help)
 	http.HandleFunc("/js", send_js)
 	http.HandleFunc("/menu", show_menu)
+	http.HandleFunc("/odos", show_odo_checks)
 	http.HandleFunc("/qlist", show_qlist)
 	http.HandleFunc("/recalc", recalc_handler)
 	http.HandleFunc("/rule", show_rule)
@@ -221,9 +227,12 @@ func json_requests(w http.ResponseWriter, r *http.Request) {
 	case "fetchb":
 		ajaxFetchBonusDetails(w, r)
 		return
+	case "putodo":
+		update_odo(w, r)
+		return
 	}
 
-	fmt.Fprint(w, `{"ok":true,"msg":"<option>one</option><option>two</option>"}`)
+	fmt.Fprintf(w, `{"ok":false,"msg":"[%v] not implemented yet"}`, f)
 }
 func recalc_handler(w http.ResponseWriter, r *http.Request) {
 
