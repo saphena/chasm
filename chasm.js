@@ -1,4 +1,8 @@
+// @ts-checks
+
 "use strict";
+
+const myStackItem = "odoStack";
 
 const CAT_OrdinaryScoringRule = 0;
 const CAT_DNF_Unless_Triggered = 1;
@@ -144,7 +148,7 @@ function fetchEntrantDetails(obj) {
 }
 
 function showEvidence(obj) {
-  killReload();
+  if (typeof window.killReload === "function") killReload();
   let ft = document.getElementById("finetune");
   let ov = document.getElementById("claimstats");
   ft.classList.remove("hide");
@@ -191,6 +195,149 @@ function cycleImgSize(obj) {
 function goHome(obj) {
   window.location.href = "/";
 }
+
+function oi(obj) {
+  obj.classList.remove("oc");
+  obj.classList.add("oi");
+
+  console.log("oi called == " + obj.getAttribute("data-save"));
+  // autosave handler
+  if (obj.timer) {
+    clearTimeout(obj.timer);
+  }
+  //obj.timer = setTimeout(obj.getAttribute('data-save'), 3000, obj);
+
+  if (obj.getAttribute("data-save") == "saveOdo")
+    obj.timer = setTimeout(saveOdo, 3000, obj);
+  else obj.timer = setTimeout(saveSetupConfig, 3000, obj);
+  console.log("oi complete " + JSON.stringify(obj));
+}
+
+function saveSetupConfig(obj) {
+  console.log("saveSetupConfig called");
+  if (obj.timer) {
+    clearTimeout(obj.timer);
+  }
+  let url = "/x?f=putcfg";
+  url += "&ff=" + obj.name + "&v=" + encodeURIComponent(obj.value);
+  stackTransaction(url, obj.id);
+
+  sendTransactions();
+}
+
+function saveSetupFinish(obj) {
+  if (obj.timer) clearTimeout(obj.timer);
+  let url = "/x?f=putcfg";
+  let dt = document.getElementById("RallyFinishDate");
+  let tm = document.getElementById("RallyFinishTime");
+  url += "&ff=RallyFinish&v=" + encodeURIComponent(dt.value + "T" + tm.value);
+  stackTransaction(url, obj.id);
+  sendTransactions();
+}
+function saveSetupStart(obj) {
+  if (obj.timer) clearTimeout(obj.timer);
+  let url = "/x?f=putcfg";
+  let dt = document.getElementById("RallyStartDate");
+  let tm = document.getElementById("RallyStartTime");
+  url += "&ff=RallyStart&v=" + encodeURIComponent(dt.value + "T" + tm.value);
+  stackTransaction(url, obj.id);
+  sendTransactions();
+}
+function saveOdo(obj) {
+  console.log("saveOdo called");
+  if (obj.timer) {
+    clearTimeout(obj.timer);
+  }
+
+  let timeDisplay = document.querySelector("#timenow");
+
+  let ent = obj.getAttribute("data-e");
+  let url =
+    "/x?f=putodo&e=" +
+    ent +
+    "&st=" +
+    obj.getAttribute("data-st") +
+    "&ff=" +
+    obj.name +
+    "&v=" +
+    obj.value +
+    "&t=" +
+    timeDisplay.getAttribute("data-time");
+
+  stackTransaction(url, obj.id);
+}
+
+function sendTransactions() {
+  let stackx = sessionStorage.getItem(myStackItem);
+  if (stackx == null) return;
+
+  let stack = JSON.parse(stackx);
+
+  console.log(stack);
+
+  let errlog = document.getElementById("errlog");
+
+  while (stack.length > 0) {
+    let itm = stack[0];
+    stack.splice(0, 1);
+    sessionStorage.setItem(myStackItem, JSON.stringify(stack));
+    console.log("Sending: " + itm.url);
+
+    fetch(itm.url)
+      .then((response) => {
+        if (!response.ok) {
+          // Handle HTTP errors
+          stackTransaction(itm.url, itm.objid);
+          //if (errlog){errlog.innerHTML=`HTTP error! Status: ${response.status}`}
+
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        if (data.err) {
+          // Handle JSON error field
+          console.error(`Error: ${data.msg}`);
+        } else {
+          // Process the data if no error
+          //if (errlog){errlog.innerHTML="Hello sailor: "+JSON.stringify(data)}
+          console.log("Data:", data);
+          document.getElementById(itm.objid).classList.replace("oi", "ok");
+          try {
+            reloadok = true;
+          } catch {}
+        }
+      })
+      .catch((error) => {
+        // Handle network or other errors
+        //if (errlog) {errlog.innerHTML="ERROR CAUGHT"}
+        stackTransaction(itm.url, itm.objid);
+        console.error("Fetch error:", error);
+        return;
+      });
+  }
+}
+
+function stackTransaction(url, objid) {
+  console.log(url);
+  let newTrans = {};
+  newTrans.url = url;
+  newTrans.objid = objid;
+  newTrans.sent = false;
+
+  const stackx = sessionStorage.getItem(myStackItem);
+  let stack = [];
+  if (stackx != null) {
+    stack = JSON.parse(stackx);
+  }
+  stack.push(newTrans);
+  sessionStorage.setItem(myStackItem, JSON.stringify(stack));
+  /*
+  obj.classList.remove("oi");
+  obj.classList.add("oc");
+  */
+}
+
 function swapimg(img) {
   let me = img.getAttribute("src");
   let main = document.getElementById("imgdivimg");

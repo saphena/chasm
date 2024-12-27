@@ -48,7 +48,7 @@ func showScorecard(w http.ResponseWriter, r *http.Request) {
 	startHTML(w, "Scorecard")
 
 	mk := CS.UnitMilesLit
-	if CS.RallyUnitKms {
+	if CS.Basics.RallyUnitKms {
 		mk = CS.UnitKmsLit
 	}
 

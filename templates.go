@@ -2,13 +2,36 @@ package main
 
 import (
 	_ "embed"
+	"encoding/base64"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 )
 
 const helpicon = "&nbsp;?&nbsp;"
 const homeicon = " &#127968; "
+
+//go:embed images/alertalert.b64
+var iconalert string
+
+//go:embed images/alertbike.b64
+var iconbike string
+
+//go:embed images/alertdaylight.b64
+var icondaylight string
+
+//go:embed images/alertface.b64
+var iconface string
+
+//go:embed images/alertnight.b64
+var iconnight string
+
+//go:embed images/alertrestricted.b64
+var iconrestricted string
+
+//go:embed images/alertreceipt.b64
+var iconreceipt string
 
 //go:embed chasm.js
 var mainscript string
@@ -65,6 +88,36 @@ var reloadticker = `
 </div>
 `
 
+func builtin_images(w http.ResponseWriter, r *http.Request) {
+
+	img := r.FormValue("i")
+	var imgdata string
+	switch img {
+	case "alert":
+		imgdata = iconalert
+	case "bike":
+		imgdata = iconbike
+	case "daylight":
+		imgdata = icondaylight
+	case "face":
+		imgdata = iconface
+	case "night":
+		imgdata = iconnight
+	case "restricted":
+		imgdata = iconrestricted
+	case "receipt":
+		imgdata = iconreceipt
+	default:
+		fmt.Fprint(w, `<p class="error">no such img</p>`)
+		return
+	}
+	dec := base64.NewDecoder(base64.StdEncoding, strings.NewReader(imgdata))
+	w.Header().Set("Content-Type", "image/png;")
+	n, err := io.Copy(w, dec)
+	checkerr(err)
+
+	fmt.Printf("Img %v sent %v bytes (%v)\n", img, n, len(imgdata))
+}
 func send_css(w http.ResponseWriter, r *http.Request) {
 
 	file := r.FormValue("file")
@@ -108,7 +161,7 @@ func showReloadTicker(w http.ResponseWriter, url string) {
 
 func showTopbar(w http.ResponseWriter, currentTask string) {
 
-	fmt.Fprintf(w, topbar, CS.RallyTitle, currentTask)
+	fmt.Fprintf(w, topbar, CS.Basics.RallyTitle, currentTask)
 
 }
 

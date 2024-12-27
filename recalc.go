@@ -436,7 +436,7 @@ func calcEntrantStatus(Miles int, et EntrantTimes, TotalPoints int) ([]ScorexLin
 	var es int = EntrantFinisher
 
 	mklit := CS.UnitMilesLit
-	if CS.RallyUnitKms {
+	if CS.Basics.RallyUnitKms {
 		mklit = CS.UnitKmsLit
 	}
 	if Miles < CS.RallyMinMiles {
@@ -607,7 +607,7 @@ func calcMileagePenalty(Miles int) ([]ScorexLine, int) {
 func calcRallyDistance(last int, this int, isKm bool) int {
 
 	delta := this - last
-	if isKm == CS.RallyUnitKms {
+	if isKm == CS.Basics.RallyUnitKms {
 		return delta
 	}
 	if isKm {

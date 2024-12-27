@@ -1,20 +1,10 @@
+// @ts-checks
+
 "use strict";
 
-const myStackItem = "odoStack";
 var timertick;
 var reloadok = true;
 
-function addMoney() {
-  let monies = document.getElementsByClassName("money");
-  let money = 0.0;
-  for (let i = 0; i < monies.length; i++) {
-    let amt = parseFloat(monies[i].value);
-    if (!isNaN(amt)) {
-      money += amt;
-    }
-  }
-  return money;
-}
 
 function calcMileage() {
   let mlgdiv = document.getElementById("OdoMileage");
@@ -34,67 +24,7 @@ function calcMileage() {
   mlgdiv.innerHTML = " " + units + " miles";
 }
 
-function changeCertStatus(sel) {
-  console.log("changeCertStatus called");
-  reloadok = false;
-  sel.classList.add("oi");
-  let ent = sel.getAttribute("data-e");
-  let url = "putentrant?EntrantID=" + ent;
-  let val = sel.value;
-  let ca = "Y";
-  let cd = "Y";
-  switch (val) {
-    case "A-D":
-      cd = "N";
-      break;
-    case "A+D":
-      break;
-    case "-A-D":
-    case "dnf":
-      ca = "N";
-      cd = "N";
-      break;
-  }
-  url += "&CertificateAvailable=" + ca + "&CertificateDelivered=" + cd;
-  stackTransaction(encodeURI(url), sel.id);
-  sendTransactions();
-}
 
-function changeFinalStatus(sel) {
-  reloadok = false;
-
-  const certDNF = 3;
-  const certNeeded = 2;
-  const signedout = 1;
-  sel.classList.add("oi");
-  let ent = sel.getAttribute("data-e");
-  let div = sel.parentNode.parentNode;
-  let cert = div.querySelector("select[name=CertificateAD");
-  let ca = cert.getAttribute("data-ca");
-  console.log("cFS ca(r) = " + ca);
-  if (ca != "Y" && ca != "N") ca = "N";
-  console.log("cFS ca = " + ca);
-  let status = sel.value;
-  let url = "putentrant?EntrantID=" + ent + "&EntrantStatus=" + status;
-  let certix = -1;
-
-  if (status != sel.getAttribute("data-fs")) {
-    url += "&CertificateAvailable=N";
-    if (status == sel.getAttribute("data-dnf")) {
-      certix = certDNF;
-    } else {
-      url += "&CertificateDelivered=" + ca;
-      certix = certNeeded;
-    }
-  } else {
-    // FinisherOK
-    if (ca != "N") certix = signedout;
-    else certix = certNeeded;
-  }
-  stackTransaction(encodeURI(url), sel.id);
-  sendTransactions();
-  if (certix >= 0) cert.options[certix].selected = true;
-}
 
 function clickTime() {
   let timeDisplay = document.querySelector("#timenow");
@@ -160,10 +90,6 @@ function loadPage(x) {
   window.location.href = x;
 }
 
-function moneyChg(obj) {
-  oic(obj);
-  showMoneyAmt();
-}
 
 function nextTimeSlot() {
   let timeDisplay = document.querySelector("#timenow");
@@ -242,16 +168,6 @@ function nextButtonSlot() {
 }
 
 // Called during Odo capture when input is entered
-function oi(obj) {
-  obj.classList.remove("oc");
-  obj.classList.add("oi");
-
-  // autosave handler
-  if (obj.timer) {
-    clearTimeout(obj.timer);
-  }
-  obj.timer = setTimeout(saveOdo, 3000, obj);
-}
 
 function oic(obj) {
   reloadok = false;
@@ -323,9 +239,9 @@ function refreshTime() {
   let xtra = parseInt(timeDisplay.getAttribute("data-xtra"));
   let newdt = getRallyTime(dt);
   let curdt = timeDisplay.getAttribute("data-time");
-  console.log(
-    "Comparing " + curdt + " > " + newdt + "; xtra=" + xtra + "(" + gap + ")"
-  );
+ // console.log(
+ //   "Comparing " + curdt + " > " + newdt + "; xtra=" + xtra + "(" + gap + ")"
+ // );
   nextButtonSlot();
   if (curdt >= newdt) {
     return;
@@ -424,77 +340,6 @@ function saveFinalStatus(obj) {
   stackTransaction(encodeURI(url), obj.id);
 }
 
-function saveOdo(obj) {
-  if (obj.timer) {
-    clearTimeout(obj.timer);
-  }
-
-  let timeDisplay = document.querySelector("#timenow");
-
-  let ent = obj.getAttribute("data-e");
-  let url =
-    "/x?f=putodo&e=" +
-    ent +
-    "&st=" +
-    obj.getAttribute("data-st") +
-    "&ff=" +
-    obj.name +
-    "&v=" +
-    obj.value +
-    "&t=" +
-    timeDisplay.getAttribute("data-time");
-
-  stackTransaction(url, obj.id);
-}
-
-function sendTransactions() {
-  let stackx = sessionStorage.getItem(myStackItem);
-  if (stackx == null) return;
-
-  let stack = JSON.parse(stackx);
-
-  //console.log(stack);
-
-  let errlog = document.getElementById("errlog");
-
-  while (stack.length > 0) {
-    let itm = stack[0];
-    stack.splice(0, 1);
-    sessionStorage.setItem(myStackItem, JSON.stringify(stack));
-    console.log("Sending: " + itm.url);
-
-    fetch(itm.url)
-      .then((response) => {
-        if (!response.ok) {
-          // Handle HTTP errors
-          stackTransaction(itm.url, itm.objid);
-          //if (errlog){errlog.innerHTML=`HTTP error! Status: ${response.status}`}
-
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((data) => {
-        if (data.err) {
-          // Handle JSON error field
-          console.error(`Error: ${data.msg}`);
-        } else {
-          // Process the data if no error
-          //if (errlog){errlog.innerHTML="Hello sailor: "+JSON.stringify(data)}
-          console.log("Data:", data);
-          document.getElementById(itm.objid).classList.replace("oi", "ok");
-          reloadok = true;
-        }
-      })
-      .catch((error) => {
-        // Handle network or other errors
-        //if (errlog) {errlog.innerHTML="ERROR CAUGHT"}
-        stackTransaction(itm.url, itm.objid);
-        console.error("Fetch error:", error);
-        return;
-      });
-  }
-}
 
 function showMoneyAmt() {
   let amt = addMoney();
@@ -519,25 +364,6 @@ function signin(m, e) {
   window.location = "/edit?m=" + m + "&e=" + e;
 }
 
-function stackTransaction(url, objid) {
-  console.log(url);
-  let newTrans = {};
-  newTrans.url = url;
-  newTrans.objid = objid;
-  newTrans.sent = false;
-
-  const stackx = sessionStorage.getItem(myStackItem);
-  let stack = [];
-  if (stackx != null) {
-    stack = JSON.parse(stackx);
-  }
-  stack.push(newTrans);
-  sessionStorage.setItem(myStackItem, JSON.stringify(stack));
-  /*
-  obj.classList.remove("oi");
-  obj.classList.add("oc");
-  */
-}
 
 function validate_entrant() {
   let mustFields = [

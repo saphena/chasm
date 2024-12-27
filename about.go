@@ -51,7 +51,7 @@ func showAboutChasm(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `<dl>`)
 	fmt.Fprint(w, `<dt>Host</dt>`)
 	host, _ := os.Hostname()
-	fmt.Fprintf(w, `<dd>%v [%v]</dd>`, host, runtime.GOOS)
+	fmt.Fprintf(w, `<dd>%v [%v - %v]</dd>`, host, runtime.GOOS, CS.Basics.RallyTimezone)
 	fmt.Fprint(w, `<dt>Database file</dt>`)
 	path, _ := filepath.Abs(*DBNAME)
 	fmt.Fprintf(w, `<dd>%v</dd>`, path)

@@ -75,7 +75,7 @@ func show_qlist(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `<fieldset class="col hdr link" onclick="reloadRankings('seq','RiderName')">Name</fieldset>`)
 	mk := "Miles"
 	mph := "MPH"
-	if CS.RallyUnitKms {
+	if CS.Basics.RallyUnitKms {
 		mk = "Kms"
 		mph = "km/h"
 	}

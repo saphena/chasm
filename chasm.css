@@ -87,6 +87,10 @@ img.flagicon {
   min-width: 20em;
 }
 
+button.plus {
+  width: 3em;
+  margin: 0 1em 0 0;
+}
 .closebutton {
   min-width: 10em;
   padding: 5px;
@@ -201,6 +205,29 @@ article.about dd {
   font-size: inherit;
 }
 
+article.bonus {
+  margin: 0 1em 0 1em;
+}
+article.bonus fieldset {
+  display: block;
+  border: none;
+  margin: 0 0 1em 0;
+}
+article.bonus label {
+  display: inline-block;
+  min-width: 10em;
+  text-align: right;
+  margin-right: 1em;
+}
+article.bonus label.short {
+  min-width: 5em;
+  margin-right: .5em;
+}
+img.icon {
+  width: 36px;
+  margin-right: 0.5em;
+}
+
 article.config {
   width: 50em;
   margin: auto;
@@ -239,6 +266,23 @@ article.config label {
 .rankings {
   margin: 0 1em;
 }
+
+.intro {
+  margin: 1em;
+}
+.bonuslist {
+  margin: 1em;
+  display: grid;
+  grid-template-columns: 10em 30em 5em 4em 6em;
+}
+.error {
+  margin: 1em;
+  padding: 1em;
+  background-color: red;
+  color: yellow;
+  font-weight: bold;
+  font-size: 1.2em;
+}
 .ebclist button,
 .claimslog button {
   margin: 1em;
@@ -269,7 +313,8 @@ header {
   width: 6em;
 }
 
-.odolist, .odohdr {
+.odolist,
+.odohdr {
   width: 20em;
   margin: 0 auto 2em auto;
   text-align: center;
@@ -319,6 +364,9 @@ div.claim {
   text-transform: uppercase;
   width: 6em;
 }
+.MaxHours {
+  width: 4em;
+}
 .Points,
 .RestMinutes {
   width: 4em;
@@ -367,17 +415,39 @@ div.claim {
   margin: auto;
   padding: 1em;
   width: 180mm;
-  background-color:lightblue;
+  background-color: lightblue;
 }
 
-table.sxtable { background-color: lightblue; margin: 0 auto 0 auto; padding: 0 .5em 0 .5em; }
-table.sxtable caption { background-color: lightblue; border: solid; padding: .5em; margin: auto auto 0 auto;}
-table.sxtable tr { height: 1.5em; }
-table.sxtable tr:last-of-type td 	{ border-top: solid; }
-table.sxtable td { padding-right: .5em; vertical-align: top; }
-.sxdescx  { margin-left: 3px; font-style: italic; font-size: smaller; }
+table.sxtable {
+  background-color: lightblue;
+  margin: 0 auto 0 auto;
+  padding: 0 0.5em 0 0.5em;
+}
+table.sxtable caption {
+  background-color: lightblue;
+  border: solid;
+  padding: 0.5em;
+  margin: auto auto 0 auto;
+}
+table.sxtable tr {
+  height: 1.5em;
+}
+table.sxtable tr:last-of-type td {
+  border-top: solid;
+}
+table.sxtable td {
+  padding-right: 0.5em;
+  vertical-align: top;
+}
+.sxdescx {
+  margin-left: 3px;
+  font-style: italic;
+  font-size: smaller;
+}
 td.sxitempoints,
-td.sxtotalpoints { text-align: right; }
+td.sxtotalpoints {
+  text-align: right;
+}
 
 .hide {
   display: none;

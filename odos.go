@@ -18,11 +18,13 @@ const timerticker = `var img = document.getElementById('ticker');
 var interval = window.setInterval(function(){
     let paused = document.getElementById('timenow');
 	if(paused) {paused = paused.getAttribute('data-paused')=='1';}
+	if (img) {
     if(!paused && img.style.visibility == 'hidden'){
         img.style.visibility = 'visible';
     }else{
         img.style.visibility = 'hidden';
     }
+}
 }, 1000);`
 
 // When showing the odo capture list, this sets the time shown in the header
@@ -128,7 +130,7 @@ func show_odo(w http.ResponseWriter, r *http.Request, showstart bool) {
 			pch = "start odo"
 			val = OdoStart
 		}
-		fmt.Fprintf(w, `<span><input id="%v" data-e="%v" data-st="%v" name="%v" type="number" class="bignumber" oninput="oi(this);" onchange="oc(this);" min="0" placeholder="%v" value="%v"></span>`, itemno, EntrantID, StartTime, odoname, pch, val)
+		fmt.Fprintf(w, `<span><input id="%v" data-e="%v" data-st="%v" data-save="saveOdo" name="%v" type="number" class="bignumber" oninput="oi(this);" onchange="oc(this);" min="0" placeholder="%v" value="%v"></span>`, itemno, EntrantID, StartTime, odoname, pch, val)
 		fmt.Fprint(w, `</div>`)
 
 	}

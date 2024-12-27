@@ -131,11 +131,12 @@ func main() {
 	checkerr(err)
 	err = json.Unmarshal([]byte(getStringFromDB("SELECT ifnull(Settings,'{}') FROM config", "{}")), &CS)
 	checkerr(err)
+	loadRallyBasics(&CS.Basics)
 	//	fmt.Printf("%v\n", CS)
 	//	x, _ := json.Marshal(CS)
 	//	fmt.Printf("%v\n", string(x))
 
-	RallyTimezone, err = time.LoadLocation(CS.RallyTimezone)
+	RallyTimezone, err = time.LoadLocation(CS.Basics.RallyTimezone)
 	checkerr(err)
 
 	if !*runOnline {
@@ -150,6 +151,8 @@ func main() {
 	fileserver := http.FileServer(http.Dir("."))
 	http.Handle("/images/", fileserver)
 	http.HandleFunc("/about", showAboutChasm)
+	http.HandleFunc("/bonus", show_bonus)
+	http.HandleFunc("/bonuses", list_bonuses)
 	http.HandleFunc("/certs", print_certs)
 	http.HandleFunc("/claim", showClaim)
 	http.HandleFunc("/claims", list_claims)
@@ -161,6 +164,7 @@ func main() {
 	http.HandleFunc("/ebclist", list_EBC_claims)
 	http.HandleFunc("/editcert", edit_certificate)
 	http.HandleFunc("/help", show_help)
+	http.HandleFunc("/img", builtin_images)
 	http.HandleFunc("/js", send_js)
 	http.HandleFunc("/menu", show_menu)
 	http.HandleFunc("/odos", show_odo_checks)
@@ -229,6 +233,9 @@ func json_requests(w http.ResponseWriter, r *http.Request) {
 		return
 	case "putodo":
 		update_odo(w, r)
+		return
+	case "putcfg":
+		ajaxUpdateSettings(w, r)
 		return
 	}
 

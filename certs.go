@@ -150,10 +150,10 @@ func print_certs(w http.ResponseWriter, r *http.Request) {
 	sqlx += " ORDER BY FinishPosition DESC"
 
 	mklit := CS.UnitMilesLit
-	if CS.RallyUnitKms {
+	if CS.Basics.RallyUnitKms {
 		mklit = CS.UnitKmsLit
 	}
-	rallyTitle := CS.RallyTitle
+	rallyTitle := CS.Basics.RallyTitle
 
 	teams := load_teams()
 
