@@ -54,7 +54,7 @@
 }
 
 .row.rankings {
-  grid-template-columns: 5em 16em 6em 6em 6em 6em 1fr;
+  grid-template-columns: 4em 4fr 1fr 1fr 1fr;
 }
 .row:not(.hdr):hover {
   background: lightblue;
@@ -381,7 +381,8 @@ div.claim {
 }
 
 .subject {
-  width: 30em;
+  width: 20em;
+  max-width: 98vw;
 }
 .BonusID {
   text-transform: uppercase;
@@ -446,6 +447,7 @@ div.claim {
   margin: auto;
   padding: 1em;
   width: 180mm;
+  max-width: 100vw;
   background-color: lightblue;
 }
 
@@ -480,6 +482,38 @@ td.sxtotalpoints {
   text-align: right;
 }
 
+.resetdb {
+  max-width: var(--default-max-width);
+  margin: auto;
+  h1 {
+    text-align: center;
+    font-size: 1.2em;
+    margin: 1em 0 1em 0;
+  }
+  p,
+  fieldset {
+    margin: 0.5em;
+  }
+  ol {
+    list-style-position: inside;
+    margin: 0.5em 1em 1em 1em;
+  }
+  fieldset {
+    border: none;
+    display: flex;
+    flex-wrap: wrap;
+  }
+  label,
+  select {
+    margin: 0.5em 0.5em 0.5em 0;
+    padding: 5 0.5em 0 0.5em;
+  }
+
+  input[type="button"] {
+    padding: 0 1em 0 1em;
+  }
+}
+
 .hide {
   display: none;
 }
@@ -490,6 +524,9 @@ td.sxtotalpoints {
     color: black;
   }
   .noprint {
+    display: none;
+  }
+  .topline {
     display: none;
   }
 }

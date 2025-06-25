@@ -55,7 +55,9 @@ var htmlheader = `
 var topbar = `
 <nav class="topbar">
 	<span class="flexitem">
+	<!--
 	<button id="main_help_button" class="link noprint" onclick="showHelp('')" title="Help">` + helpicon + `</button>
+	-->
 	<button id="main_home_button" class="link noprint" onclick="goHome(this)" title="Main menu">` + homeicon + `</button>
 	<span id="main_rally_title" class="link" onclick="goHome(this)">%s</span>
 	</span>

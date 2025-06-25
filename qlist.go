@@ -44,18 +44,12 @@ func show_qlist(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `<input type="hidden" name="ok" value="%v">`, r.FormValue("ok"))
 	fmt.Fprintf(w, `<span class="pushright"><label for="plusok">+ok</label> <input type="checkbox"  id="plusok" %v onchange="showQOkChanged(this)"></span>`, checked)
 	checked = ""
-	showspeed := r.FormValue("speed") != ""
-	if showspeed {
-		checked = "checked"
-	}
-	fmt.Fprintf(w, `<input type="hidden" name="speed" value="%v">`, r.FormValue("speed"))
-	fmt.Fprintf(w, `<span class="pushright"><label for="showspeed">+speed</label> <input type="checkbox" id="showspeed" %v onchange="showQSpeedChanged(this)"></span>`, checked)
 
 	checked = ""
 	if showHot {
 		checked = "checked"
 	}
-	fmt.Fprintf(w, `<span class="pushright"><label for="showhot">%v</label> <input type="checkbox" id="showhot" %v onchange="showQHotChanged(this)"></span>`, hot_icon, checked)
+	fmt.Fprintf(w, `<span class="pushright" title="Show in order of finish time"><label for="showhot">%v</label> <input type="checkbox" id="showhot" %v onchange="showQHotChanged(this)"></span>`, hot_icon, checked)
 	fmt.Fprint(w, `</form></div>`)
 
 	fmt.Fprint(w, `<div class="rankhead">`)
@@ -73,18 +67,15 @@ func show_qlist(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `<fieldset class="row hdr rankings">`)
 	fmt.Fprint(w, `<fieldset class="col hdr mid link" onclick="reloadRankings('seq','FinishPosition')">Rank</fieldset>`)
 	fmt.Fprint(w, `<fieldset class="col hdr link" onclick="reloadRankings('seq','RiderName')">Name</fieldset>`)
+
 	mk := "Miles"
-	mph := "MPH"
 	if CS.Basics.RallyUnitKms {
 		mk = "Kms"
-		mph = "km/h"
+
 	}
 	fmt.Fprintf(w, `<fieldset class="col hdr mid link" onclick="reloadRankings('seq','CorrectedMiles')">%v</fieldset>`, mk)
 	fmt.Fprint(w, `<fieldset class="col hdr right link" onclick="reloadRankings('seq','TotalPoints')">Points</fieldset>`)
 	fmt.Fprintf(w, `<fieldset class="col hdr right link" onclick="reloadRankings('seq','PPM')">P&divide;%v</fieldset>`, string(mk[0]))
-	if showspeed {
-		fmt.Fprintf(w, `<fieldset class="col hdr right link" onclick="reloadRankings('seq','AvgSpeed')">%v</fieldset>`, mph)
-	}
 	fmt.Fprint(w, `</fieldset>`)
 
 	sqlx := "SELECT ifnull(FinishPosition,0),RiderName,ifnull(PillionName,''),ifnull(CorrectedMiles,0),ifnull(TotalPoints,0),EntrantStatus"
@@ -129,9 +120,7 @@ func show_qlist(w http.ResponseWriter, r *http.Request) {
 			eff = fmt.Sprintf("%.1f", rr.Eff)
 		}
 		fmt.Fprintf(w, `<fieldset class="col right">%v</fieldset>`, eff)
-		if showspeed {
-			fmt.Fprintf(w, `<fieldset class="col right">%v</fieldset>`, rr.Speed)
-		}
+
 		fmt.Fprint(w, `</fieldset>`)
 	}
 	fmt.Fprint(w, `</div>`)

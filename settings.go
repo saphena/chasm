@@ -70,9 +70,9 @@ type chasmSettings struct {
 var CS chasmSettings
 
 const defaultCS = `{
-	"ShowExcludedClaims": 	true,
-	"CurrentLeg": 			5,
-	"UseCheckInForOdo": 	false,
+	"ShowExcludedClaims": 	false,
+	"CurrentLeg": 			1,
+	"UseCheckInForOdo": 	true,
 	"RallyUnitKms": 		false,
 	"UnitMilesLit":			"miles",
 	"UnitKmsLit":			"km",
@@ -109,8 +109,8 @@ const defaultCS = `{
 }`
 
 const debugDefaults = `{
-	"RallyUseQA":			true,
-	"RallyUsePctPen":		true,
+	"RallyUseQA":			false,
+	"RallyUsePctPen":		false,
 	"RallyPctPenVal":		10,
 	"RallyRankEfficiency":	false
 

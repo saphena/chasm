@@ -170,6 +170,7 @@ func main() {
 	http.HandleFunc("/odos", show_odo_checks)
 	http.HandleFunc("/qlist", show_qlist)
 	http.HandleFunc("/recalc", recalc_handler)
+	http.HandleFunc("/reset", showResetOptions)
 	http.HandleFunc("/rule", show_rule)
 	http.HandleFunc("/rules", show_rules)
 	http.HandleFunc("/savecert", save_certificate)

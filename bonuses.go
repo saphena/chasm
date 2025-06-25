@@ -31,7 +31,7 @@ func list_bonuses(w http.ResponseWriter, r *http.Request) {
 
 	startHTML(w, "Bonuses")
 
-	fmt.Fprint(w, `<p class="intro">Ordinary bonuses generally represent physical locations that entrants must visit and complete some task, typically take a photo. They are presented on scorecards in code order. Numeric only codes should all have the same number of digits (use leading '0' if necessary). Descriptions may include limited HTML to affect formatting on score explanations.</p>`)
+	fmt.Fprint(w, `<p class="intro">Ordinary bonuses generally represent physical locations that entrants must visit and complete some task, typically take a photo.  Descriptions may include limited HTML to affect formatting on score explanations.</p>`)
 
 	fmt.Fprint(w, `<div class="intro">`)
 	fmt.Fprint(w, `<button class="plus" onclick="addNewBonus()" title="Add new bonus">+</button>`)

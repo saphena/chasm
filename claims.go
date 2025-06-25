@@ -474,17 +474,18 @@ func insertNewClaim(r *http.Request) {
 	stmt, err := DBH.Prepare(sqlx)
 	checkerr(err)
 	defer stmt.Close()
-	_, err = stmt.Exec(time.Now().Format(time.RFC3339), r.FormValue("ClaimTime"), r.FormValue("EntrantID"), strings.ToUpper(r.FormValue("BonusID")), r.FormValue("OdoReading"), r.FormValue("Decision"), filepath.Base(r.FormValue("Photo")), r.FormValue("Points"), r.FormValue(("RestMinutes")), Leg, r.FormValue("AnswerSupplied"), r.FormValue("QuestionAnswered"), r.FormValue("JudgesNotes"), intval(r.FormValue("PercentPenalty")))
+	_, err = stmt.Exec(time.Now().Format(time.RFC3339), r.FormValue("ClaimTime"), r.FormValue("EntrantID"), strings.ToUpper(r.FormValue("BonusID")), intval(r.FormValue("OdoReading")), intval(r.FormValue("Decision")), filepath.Base(r.FormValue("Photo")), intval(r.FormValue("Points")), intval(r.FormValue(("RestMinutes"))), Leg, r.FormValue("AnswerSupplied"), r.FormValue("QuestionAnswered"), r.FormValue("JudgesNotes"), intval(r.FormValue("PercentPenalty")))
 	checkerr(err)
 
 }
 func saveClaim(r *http.Request) {
 
-	//fmt.Printf("saveclaim: %v\n", r)
+	fmt.Printf("saveclaim: %v\n", r)
 	claimid := intval(r.FormValue("claimid"))
 
 	if claimid < 1 {
 		insertNewClaim(r)
+		recalc_scorecard(intval(r.FormValue("EntrantID")))
 		return
 	}
 	sqlx := "UPDATE claims SET ClaimTime=?,EntrantID=?,BonusID=?,OdoReading=?,AnswerSupplied=?,QuestionAnswered=?,Points=?,RestMinutes=?,Decision=?,JudgesNotes=?"
@@ -494,8 +495,10 @@ func saveClaim(r *http.Request) {
 	stmt, err := DBH.Prepare(sqlx)
 	checkerr(err)
 	defer stmt.Close()
-	_, err = stmt.Exec(r.FormValue("ClaimTime"), r.FormValue("EntrantID"), strings.ToUpper(r.FormValue("BonusID")), r.FormValue("OdoReading"), r.FormValue("AnswerSupplied"), r.FormValue("QuestionAnswered"), r.FormValue("Points"), r.FormValue(("RestMinutes")), r.FormValue("Decision"), r.FormValue("JudgesNotes"), intval(r.FormValue("PercentPenalty")), claimid)
+	_, err = stmt.Exec(r.FormValue("ClaimTime"), r.FormValue("EntrantID"), strings.ToUpper(r.FormValue("BonusID")), intval(r.FormValue("OdoReading")), r.FormValue("AnswerSupplied"), r.FormValue("QuestionAnswered"), intval(r.FormValue("Points")), intval(r.FormValue(("RestMinutes"))), intval(r.FormValue("Decision")), r.FormValue("JudgesNotes"), intval(r.FormValue("PercentPenalty")), claimid)
 	checkerr(err)
+	recalc_scorecard(intval(r.FormValue("EntrantID")))
+
 }
 
 func showClaim(w http.ResponseWriter, r *http.Request) {
@@ -521,8 +524,10 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 	if claimid < 1 {
 		fmt.Fprint(w, `<h4>Filing new claim</h4>`)
 		fmt.Fprint(w, `<input type="text" autofocus tabindex="1" class="subject" placeholder="Paste email Subject line here" oninput="pasteNewClaim(this)">`)
-		cr.Decision = -1 // undecided
+		cr.Decision = 0 // Good claim
 		claimdate = time.Now().Format("2006-01-02")
+		claimtime = time.Now().Format("15:04")
+		cr.ClaimTime = claimdate + "T" + claimtime
 	} else {
 		cr = fetchClaimDetails((claimid))
 		if len(cr.ClaimTime) > 12 {
@@ -595,25 +600,15 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 			ebcimg[i] = strings.ReplaceAll(filepath.Join(CS.ImgEbcFolder, filepath.Base(ebcimg[i])), "\\", "/")
 		}
 	}
-	fmt.Fprint(w, `<fieldset class="claimphotos">`)
+	hide = "hide"
+	if claimid > 0 {
+		hide = ""
+	}
+	fmt.Fprintf(w, `<fieldset class="claimphotos %v">`, hide)
 
 	showPhotoFrame(w, ebcimg, cr.BonusID)
 
-	fmt.Fprint(w, `</fieldset>`)
-
-	/**
-
-	fmt.Fprint(w, `<fieldset class="claimphotos">`)
-	ebcimg := strings.ReplaceAll(filepath.Join(CS.ImgEbcFolder, filepath.Base(cr.Photo)), "\\", "/")
-	if cr.Photo == "" {
-		ebcimg = ""
-	}
-	fmt.Fprintf(w, `<img id="claimPhoto" title="%v" src="%v" alt="%v" data-folder="%v" onclick="cycleClaimImgSize(this)">`, CS.EBCImgTitle, ebcimg, ebcimg, CS.ImgEbcFolder)
-	rbimg := strings.ReplaceAll(filepath.Join(CS.ImgBonusFolder, bd.Image), "\\", "/")
-	fmt.Fprintf(w, `<img id="bonusPhoto" title="%v" src="%v" alt="%v" data-folder="%v">`, CS.RallyBookImgTitle, rbimg, bd.Image, CS.ImgBonusFolder)
-	fmt.Fprint(w, `</fieldset>`)
-
-	**/
+	fmt.Fprint(w, `</fieldset><!-- below photo frame -->`)
 
 	fmt.Fprint(w, `<fieldset class="claimfield">`)
 	fmt.Fprint(w, `<label for="OdoReading">Odo reading</label>`)
@@ -980,7 +975,6 @@ func showPhotoFrame(w http.ResponseWriter, photos []string, BonusID string) {
 	bimg := strings.ReplaceAll(filepath.Join(CS.ImgBonusFolder, filepath.Base(getStringFromDB("SELECT ifnull(Image,'') FROM bonuses WHERE BonusID='"+BonusID+"'", ""))), `\`, `/`)
 	fmt.Fprintf(w, `<img src="%v" alt="*" title="%v">`, bimg, CS.RallyBookImgTitle)
 	fmt.Fprint(w, `</div>`)
-	fmt.Fprint(w, `</div>`)
 
 }
 
@@ -1037,4 +1031,5 @@ func saveEBC(w http.ResponseWriter, r *http.Request) {
 		r.FormValue("OdoReading"), decision, ImgFromURL(r.FormValue("Photo")), points, restmins, askpoints, askmins, CS.CurrentLeg,
 		r.FormValue("Evidence"), qasked, r.FormValue("AnswerSupplied"), qanswered, r.FormValue("JudgesNotes"), percent)
 	checkerr(err)
+	recalc_scorecard(intval(r.FormValue("EntrantID")))
 }

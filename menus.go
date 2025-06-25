@@ -19,7 +19,7 @@ var mainMenu = menu{
 	{"Claims log", "Full list of processed claims", "/claims", ""},
 	{"EBC claims judging", "Process incoming claims from email", "/ebclist", ""},
 	{"Review scorecards", "", "/cards", ""},
-	{"Current rankings", "Show state of play", "/qlist", "window.open(#url#,'qlist')"},
+	{"Current rankings", "Show state of play", "/qlist", ""},
 	{"Finisher certificates", "Print Finisher certificates", "/certs", "window.open(#url#,'certs')"},
 	{"Rally setup &amp; config", "Access all components", "/setup", ""},
 }
