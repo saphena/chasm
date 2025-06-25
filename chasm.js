@@ -172,6 +172,29 @@ function showFirstClaim() {
   let rows = document.querySelectorAll("fieldset.row");
   showEBC(rows[1]); // 1 not 0; 0 = hdr
 }
+
+/** cycleClaimImgSize handles photo displays during claim editing */
+function cycleClaimImgSize(obj) {
+  let img = obj.id;
+  let sz = obj.style.width;
+  console.log("sz == " + sz);
+  let otherimg = "";
+  if (img == "claimPhoto") {
+    otherimg = "bonusPhoto";
+  } else {
+    otherimg = "claimPhoto";
+  }
+  let other = document.getElementById(otherimg);
+  if (sz == "512px" || sz == "") {
+    other.style.width = "100px";
+    obj.style.width = "99%";
+  } else {
+    other.style.width = "";
+    obj.style.width = "512px";
+  }
+}
+
+/** cycleImgSize handles photo displays during EBC judging */
 function cycleImgSize(obj) {
   let img = obj.id;
   let sz = obj.style.width;

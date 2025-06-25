@@ -175,15 +175,16 @@ func show_rules(w http.ResponseWriter, r *http.Request) {
 			pm = "x"
 		}
 		pts := strconv.Itoa(cr.Power)
-		if cr.Ruletype == CAT_OrdinaryScoringRule {
+		switch cr.Ruletype {
+		case CAT_OrdinaryScoringRule:
 			if cr.Target == CAT_ModifyAxisScore {
 				target = "axis"
 			} else {
 				target = "bonus"
 			}
-		} else if cr.Ruletype == CAT_OrdinaryScoringSequence {
+		case CAT_OrdinaryScoringSequence:
 			target = "bonus"
-		} else {
+		default:
 			pm = ""
 			pts = ""
 		}

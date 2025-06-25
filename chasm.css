@@ -1,3 +1,15 @@
+@page {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+:root {
+  --default-max-width: 50em;
+  --regular-background: #ccffcc;
+  --regular-text: black;
+  --error-background: red;
+  --error-text: white;
+}
 * {
   margin: 0;
   padding: 0;
@@ -6,7 +18,7 @@
   font-size: 14pt;
 }
 .singlerule {
-  max-width: 50em;
+  max-width: var(--default-max-width);
   margin: auto;
   display: grid;
 }
@@ -35,11 +47,12 @@
   grid-template-columns: 8em 8em 2em 8em 1fr;
 }
 .row.ebc {
-  grid-template-columns: 18em 9em 8em 1fr;
+  grid-template-columns: 4fr 2fr 2fr 1fr;
 }
 .row.claims {
-  grid-template-columns: 18em 9em 8em 8em 4em;
+  grid-template-columns: 4fr 2fr 2fr 2fr 1fr;
 }
+
 .row.rankings {
   grid-template-columns: 5em 16em 6em 6em 6em 6em 1fr;
 }
@@ -58,6 +71,7 @@
   border: none;
   display: inline;
   text-align: left;
+  margin: 0 0.2em 0 0;
 }
 .hdr {
   font-weight: bold;
@@ -92,12 +106,14 @@ button.plus {
   margin: 0 1em 0 0;
 }
 .closebutton {
-  min-width: 10em;
+  width: 98%;
+  max-width: 20em;
   padding: 5px;
   margin: 1em 1em 0.5em 0;
 }
 .judgesnotes {
-  width: 50em;
+  width: 98%;
+  max-width: var(--default-max-width);
   margin-top: 3px;
 }
 
@@ -166,7 +182,8 @@ button.plus {
 
 article.about {
   display: block;
-  width: 50em;
+  width: 98%;
+  max-width: var(--default-max-width);
   margin: 1em auto;
   border: solid 2px black;
   background-color: #f5f5f7;
@@ -200,6 +217,8 @@ article.about dt {
   font-size: inherit;
 }
 article.about dd {
+  display: flex;
+  flex-wrap: wrap;
   margin: 0 0 0 3em;
   font-weight: bold;
   font-size: inherit;
@@ -221,7 +240,7 @@ article.bonus label {
 }
 article.bonus label.short {
   min-width: 5em;
-  margin-right: .5em;
+  margin-right: 0.5em;
 }
 img.icon {
   width: 36px;
@@ -229,7 +248,8 @@ img.icon {
 }
 
 article.config {
-  width: 50em;
+  width: 98%;
+  max-width: var(--default-max-width);
   margin: auto;
 }
 article.config fieldset {
@@ -238,8 +258,8 @@ article.config fieldset {
   margin: 0 0 1em 0;
 }
 article.config label {
-  display: inline-block;
-  min-width: 10em;
+  display: table-cell;
+  /*min-width: 10em;*/
   text-align: right;
   margin-right: 1em;
 }
@@ -249,10 +269,11 @@ article.config label {
 }
 
 .menu button {
-  width: 14em;
+  width: 98%;
+  max-width: 20em;
   margin: 1em auto 0 auto;
   border-radius: 12px;
-  padding: 3px;
+  padding: 5px;
 }
 
 .menu button:hover {
@@ -265,6 +286,7 @@ article.config label {
 .rankhead,
 .rankings {
   margin: 0 1em;
+  max-width: var(--default-max-width);
 }
 
 .intro {
@@ -273,7 +295,8 @@ article.config label {
 .bonuslist {
   margin: 1em;
   display: grid;
-  grid-template-columns: 10em 30em 5em 4em 6em;
+  grid-template-columns: 1fr 2fr 1fr 1fr 1fr;
+  max-width: var(--default-max-width);
 }
 .error {
   margin: 1em;
@@ -290,7 +313,7 @@ article.config label {
 }
 
 h4 {
-  margin: 1em 1em 1em 0;
+  margin: 0.5em 1em 0.5em 0;
   font-size: 1.5em;
 }
 .showebc {
@@ -373,9 +396,10 @@ div.claim {
 }
 .claimfield {
   margin: 1em;
-  display: grid;
+  display: inlin;
   border: none;
-  grid-template-columns: 10em 16em 1fr;
+  flex-direction: row;
+  vertical-align: middle;
 }
 .claimfield label {
   text-align: right;
@@ -387,8 +411,15 @@ div.claim {
 }
 
 .claimphotos {
-  display: grid;
-  grid-template-columns: 0.5fr 0.5fr;
+  display: flex;
+  flex-wrap: wrap;
+}
+.claimphotos img {
+  display: inline-block;
+
+  margin: 3px;
+  width: 512px;
+  max-width: 100%;
 }
 .AnswerSupplied {
   margin: 3px;

@@ -14,7 +14,7 @@ import (
 const PROGRAMTITLE = "ScoreMaster"
 const PROGRAMVERSION = "4.0"
 
-const CopyriteYear = "2024"
+const CopyriteYear = "2025"
 const ChasmVersion = "0.1"
 
 var EBCFetchVersion string = "0.0" // Loaded at runtime

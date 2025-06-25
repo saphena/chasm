@@ -97,6 +97,8 @@ type EntrantDetails struct {
 	TeamID      int
 }
 
+const maximg = 3
+
 //var EntrantSelector map[int]string
 
 func emitImage(img string, alt string, title string) string {
@@ -328,7 +330,7 @@ func list_claims(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `<fieldset class="col claims hdr">Entrant</fieldset>`)
 	fmt.Fprint(w, `<fieldset class="col claims hdr">Bonus</fieldset>`)
 	fmt.Fprint(w, `<fieldset class="col claims hdr">Odo</fieldset>`)
-	fmt.Fprint(w, `<fieldset class="col claims hdr">Claimtime</fieldset>`)
+	fmt.Fprint(w, `<fieldset class="col claims hdr">Time</fieldset>`)
 	fmt.Fprint(w, `<fieldset class="col claims hdr mid">Good?</fieldset>`)
 	fmt.Fprint(w, `</fieldset>`)
 
@@ -367,6 +369,8 @@ func list_claims(w http.ResponseWriter, r *http.Request) {
 // Show judgeable claims submitted electronically
 func list_EBC_claims(w http.ResponseWriter, r *http.Request) {
 
+	const sorry = "Sorry, no claims need judging at the moment &#128543;"
+
 	sqlx := `SELECT ebclaims.rowid,ebclaims.EntrantID,entrants.RiderName,ifnull(entrants.PillionName,''),ebclaims.BonusID,xbonus.BriefDesc,ebclaims.OdoReading,ebclaims.ClaimTime
 	 		FROM ebclaims LEFT JOIN entrants ON ebclaims.EntrantID=entrants.EntrantID
 			LEFT JOIN (SELECT BonusID,BriefDesc FROM bonuses) AS xbonus ON ebclaims.BonusID=xbonus.BonusID
@@ -382,16 +386,19 @@ func list_EBC_claims(w http.ResponseWriter, r *http.Request) {
 	showReloadTicker(w, r.URL.String())
 	fmt.Fprint(w, `<h4>Emailed claims ready to be judged</h4>`)
 
+	fmt.Fprint(w, `<div id="judgefc">`)
 	fmt.Fprintf(w, `<button autofocus onclick="showFirstClaim()">Judge first claim</button> <span id="fcc"></span>`)
 
 	fmt.Fprint(w, `<fieldset class="row ebc hdr">`)
 	fmt.Fprint(w, `<fieldset class="col ebc hdr">Entrant</fieldset>`)
 	fmt.Fprint(w, `<fieldset class="col ebc hdr">Bonus</fieldset>`)
 	fmt.Fprint(w, `<fieldset class="col ebc hdr">Odo</fieldset>`)
-	fmt.Fprint(w, `<fieldset class="col ebc hdr">Claimtime</fieldset>`)
+	fmt.Fprint(w, `<fieldset class="col ebc hdr">Time</fieldset>`)
 	fmt.Fprint(w, `</fieldset>`)
+	fmt.Fprint(w, `</div>`)
 
-	fmt.Fprint(w, `</div></header><div class="ebclist">`)
+	fmt.Fprint(w, `</div></header>`)
+	fmt.Fprint(w, `<div class="ebclist">`)
 	n := 0
 	for rows.Next() {
 		var ebc ElectronicBonusClaim
@@ -410,7 +417,7 @@ func list_EBC_claims(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `</fieldset>`)
 	}
 	fmt.Fprint(w, `</div>`)
-	fmt.Fprintf(w, `<script>let x = document.getElementById('fcc');x.innerHTML='1/%v';</script>`, n)
+	fmt.Fprintf(w, `<script>if (%v>0){let x = document.getElementById('fcc');x.innerHTML='1/%v';}else{let x=document.getElementById('judgefc');x.innerHTML='%v';}</script>`, n, n, sorry)
 
 }
 
@@ -582,15 +589,31 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `</span>`)
 	fmt.Fprint(w, `</fieldset>`)
 
+	ebcimg := strings.Split(cr.Photo, ",")
+	for i := 0; i < len(ebcimg); i++ {
+		if ebcimg[i] != "" {
+			ebcimg[i] = strings.ReplaceAll(filepath.Join(CS.ImgEbcFolder, filepath.Base(ebcimg[i])), "\\", "/")
+		}
+	}
+	fmt.Fprint(w, `<fieldset class="claimphotos">`)
+
+	showPhotoFrame(w, ebcimg, cr.BonusID)
+
+	fmt.Fprint(w, `</fieldset>`)
+
+	/**
+
 	fmt.Fprint(w, `<fieldset class="claimphotos">`)
 	ebcimg := strings.ReplaceAll(filepath.Join(CS.ImgEbcFolder, filepath.Base(cr.Photo)), "\\", "/")
 	if cr.Photo == "" {
 		ebcimg = ""
 	}
-	fmt.Fprintf(w, `<img title="%v" src="%v" alt="%v" data-folder="%v">`, CS.EBCImgTitle, ebcimg, ebcimg, CS.ImgEbcFolder)
+	fmt.Fprintf(w, `<img id="claimPhoto" title="%v" src="%v" alt="%v" data-folder="%v" onclick="cycleClaimImgSize(this)">`, CS.EBCImgTitle, ebcimg, ebcimg, CS.ImgEbcFolder)
 	rbimg := strings.ReplaceAll(filepath.Join(CS.ImgBonusFolder, bd.Image), "\\", "/")
 	fmt.Fprintf(w, `<img id="bonusPhoto" title="%v" src="%v" alt="%v" data-folder="%v">`, CS.RallyBookImgTitle, rbimg, bd.Image, CS.ImgBonusFolder)
 	fmt.Fprint(w, `</fieldset>`)
+
+	**/
 
 	fmt.Fprint(w, `<fieldset class="claimfield">`)
 	fmt.Fprint(w, `<label for="OdoReading">Odo reading</label>`)
@@ -879,7 +902,7 @@ func showEBC(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `<input type="button" data-result="%v"  name="Decision" onclick="closeEBC(this)" class="closebutton" value="%v">`, i, CS.CloseEBC[i])
 	}
 	fmt.Fprint(w, `</div>`)
-	showPhotos(w, ebc.EmailID, ebc.Bonusid)
+	showPhotosEBC(w, ebc.EmailID, ebc.Bonusid)
 
 	fmt.Fprint(w, `</form>`)
 
@@ -902,10 +925,7 @@ func showEBC(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func showPhotos(w http.ResponseWriter, emailid int, BonusID string) {
-
-	const maximg = 3
-	bimg := strings.ReplaceAll(filepath.Join(CS.ImgBonusFolder, filepath.Base(getStringFromDB("SELECT ifnull(Image,'') FROM bonuses WHERE BonusID='"+BonusID+"'", ""))), `\`, `/`)
+func showPhotosEBC(w http.ResponseWriter, emailid int, BonusID string) {
 
 	sqlx := "SELECT Image FROM ebcphotos WHERE EmailID=" + strconv.Itoa(emailid)
 	rows, err := DBH.Query(sqlx)
@@ -914,8 +934,7 @@ func showPhotos(w http.ResponseWriter, emailid int, BonusID string) {
 	fmt.Fprint(w, `<div class="imgcomparediv">`)
 
 	// "if(this.width=='50%')this.width='100%';else this.width='50%'"
-	fmt.Fprint(w, `<div class="ebcimgdiv" id="ebcimgdiv" onclick="cycleImgSize(this)">`)
-	var showimg [maximg]string
+	showimg := make([]string, maximg)
 
 	ix := 0
 	for rows.Next() {
@@ -930,24 +949,39 @@ func showPhotos(w http.ResponseWriter, emailid int, BonusID string) {
 			break
 		}
 	}
-	fmt.Fprintf(w, `<img id="imgdivimg" alt="*" src="%v" title="%v">`, showimg[0], CS.EBCImgTitle)
-	fmt.Fprintf(w, `<input type="hidden" id="chosenPhoto" name="Photo" value="%v">`, showimg[0])
+
+	showPhotoFrame(w, showimg, BonusID)
+
+}
+
+func showPhotoFrame(w http.ResponseWriter, photos []string, BonusID string) {
+
+	maximg := len(photos)
+	photo0 := ""
+	if maximg > 0 {
+		photo0 = photos[0]
+	}
+	fmt.Fprint(w, `<div class="ebcimgdiv" id="ebcimgdiv" onclick="cycleImgSize(this)">`)
+
+	fmt.Fprintf(w, `<img id="imgdivimg" alt="*" src="%v" title="%v">`, photo0, CS.EBCImgTitle)
+	fmt.Fprintf(w, `<input type="hidden" id="chosenPhoto" name="Photo" value="%v">`, photos[0])
 
 	fmt.Fprint(w, `<div id="imgdivs">`)
 
-	for ix = 1; ix < maximg; ix++ {
-		if showimg[ix] != "" {
-			fmt.Fprintf(w, `<img src="%v" alt="*" onclick="swapimg(this)" title="%v">`, showimg[ix], CS.EBCImgSwapTitle)
+	for ix := 1; ix < maximg; ix++ {
+		if photos[ix] != "" {
+			fmt.Fprintf(w, `<img src="%v" alt="*" onclick="swapimg(this)" title="%v">`, photos[ix], CS.EBCImgSwapTitle)
 		}
 	}
 	fmt.Fprint(w, `</div>`) // imgdivs
 	fmt.Fprint(w, `</div>`) // ebcimgdiv
 
 	fmt.Fprint(w, `<div class="bonusimgdiv" id="bonusimgdiv">`)
+	bimg := strings.ReplaceAll(filepath.Join(CS.ImgBonusFolder, filepath.Base(getStringFromDB("SELECT ifnull(Image,'') FROM bonuses WHERE BonusID='"+BonusID+"'", ""))), `\`, `/`)
 	fmt.Fprintf(w, `<img src="%v" alt="*" title="%v">`, bimg, CS.RallyBookImgTitle)
 	fmt.Fprint(w, `</div>`)
-
 	fmt.Fprint(w, `</div>`)
+
 }
 
 func intval(x string) int {
