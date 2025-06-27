@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -30,7 +31,15 @@ type RallyBasics struct {
 	RallyUnitKms    bool
 	RallyTimezone   string
 }
+
+const (
+	CheckoutStart = iota
+	FirstClaimStart
+)
+
 type chasmSettings struct {
+	StartOption         int
+	AutoFinisher        bool
 	ShowExcludedClaims  bool // If a claim is marked 'excluded' and is not superseded, show it on the scoresheet
 	CurrentLeg          int
 	UseCheckinForOdo    bool // If true, OdoRallyFinish updated only by check-in, not by individual claims
@@ -65,11 +74,14 @@ type chasmSettings struct {
 	EBCImgTitle         string
 	EBCImgSwapTitle     string
 	Email               emailSettings
+	UploadsFolder       string
 }
 
 var CS chasmSettings
 
 const defaultCS = `{
+	"StartOption": 			0,
+	"AutoFinisher":			false,
 	"ShowExcludedClaims": 	false,
 	"CurrentLeg": 			1,
 	"UseCheckInForOdo": 	true,
@@ -105,7 +117,8 @@ const defaultCS = `{
 	"RallyBookImgTitle":	"Rally book photo",
 	"EBCImgTitle":			"Entrant's image - click to resize",
 	"EBCImgSwapTitle":		"Click to view this image",
-	"Rally":				{"A1":"AAAAAAAAAAAAAA","A2":"22222222222222"}
+	"Rally":				{"A1":"AAAAAAAAAAAAAA","A2":"22222222222222"},
+	"UploadsFolder":		"uploads"
 }`
 
 const debugDefaults = `{
@@ -145,6 +158,9 @@ var tzlist = []string{
 	"Europe/Warsaw",
 	"Europe/Zurich",
 }
+
+// SQL for safely retrieving RiderName
+const RiderNameSQL = "ifnull(entrants.RiderName,ifnull(entrants.RiderFirst,'') || ' ' || ifnull(entrants.RiderLast,'')) AS RiderName"
 
 func ajaxUpdateSettings(w http.ResponseWriter, r *http.Request) {
 
@@ -201,6 +217,7 @@ func ajaxUpdateSettings(w http.ResponseWriter, r *http.Request) {
 		defer stmt.Close()
 		_, err = stmt.Exec(rs)
 		checkerr(err)
+		CS.StartOption = intval(rs)
 	case "LocalTZ":
 		CS.Basics.RallyTimezone = r.FormValue("v")
 		ok = "true"
@@ -225,7 +242,7 @@ func ajaxUpdateSettings(w http.ResponseWriter, r *http.Request) {
 		checkerr(err)
 
 	}
-
+	saveSettings()
 	fmt.Fprintf(w, `{"ok":%v,"msg":"%v"}`, ok, msg)
 
 }
@@ -265,7 +282,7 @@ func editConfigMain(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprint(w, `<fieldset>`)
 	fmt.Fprint(w, `<label for="StartOption">Rally Start option</label>`)
-	so := getIntegerFromDB("SELECT StartOption FROM rallyparams", 0)
+	so := CS.StartOption //getIntegerFromDB("SELECT StartOption FROM rallyparams", 0)
 	fmt.Fprint(w, ` <select id="StartOption" name="StartOption" onchange="saveSetupConfig(this)">`)
 	selected = ""
 	if so != 1 {
@@ -332,4 +349,16 @@ func splitDateTime(iso string) (string, string) {
 		return b4, af
 	}
 	return iso, ""
+}
+
+func saveSettings() {
+
+	csb, err := json.Marshal(CS)
+	checkerr(err)
+	stmt, err := DBH.Prepare("UPDATE config SET Settings=?")
+	checkerr(err)
+	defer stmt.Close()
+	_, err = stmt.Exec(csb)
+	checkerr(err)
+
 }

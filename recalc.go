@@ -811,7 +811,7 @@ func htmlScorex(sx []ScorexLine, e int, es int, tp int) string {
 	if KmsRally {
 		mk = "km"
 	}
-	sqlx := "SELECT RiderName,IfNull(PillionName,''),IfNull(CorrectedMiles,0) FROM entrants WHERE EntrantID=" + strconv.Itoa(e)
+	sqlx := "SELECT " + RiderNameSQL + ",IfNull(PillionName,''),IfNull(CorrectedMiles,0) FROM entrants WHERE EntrantID=" + strconv.Itoa(e)
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
 	defer rows.Close()

@@ -191,7 +191,7 @@ article.about {
 
 article.about h1 {
   text-align: center;
-  margin: 1em auto 1em auto;
+  margin: 1em auto 0 auto;
   font-size: 2em;
 }
 article.about .h2 {
@@ -217,9 +217,10 @@ article.about dt {
   font-size: inherit;
 }
 article.about dd {
-  display: flex;
-  flex-wrap: wrap;
+  word-wrap: break-word;
   margin: 0 0 0 3em;
+  max-width: calc(100% - 3em);
+
   font-weight: bold;
   font-size: inherit;
 }
@@ -513,6 +514,46 @@ td.sxtotalpoints {
     padding: 0 1em 0 1em;
   }
 }
+
+.reviewlist {
+  display: flex;
+  flex-direction: column;
+  max-width: var(--default-max-width);
+  .row {
+    display: grid;
+    grid-template-columns: 3em 1fr 1fr;
+    margin-left: 1em;
+  }
+}
+
+.import {
+  max-width: var(--default-max-width);
+  margin: auto;
+  h1 {
+    font-size: 2em;
+    margin: 1em;
+  }
+  fieldset {
+    border: none;
+    margin: 2em;
+  }
+  input[type=submit] {
+    margin: 0 0 0 3em;
+    padding: .5em;
+    width: 20em;
+    max-width: calc(90% - 3em);
+  }
+}
+
+.importmap {
+  max-width: var(--default-max-width);
+  margin: auto;
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+  }
+}
+
 
 .hide {
   display: none;

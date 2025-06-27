@@ -21,6 +21,8 @@ var mainMenu = menu{
 	{"Review scorecards", "", "/cards", ""},
 	{"Current rankings", "Show state of play", "/qlist", ""},
 	{"Finisher certificates", "Print Finisher certificates", "/certs", "window.open(#url#,'certs')"},
+	{"Check-OUT", "Check-out at start of rally", "/odos?check=out", ""},
+	{"Check-IN", "Check-in at end of rally", "/odos?check=in", ""},
 	{"Rally setup &amp; config", "Access all components", "/setup", ""},
 }
 

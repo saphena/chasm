@@ -97,6 +97,12 @@ func getStringFromDB(sqlx string, defval string) string {
 	return defval
 }
 
+func printNZ(i int) string {
+	if i == 0 {
+		return ""
+	}
+	return strconv.Itoa(i)
+}
 func jsonBool(b bool) string {
 	if b {
 		return "true"
@@ -146,13 +152,14 @@ func main() {
 	fmt.Println()
 
 	// DEBUG PURPOSES ONLY
-	recalc_all()
+	//recalc_all()
 
 	fileserver := http.FileServer(http.Dir("."))
 	http.Handle("/images/", fileserver)
 	http.HandleFunc("/about", showAboutChasm)
 	http.HandleFunc("/bonus", show_bonus)
 	http.HandleFunc("/bonuses", list_bonuses)
+	http.HandleFunc("/cards", showScorecards)
 	http.HandleFunc("/certs", print_certs)
 	http.HandleFunc("/claim", showClaim)
 	http.HandleFunc("/claims", list_claims)
@@ -165,6 +172,7 @@ func main() {
 	http.HandleFunc("/editcert", edit_certificate)
 	http.HandleFunc("/help", show_help)
 	http.HandleFunc("/img", builtin_images)
+	http.HandleFunc("/import", showImport)
 	http.HandleFunc("/js", send_js)
 	http.HandleFunc("/menu", show_menu)
 	http.HandleFunc("/odos", show_odo_checks)
@@ -178,6 +186,7 @@ func main() {
 	http.HandleFunc("/score", showScorecard)
 	http.HandleFunc("/setup", show_setup)
 	http.HandleFunc("/updtcrule", update_rule)
+	http.HandleFunc("/upload", uploadImport)
 	http.HandleFunc("/x", json_requests)
 	http.HandleFunc("/", central_dispatch)
 	http.ListenAndServe(":"+*HTTPPort, nil)

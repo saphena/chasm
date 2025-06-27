@@ -91,10 +91,14 @@ type ClaimRecord struct {
 }
 
 type EntrantDetails struct {
-	EntrantID   int
-	RiderName   string
-	PillionName string
-	TeamID      int
+	EntrantID    int
+	RiderName    string
+	PillionName  string
+	TeamID       int
+	RiderFirst   string
+	RiderLast    string
+	PillionFirst string
+	PillionLast  string
 }
 
 const maximg = 3
@@ -180,7 +184,7 @@ func fetchEntrantDetails(entrant int) EntrantDetails {
 
 	e := strconv.Itoa(entrant)
 
-	ed.RiderName = getStringFromDB("SELECT RiderName FROM entrants WHERE EntrantID="+e, e)
+	ed.RiderName = getStringFromDB("SELECT "+RiderNameSQL+" FROM entrants WHERE EntrantID="+e, e)
 	ed.PillionName = getStringFromDB("SELECT ifnull(PillionName,'') FROM entrants WHERE EntrantID="+e, "")
 	ed.TeamID = getIntegerFromDB("SELECT TeamID FROM entrants WHERE EntrantID="+e, 0)
 	return ed
@@ -371,7 +375,7 @@ func list_EBC_claims(w http.ResponseWriter, r *http.Request) {
 
 	const sorry = "Sorry, no claims need judging at the moment &#128543;"
 
-	sqlx := `SELECT ebclaims.rowid,ebclaims.EntrantID,entrants.RiderName,ifnull(entrants.PillionName,''),ebclaims.BonusID,xbonus.BriefDesc,ebclaims.OdoReading,ebclaims.ClaimTime
+	sqlx := `SELECT ebclaims.rowid,ebclaims.EntrantID,` + RiderNameSQL + `,ifnull(entrants.PillionName,''),ebclaims.BonusID,xbonus.BriefDesc,ebclaims.OdoReading,ebclaims.ClaimTime
 	 		FROM ebclaims LEFT JOIN entrants ON ebclaims.EntrantID=entrants.EntrantID
 			LEFT JOIN (SELECT BonusID,BriefDesc FROM bonuses) AS xbonus ON ebclaims.BonusID=xbonus.BonusID
 			 WHERE Processed=0 ORDER BY Decision DESC,FinalTime;`
@@ -424,7 +428,7 @@ func list_EBC_claims(w http.ResponseWriter, r *http.Request) {
 func loadEntrantsList() map[int]string {
 
 	res := make(map[int]string)
-	sqlx := "SELECT EntrantID,RiderName,ifnull(PillionName,'') FROM entrants"
+	sqlx := "SELECT EntrantID," + RiderNameSQL + ",ifnull(PillionName,'') FROM entrants"
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
 	defer rows.Close()
@@ -480,7 +484,7 @@ func insertNewClaim(r *http.Request) {
 }
 func saveClaim(r *http.Request) {
 
-	fmt.Printf("saveclaim: %v\n", r)
+	//fmt.Printf("saveclaim: %v\n", r)
 	claimid := intval(r.FormValue("claimid"))
 
 	if claimid < 1 {
@@ -747,7 +751,7 @@ func showEBC(w http.ResponseWriter, r *http.Request) {
 	err = rows.Scan(&ebc.EntrantID, &ebc.Bonusid, &ebc.OdoReading, &ebc.ClaimTime, &ebc.Subject, &ebc.ExtraField, &ebc.AttachmentTime, &ebc.DateTime, &ebc.FirstTime, &ebc.FinalTime, &ebc.EmailID)
 	checkerr(err)
 
-	team := getStringFromDB("SELECT RiderName FROM entrants WHERE EntrantID="+strconv.Itoa(ebc.EntrantID), "***")
+	team := getStringFromDB("SELECT "+RiderNameSQL+" FROM entrants WHERE EntrantID="+strconv.Itoa(ebc.EntrantID), "***")
 	x := getStringFromDB("SELECT ifnull(PillionName,'') FROM entrants WHERE EntrantID="+strconv.Itoa(ebc.EntrantID), "")
 	if x != "" {
 		team += " &amp; " + x

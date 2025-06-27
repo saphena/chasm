@@ -91,8 +91,8 @@ func show_odo(w http.ResponseWriter, r *http.Request, showstart bool) {
 	}
 
 	if !showstart {
-		const holdlit = `stop clock`
-		const unholdlit = `restart clock`
+		const holdlit = ` stop clock `
+		const unholdlit = ` restart clock `
 		fmt.Fprintf(w, ` <button data-hold="%v" data-unhold="%v" onclick="clickTimeBtn(this);" id="pauseTime">%v</button>`, holdlit, unholdlit, holdlit)
 	}
 	fmt.Fprint(w, `<script>`+timerticker+`</script>`)
