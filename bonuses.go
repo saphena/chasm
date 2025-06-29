@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"text/template"
 )
 
 type BonusRec struct {
@@ -27,6 +28,104 @@ type BonusRec struct {
 	Cat         [NumCategoryAxes]int
 }
 
+type BonusDisplayRec struct {
+	B            BonusRec
+	FlagA        bool
+	FlagB        bool
+	FlagD        bool
+	FlagF        bool
+	FlagN        bool
+	FlagR        bool
+	FlagT        bool
+	BonusImgFldr string
+}
+
+var BonusDisplayScreen = `
+	<article class="bonus">
+		<fieldset>
+			<label for="BonusID">Code</label>
+			<input type="text" id="BonusID" name="BonusID" class="BonusID" value="{{.B.BonusID}}">
+		</fieldset>
+		<fieldset>
+			<label for="BriefDesc">Description</label>
+			<input type="text" id="BriefDesc" name="BriefDesc" class="BriefDesc" value="{{.B.BriefDesc}}">
+		</fieldset>
+		<fieldset>
+			<label for="Points">Points</label>
+			<input type="number" id="Points" name="Points" class="Points" value="{{.B.Points}}">
+			<select id="AskPoints" name="AskPoints">
+				<option value="0" {{if eq .B.AskPoints 0}}selected{{end}}>Fixed</option>
+				<option value="1" {{if eq .B.AskPoints 1}}selected{{end}}>Variable</option>
+				<option value="2" {{if eq .B.AskPoints 2}}selected{{end}}>Multiply last</option>
+			</select>
+		</fieldset>
+		<fieldset>
+			<label for="Notes">Scoring notes</label>
+			<input type="text" id="Notes" name="Notes" class="Notes" value="{{.B.Notes}}">
+		</fieldset>
+		<fieldset>
+			<label>Scoring flags</label>
+			<span title="Alert!">
+				<label for="ScoringFlagA" class="short"><img class="icon" src="/img?i=alert" alt="!"></label>
+				<input type="checkbox" id="ScoringFlagA" name="ScoringFlagA" {{if .FlagA}}checked{{end}} value="A">
+			</span>
+			<span title="Bike in photo">
+				<label for="ScoringFlagB" class="short"><img class="icon" src="/img?i=bike" alt="B"></label>
+				<input type="checkbox" id="ScoringFlagB" name="ScoringFlagB" {{if .FlagB}}checked{{end}} value="B">
+			</span>
+			<span title="Daylight only">
+				<label for="ScoringFlagD" class="short"><img class="icon" src="/img?i=daylight" alt="D"></label>
+				<input type="checkbox" id="ScoringFlagD" name="ScoringFlagD" {{if .FlagD}}checked{{end}} value="D">
+			</span>
+			<span title="Face in photo">
+				<label for="ScoringFlagF" class="short"><img class="icon" src="/img?i=face" alt="F"></label>
+				<input type="checkbox" id="ScoringFlagF" name="ScoringFlagF" {{if .FlagF}}checked{{end}} value="F">
+			</span>
+			<span title="Nighttime only">
+				<label for="ScoringFlagN" class="short"><img class="icon" src="/img?i=night" alt="N"></label>
+				<input type="checkbox" id="ScoringFlagN" name="ScoringFlagN" {{if .FlagN}}checked{{end}} value="N">
+			</span>
+			<span title="Restricted access/hours">
+				<label for="ScoringFlagR" class="short"><img class="icon" src="/img?i=restricted" alt="R"></label>
+				<input type="checkbox" id="ScoringFlagR" name="ScoringFlagR" {{if .FlagR}}checked{{end}} value="R">
+			</span>
+			<span title="Receipt/ticket needed">
+				<label for="ScoringFlagT" class="short"><img class="icon" src="/img?i=receipt" alt="T"></label>
+				<input type="checkbox" id="ScoringFlagT" name="ScoringFlagT" {{if .FlagT}}checked{{end}} value="T">
+			</span>
+		</fieldset>
+		<fieldset>
+			<label for="Image">Image</label>
+			<input type="text" id="Image" name="Image" class="Image" value="{{.B.Image}}">
+		</fieldset><fieldset>
+			<img alt="*" data-bimg-folder="{{.BonusImgFldr}}" src="{{.BonusImgFldr}}/{{.B.Image}}">
+		</fieldset>
+		<fieldset>
+			<label for="Compulsory">Compulsory?</label> 
+			<select id="Compulsory" >
+				<option value="0" {{if eq .B.Compulsory 0}}selected{{end}}>Optional</option>
+				<option value="1" {{if eq .B.Compulsory 1}}selected{{end}}>Compulsory</option>
+			</select>
+		</fieldset>
+		<fieldset>
+			<label for="RestMinutes">Rest minutes</label> 
+			<input id="RestMinutes" name="RestMinutes" class="RestMinutes" value="{{.B.RestMinutes}}">
+			<select name="AskMinutes">
+				<option value="0" {{if eq .B.AskMinutes 0}}selected{{end}}>Fixed</option>
+				<option value="1" {{if eq .B.AskMinutes 1}}selected{{end}}>Variable</option>
+			</select>
+		</fieldset>
+		<fieldset>
+			<label for="Coords">Coords</label> 
+			<input id="Coords" name="Coords" class="Coords" value="{{.B.Coords}}">
+		</fieldset>
+		<fieldset>
+			<label for="Waffle">Waffle</label> 
+			<input id="Waffle" name="Waffle" class="Waffle" value="{{.B.Waffle}}">
+		</fieldset>
+	</article>
+`
+
 func list_bonuses(w http.ResponseWriter, r *http.Request) {
 
 	startHTML(w, "Bonuses")
@@ -38,7 +137,7 @@ func list_bonuses(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, ` <input type="text" onchange="showBonus(this.value)" placeholder="Code to show">`)
 	fmt.Fprint(w, `</div>`)
 	fmt.Fprint(w, `<div class="bonuslist hdr">`)
-	fmt.Fprint(w, `<span>Code</span><span>Description</span><span>Points</span><span></span><span class="right">Claims</span>`)
+	fmt.Fprint(w, `<span>Code</span><span>Description</span><span>Points</span><span class="right">Claims</span>`)
 	fmt.Fprint(w, `</div>`)
 	fmt.Fprint(w, `</header>`)
 
@@ -47,14 +146,21 @@ func list_bonuses(w http.ResponseWriter, r *http.Request) {
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
 	defer rows.Close()
+	oe := true
 	for rows.Next() {
 		var bonus string
 		var descr string
 		var points int
 		err := rows.Scan(&bonus, &descr, &points)
 		checkerr(err)
-		fmt.Fprint(w, `<div class="bonuslist">`)
+		oex := "even"
+		if oe {
+			oex = "odd"
+		}
+		oe = !oe
+		fmt.Fprintf(w, `<div class="bonuslist row link %v" onclick="window.location.href='/bonus?b=%v&back=bonuses'">`, oex, bonus)
 		fmt.Fprintf(w, `<span>%v</span><span>%v</span><span>%v</span>`, bonus, descr, points)
+		fmt.Fprint(w, `<span class="claims"></span>`)
 		fmt.Fprint(w, `</div>`)
 	}
 }
@@ -71,7 +177,11 @@ func show_bonus(w http.ResponseWriter, r *http.Request) {
 	}
 	sqlx += " FROM bonuses WHERE BonusID='" + bonus + "'"
 
-	startHTML(w, "Bonus detail")
+	if r.FormValue("back") != "" {
+		startHTMLBL(w, "Bonus detail", r.FormValue("back"))
+	} else {
+		startHTML(w, "Bonus detail")
+	}
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
 	defer rows.Close()
@@ -99,118 +209,20 @@ func show_bonus(w http.ResponseWriter, r *http.Request) {
 	err = rows.Scan(columns...)
 	checkerr(err)
 
-	var selected string
-	var checked string
+	var br BonusDisplayRec
+	br.B = b
+	br.BonusImgFldr = CS.ImgBonusFolder
+	br.FlagA = strings.Contains(b.Flags, "A")
+	br.FlagB = strings.Contains(b.Flags, "B")
+	br.FlagD = strings.Contains(b.Flags, "D")
+	br.FlagF = strings.Contains(b.Flags, "F")
+	br.FlagN = strings.Contains(b.Flags, "N")
+	br.FlagR = strings.Contains(b.Flags, "R")
+	br.FlagT = strings.Contains(b.Flags, "T")
 
-	fmt.Fprint(w, `</header>`)
-	fmt.Fprint(w, `<article class="bonus">`)
-	fmt.Fprint(w, `<fieldset>`)
-	fmt.Fprint(w, `<label for="BonusID">Code</label>`)
-	fmt.Fprintf(w, `<input type="text" id="BonusID" name="BonusID" class="BonusID" value="%v">`, b.BonusID)
-	fmt.Fprint(w, `</fieldset>`)
-	fmt.Fprint(w, `<fieldset>`)
-	fmt.Fprint(w, `<label for="BriefDesc">Description</label>`)
-	fmt.Fprintf(w, `<input type="text" id="BriefDesc" name="BriefDesc" class="BriefDesc" value="%v">`, b.BriefDesc)
-	fmt.Fprint(w, `</fieldset>`)
-	fmt.Fprint(w, `<fieldset>`)
-	fmt.Fprint(w, `<label for="Points">Points</label>`)
-	fmt.Fprintf(w, `<input type="number" id="Points" name="Points" class="Points" value="%v">`, b.Points)
-	fmt.Fprint(w, ` <select id="AskPoints" name="AskPoints">`)
-	selected = ""
-	if b.AskPoints == 0 {
-		selected = "selected"
-	}
-	fmt.Fprintf(w, `<option value="0" %v>Fixed</option>`, selected)
-	selected = ""
-	if b.AskPoints == 1 {
-		selected = "selected"
-	}
-	fmt.Fprintf(w, `<option value="1" %v>Variable</option>`, selected)
-	selected = ""
-	if b.AskPoints == 2 {
-		selected = "selected"
-	}
-	fmt.Fprintf(w, `<option value="2" %v>Multiplier</option>`, selected)
+	t, err := template.New("BonusDetail").Parse(BonusDisplayScreen)
+	checkerr(err)
+	err = t.Execute(w, br)
+	checkerr(err)
 
-	fmt.Fprint(w, `</select>`)
-	fmt.Fprint(w, `</fieldset>`)
-
-	fmt.Fprint(w, `<fieldset>`)
-	fmt.Fprint(w, `<label for="Notes">Scoring notes</label>`)
-	fmt.Fprintf(w, `<input type="text" id="Notes" name="Notes" class="Notes" value="%v">`, b.Notes)
-	fmt.Fprint(w, `</fieldset>`)
-
-	fmt.Fprint(w, `<fieldset>`)
-	fmt.Fprint(w, `<label>Scoring flags</label>`)
-	fmt.Fprint(w, `<span title="Alert!">`)
-	fmt.Fprint(w, `<label for="ScoringFlagA" class="short"><img class="icon" src="/img?i=alert" alt="!"></label>`)
-	checked = ""
-	if strings.Contains(b.Flags, "A") {
-		checked = "checked"
-	}
-	fmt.Fprintf(w, `<input type="checkbox" id="ScoringFlagA" name="ScoringFlagA" %v value="A">`, checked)
-	fmt.Fprint(w, `</span>`)
-
-	fmt.Fprint(w, `<span title="Bike in photo">`)
-	fmt.Fprint(w, `<label for="ScoringFlagB" class="short"><img class="icon" src="/img?i=bike" alt="B"></label>`)
-	checked = ""
-	if strings.Contains(b.Flags, "B") {
-		checked = "checked"
-	}
-	fmt.Fprintf(w, `<input type="checkbox" id="ScoringFlagB" name="ScoringFlagB" %v value="B">`, checked)
-	fmt.Fprint(w, `</span>`)
-
-	fmt.Fprint(w, `<span title="Daylight only">`)
-	fmt.Fprint(w, `<label for="ScoringFlagD" class="short"><img class="icon" src="/img?i=daylight" alt="D"></label>`)
-	checked = ""
-	if strings.Contains(b.Flags, "D") {
-		checked = "checked"
-	}
-	fmt.Fprintf(w, `<input type="checkbox" id="ScoringFlagD" name="ScoringFlagD" %v value="D">`, checked)
-	fmt.Fprint(w, `</span>`)
-
-	fmt.Fprint(w, `<span title="Face in photo">`)
-	fmt.Fprint(w, `<label for="ScoringFlagF" class="short"><img class="icon" src="/img?i=face" alt="F"></label>`)
-	checked = ""
-	if strings.Contains(b.Flags, "F") {
-		checked = "checked"
-	}
-	fmt.Fprintf(w, `<input type="checkbox" id="ScoringFlagF" name="ScoringFlagF" %v value="F">`, checked)
-	fmt.Fprint(w, `</span>`)
-
-	fmt.Fprint(w, `<span title="Nighttime only">`)
-	fmt.Fprint(w, `<label for="ScoringFlagN" class="short"><img class="icon" src="/img?i=night" alt="N"></label>`)
-	checked = ""
-	if strings.Contains(b.Flags, "N") {
-		checked = "checked"
-	}
-	fmt.Fprintf(w, `<input type="checkbox" id="ScoringFlagN" name="ScoringFlagN" %v value="N">`, checked)
-	fmt.Fprint(w, `</span>`)
-
-	fmt.Fprint(w, `<span title="Restricted access/hours">`)
-	fmt.Fprint(w, `<label for="ScoringFlagR" class="short"><img class="icon" src="/img?i=restricted" alt="R"></label>`)
-	checked = ""
-	if strings.Contains(b.Flags, "R") {
-		checked = "checked"
-	}
-	fmt.Fprintf(w, `<input type="checkbox" id="ScoringFlagR" name="ScoringFlagR" %v value="R">`, checked)
-	fmt.Fprint(w, `</span>`)
-
-	fmt.Fprint(w, `<span title="Receipt/ticket needed">`)
-	fmt.Fprint(w, `<label for="ScoringFlagT" class="short"><img class="icon" src="/img?i=receipt" alt="T"></label>`)
-	checked = ""
-	if strings.Contains(b.Flags, "T") {
-		checked = "checked"
-	}
-	fmt.Fprintf(w, `<input type="checkbox" id="ScoringFlagT" name="ScoringFlagT" %v value="T">`, checked)
-	fmt.Fprint(w, `</span>`)
-
-	fmt.Fprint(w, `</fieldset>`)
-
-	fmt.Fprint(w, `<fieldset>`)
-	fmt.Fprint(w, `<label for="Image">Image</label>`)
-	fmt.Fprintf(w, ` <input type="text" id="Image" name="Image" class="Image" value="%v">`, b.Image)
-	fmt.Fprint(w, `</fieldset>`)
-
-	fmt.Fprint(w, `</article>`)
 }

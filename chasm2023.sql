@@ -250,6 +250,8 @@ CREATE TABLE IF NOT EXISTS "bonuses" (
 	"Waffle"	TEXT,
 	"Question"	TEXT,
 	"Answer"	TEXT,
+	"Leg" INTEGER DEFAULT 0,
+	"QAPoints" INTEGER NOT NULL DEFAULT 0,
 	PRIMARY KEY("BonusID")
 );
 DROP TABLE IF EXISTS "magicwords";
@@ -258,12 +260,6 @@ CREATE TABLE IF NOT EXISTS "magicwords" (
 	"magic"	TEXT NOT NULL
 );
 DROP TABLE IF EXISTS "speedpenalties";
-CREATE TABLE IF NOT EXISTS "speedpenalties" (
-	"Basis"	INTEGER NOT NULL DEFAULT 0,
-	"MinSpeed"	INTEGER NOT NULL,
-	"PenaltyType"	INTEGER NOT NULL DEFAULT 0,
-	"PenaltyPoints"	INTEGER DEFAULT 0
-);
 DROP TABLE IF EXISTS "importspecs";
 CREATE TABLE IF NOT EXISTS "importspecs" (
 	"specid"	TEXT NOT NULL,

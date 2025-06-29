@@ -226,22 +226,29 @@ article.about dd {
 }
 
 article.bonus {
-  margin: 0 1em 0 1em;
-}
-article.bonus fieldset {
-  display: block;
-  border: none;
-  margin: 0 0 1em 0;
-}
-article.bonus label {
-  display: inline-block;
-  min-width: 10em;
-  text-align: right;
-  margin-right: 1em;
-}
-article.bonus label.short {
-  min-width: 5em;
-  margin-right: 0.5em;
+  max-width: var(--default-max-width);
+  padding: 2px;
+  margin: 0 auto 0 auto;
+
+  fieldset {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    border: none;
+    margin: 0 0 1em 0;
+
+    label,
+    input,
+    select {
+      display: inline-block;
+      margin-right: 0.5em;
+    }
+    .Notes,
+    .Waffle {
+      width: 98%;
+      max-width: 30em;
+    }
+  }
 }
 img.icon {
   width: 36px;
@@ -294,7 +301,7 @@ article.config label {
   margin: 1em;
 }
 .bonuslist {
-  margin: 1em;
+  margin: 0.2em;
   display: grid;
   grid-template-columns: 1fr 2fr 1fr 1fr 1fr;
   max-width: var(--default-max-width);
@@ -392,9 +399,12 @@ div.claim {
 .MaxHours {
   width: 4em;
 }
-.Points,
-.RestMinutes {
+.Points {
   width: 4em;
+}
+
+.RestMinutes {
+  width: 3em;
 }
 .claimfield {
   margin: 1em;
@@ -517,10 +527,9 @@ td.sxtotalpoints {
 
 .reviewhdr {
   margin: 0 0 1em 5px;
-  input[type=submit] {
-    padding: 0 .5em 0 .5em;
+  input[type="submit"] {
+    padding: 0 0.5em 0 0.5em;
   }
-
 }
 .reviewlist {
   display: flex;
@@ -541,7 +550,7 @@ td.sxtotalpoints {
   }
   .rejects {
     text-decoration: line-through;
-    
+
     font-weight: bold;
   }
 }
@@ -561,9 +570,9 @@ td.sxtotalpoints {
     border: none;
     margin: 2em;
   }
-  input[type=submit] {
+  input[type="submit"] {
     margin: 0 0 0 3em;
-    padding: .5em;
+    padding: 0.5em;
     width: 20em;
     max-width: calc(90% - 3em);
   }
@@ -577,7 +586,6 @@ td.sxtotalpoints {
     grid-template-columns: 1fr 2fr 1fr;
   }
 }
-
 
 .hide {
   display: none;
