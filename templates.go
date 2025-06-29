@@ -59,7 +59,7 @@ var topbar = `
 	<button id="main_help_button" class="link noprint" onclick="showHelp('')" title="Help">` + helpicon + `</button>
 	-->
 	<button id="main_home_button" class="link noprint" onclick="goHome(this)" title="Main menu">` + homeicon + `</button>
-	<span id="main_rally_title" class="link" onclick="goHome(this)">%s</span>
+	<span id="main_rally_title" class="link" onclick="loadPage('%s')">%s</span>
 	</span>
 	<span class="flexitem">
 	<span id="main_current_task">%s</span>
@@ -163,11 +163,25 @@ func showReloadTicker(w http.ResponseWriter, url string) {
 
 func showTopbar(w http.ResponseWriter, currentTask string) {
 
-	fmt.Fprintf(w, topbar, CS.Basics.RallyTitle, currentTask)
+	showTopbarBL(w, currentTask, "")
+
+}
+func showTopbarBL(w http.ResponseWriter, currentTask string, backLink string) {
+
+	itm := "/"
+	if backLink != "" {
+		itm = backLink
+	}
+	fmt.Fprintf(w, topbar, itm, CS.Basics.RallyTitle, currentTask)
 
 }
 
 func startHTML(w http.ResponseWriter, currentTask string) {
+
+	startHTMLBL(w, currentTask, "")
+
+}
+func startHTMLBL(w http.ResponseWriter, currentTask string, backLink string) {
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
@@ -176,6 +190,6 @@ func startHTML(w http.ResponseWriter, currentTask string) {
 
 	fmt.Fprint(w, htmlheader)
 	fmt.Fprint(w, `<header>`)
-	showTopbar(w, currentTask)
+	showTopbarBL(w, currentTask, backLink)
 
 }

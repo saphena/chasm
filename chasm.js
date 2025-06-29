@@ -236,6 +236,14 @@ function oi(obj) {
   console.log("oi complete " + JSON.stringify(obj));
 }
 
+function saveRS(obj) {
+  let e = obj.getAttribute("data-e");
+  let url = "/x?f=savers&e=" + e;
+  url += "&rs=" + obj.value;
+  console.log("saveRS: " + url);
+  stackTransaction(url, obj.id);
+  sendTransactions();
+}
 function saveSetupConfig(obj) {
   console.log("saveSetupConfig called");
   if (obj.timer) {
@@ -648,4 +656,9 @@ function applyCorrectAnswerBonus(apply) {
 function leaveUndecided() {
   let lu = document.getElementById("leavebutton");
   closeEBC(lu);
+}
+
+function loadPage(pg) {
+  console.log("loadPage called with '"+pg+"'")
+  window.location.href = pg;
 }

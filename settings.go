@@ -159,8 +159,9 @@ var tzlist = []string{
 	"Europe/Zurich",
 }
 
-// SQL for safely retrieving RiderName
+// SQL for safely retrieving full names
 const RiderNameSQL = "ifnull(entrants.RiderName,ifnull(entrants.RiderFirst,'') || ' ' || ifnull(entrants.RiderLast,'')) AS RiderName"
+const PillionNameSQL = "ifnull(entrants.PillionName,ifnull(entrants.PillionFirst,'') || ' ' || ifnull(entrants.PillionLast,'')) AS PillionName"
 
 func ajaxUpdateSettings(w http.ResponseWriter, r *http.Request) {
 

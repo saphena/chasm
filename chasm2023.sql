@@ -333,6 +333,8 @@ CREATE TABLE IF NOT EXISTS "entrants" (
 	"Confirmed"	INTEGER NOT NULL DEFAULT 0,
 	"AvgSpeed"	TEXT,
 	"Cohort"	INTEGER NOT NULL DEFAULT 0,
+	"RiderLast" TEXT,
+	"PillionLast" TEXT,
 	"ReviewedByTeam"	INTEGER NOT NULL DEFAULT 0,
 	"AcceptedByEntrant"	INTEGER NOT NULL DEFAULT 0,
 	"LastReviewed"	TEXT,

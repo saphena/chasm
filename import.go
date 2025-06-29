@@ -12,7 +12,16 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-var SpecialFields = []string{"RiderName", "PillionName", "Bike"}
+// var SpecialEntrantFields = map[string]string(`[
+//
+//	{"RiderName": "ifnull(RiderFirst,'') || ' ' || ifnull(RiderLast,'')"},
+//
+// ]
+var SpecialEntrantFields = map[string]string{
+	"RiderName":   "ifnull(RiderFirst,'') || ' ' || ifnull(RiderLast,'')",
+	"PillionName": "ifnull(PillionFirst,'') || ' '  || ifnull(PillionLast,'')",
+	"Bike":        "",
+}
 
 const uploadSpace = (10 << 20) // 10MB
 const tempfilename = "uploadeddata.csv"

@@ -78,7 +78,7 @@ func show_qlist(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `<fieldset class="col hdr right link" onclick="reloadRankings('seq','PPM')">P&divide;%v</fieldset>`, string(mk[0]))
 	fmt.Fprint(w, `</fieldset>`)
 
-	sqlx := "SELECT ifnull(FinishPosition,0),RiderName,ifnull(PillionName,''),ifnull(CorrectedMiles,0),ifnull(TotalPoints,0),EntrantStatus"
+	sqlx := "SELECT ifnull(FinishPosition,0)," + RiderNameSQL + ",ifnull(PillionName,''),ifnull(CorrectedMiles,0),ifnull(TotalPoints,0),EntrantStatus"
 	sqlx += ",IfNull((TotalPoints*1.0) / CorrectedMiles,0) As PPM,ifnull(AvgSpeed,''),EntrantID"
 	sqlx += " FROM entrants"
 	sqlx += " WHERE EntrantStatus IN ("
@@ -106,7 +106,7 @@ func show_qlist(w http.ResponseWriter, r *http.Request) {
 		if pn != "" {
 			rr.Name += " &amp; " + pn
 		}
-		fmt.Fprintf(w, `<fieldset class="row rankings link" onclick="window.location.href='/score?e=%v'">`, rr.Entrant)
+		fmt.Fprintf(w, `<fieldset class="row rankings link" onclick="window.location.href='/score?e=%v&back=qlist'">`, rr.Entrant)
 		status := EntrantStatusLits[rr.Status]
 		if rr.Status == EntrantFinisher {
 			status = strconv.Itoa(rr.Rank)

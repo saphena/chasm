@@ -515,17 +515,41 @@ td.sxtotalpoints {
   }
 }
 
+.reviewhdr {
+  margin: 0 0 1em 5px;
+  input[type=submit] {
+    padding: 0 .5em 0 .5em;
+  }
+
+}
 .reviewlist {
   display: flex;
   flex-direction: column;
   max-width: var(--default-max-width);
   .row {
     display: grid;
-    grid-template-columns: 3em 1fr 1fr;
+    grid-template-columns: 3em 1fr 1fr 1fr;
     margin-left: 1em;
   }
+  .nums {
+    display: inline-flex;
+    flex-direction: row;
+  }
+  .nums span {
+    text-align: center;
+    width: 2em;
+  }
+  .rejects {
+    text-decoration: line-through;
+    
+    font-weight: bold;
+  }
 }
-
+.bigtick {
+  font-size: 1.2em;
+  font-weight: bold;
+  color: blue;
+}
 .import {
   max-width: var(--default-max-width);
   margin: auto;

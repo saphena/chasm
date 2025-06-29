@@ -91,14 +91,17 @@ type ClaimRecord struct {
 }
 
 type EntrantDetails struct {
-	EntrantID    int
-	RiderName    string
-	PillionName  string
-	TeamID       int
-	RiderFirst   string
-	RiderLast    string
-	PillionFirst string
-	PillionLast  string
+	EntrantID         int
+	RiderName         string
+	PillionName       string
+	TeamID            int
+	RiderFirst        string
+	RiderLast         string
+	PillionFirst      string
+	PillionLast       string
+	ReviewedByTeam    int
+	AcceptedByEntrant int
+	LastReviewed      string
 }
 
 const maximg = 3
@@ -517,7 +520,7 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
 
-	startHTML(w, "Individual claim")
+	startHTMLBL(w, "Individual claim", "claims")
 
 	claimid := intval(r.FormValue("c"))
 
