@@ -40,7 +40,34 @@ type BonusDisplayRec struct {
 	BonusImgFldr string
 }
 
+const TrashcanIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+  <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+  <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
+</svg>`
+
+const FloppyDiskIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-floppy" viewBox="0 0 16 16">
+  <path d="M11 2H9v3h2z"/>
+  <path d="M1.5 0h11.586a1.5 1.5 0 0 1 1.06.44l1.415 1.414A1.5 1.5 0 0 1 16 2.914V14.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 14.5v-13A1.5 1.5 0 0 1 1.5 0M1 1.5v13a.5.5 0 0 0 .5.5H2v-4.5A1.5 1.5 0 0 1 3.5 9h9a1.5 1.5 0 0 1 1.5 1.5V15h.5a.5.5 0 0 0 .5-.5V2.914a.5.5 0 0 0-.146-.353l-1.415-1.415A.5.5 0 0 0 13.086 1H13v4.5A1.5 1.5 0 0 1 11.5 7h-7A1.5 1.5 0 0 1 3 5.5V1H1.5a.5.5 0 0 0-.5.5m3 4a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5V1H4zM3 15h10v-4.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5z"/>
+</svg>`
+
 var BonusDisplayScreen = `
+	<div class="topline">
+		{{if ne .B.BonusID ""}}
+		<fieldset>
+			<button title="Delete this Bonus?" onclick="enableDelete(!document.getElementById('enableDelete').checked)">   ` + TrashcanIcon + `</button>
+			<input type="checkbox" id="enableDelete" onchange="enableSave(this.checked)">
+		</fieldset>
+		{{end}}
+		<fieldset>
+			<button id="updatedb" title="Update DB" disabled>` + FloppyDiskIcon + `</button>
+		</fieldset>
+		<fieldset>
+			<input type="button" title="show next" value="⋘" onclick="window.location.href='/bonus?b={{.B.BonusID}}&prev'">
+			<input type="button" title="show previous" value="⋙" onclick="window.location.href='/bonus?b={{.B.BonusID}}&next'">
+			<input type="button" title="back to list" value="↥☰↥" onclick="window.location.href='/bonuses'">
+		</fieldset>
+
+	</div>
 	<article class="bonus">
 		<fieldset>
 			<label for="BonusID">Code</label>
@@ -61,44 +88,43 @@ var BonusDisplayScreen = `
 		</fieldset>
 		<fieldset>
 			<label for="Notes">Scoring notes</label>
-			<input type="text" id="Notes" name="Notes" class="Notes" value="{{.B.Notes}}">
+			<textarea id="Notes" name="Notes" class="Notes">{{.B.Notes}}</textarea>
 		</fieldset>
 		<fieldset>
-			<label>Scoring flags</label>
-			<span title="Alert!">
-				<label for="ScoringFlagA" class="short"><img class="icon" src="/img?i=alert" alt="!"></label>
-				<input type="checkbox" id="ScoringFlagA" name="ScoringFlagA" {{if .FlagA}}checked{{end}} value="A">
+			<span class="button {{if.FlagA}}selected{{end}}" title="Alert!">
+				<img class="icon" src="/img?i=alert" alt="!" onclick="toggleButton(this)">
+				<input type="checkbox" class="quietcheck" id="ScoringFlagB" name="ScoringFlagB" {{if .FlagB}}checked{{end}} value="B">
 			</span>
-			<span title="Bike in photo">
-				<label for="ScoringFlagB" class="short"><img class="icon" src="/img?i=bike" alt="B"></label>
-				<input type="checkbox" id="ScoringFlagB" name="ScoringFlagB" {{if .FlagB}}checked{{end}} value="B">
+			<span class="button {{if .FlagB}}selected{{end}}" title="Bike in photo">
+				<img class="icon" src="/img?i=bike" alt="B" onclick="toggleButton(this)">
+				<input type="checkbox" class="quietcheck" id="ScoringFlagB" name="ScoringFlagB" {{if .FlagB}}checked{{end}} value="B">
 			</span>
-			<span title="Daylight only">
-				<label for="ScoringFlagD" class="short"><img class="icon" src="/img?i=daylight" alt="D"></label>
-				<input type="checkbox" id="ScoringFlagD" name="ScoringFlagD" {{if .FlagD}}checked{{end}} value="D">
+			<span class="button {{if .FlagD}}selected{{end}}" title="Daylight only">
+				<img class="icon" src="/img?i=daylight" alt="D" onclick="toggleButton(this)">
+				<input type="checkbox"  class="quietcheck" id="ScoringFlagD" name="ScoringFlagD" {{if .FlagD}}checked{{end}} value="D">
 			</span>
-			<span title="Face in photo">
-				<label for="ScoringFlagF" class="short"><img class="icon" src="/img?i=face" alt="F"></label>
-				<input type="checkbox" id="ScoringFlagF" name="ScoringFlagF" {{if .FlagF}}checked{{end}} value="F">
+			<span class="button {{if .FlagF}}selected{{end}}" title="Face in photo">
+				<img class="icon" src="/img?i=face" alt="F" onclick="toggleButton(this)">
+				<input type="checkbox"  class="quietcheck" id="ScoringFlagF" name="ScoringFlagF" {{if .FlagF}}checked{{end}} value="F">
 			</span>
-			<span title="Nighttime only">
-				<label for="ScoringFlagN" class="short"><img class="icon" src="/img?i=night" alt="N"></label>
-				<input type="checkbox" id="ScoringFlagN" name="ScoringFlagN" {{if .FlagN}}checked{{end}} value="N">
+			<span class="button {{if .FlagN}}selected{{end}}" title="Nighttime only">
+				<img class="icon" src="/img?i=night" alt="N" onclick="toggleButton(this)">
+				<input type="checkbox" class="quietcheck" id="ScoringFlagN" name="ScoringFlagN" {{if .FlagN}}checked{{end}} value="N">
 			</span>
-			<span title="Restricted access/hours">
-				<label for="ScoringFlagR" class="short"><img class="icon" src="/img?i=restricted" alt="R"></label>
-				<input type="checkbox" id="ScoringFlagR" name="ScoringFlagR" {{if .FlagR}}checked{{end}} value="R">
+			<span class="button {{if .FlagR}}selected{{end}}" title="Restricted access/hours">
+				<img class="icon" src="/img?i=restricted" alt="R" onclick="toggleButton(this)">
+				<input type="checkbox" class="quietcheck" id="ScoringFlagR" name="ScoringFlagR" {{if .FlagR}}checked{{end}} value="R">
 			</span>
-			<span title="Receipt/ticket needed">
-				<label for="ScoringFlagT" class="short"><img class="icon" src="/img?i=receipt" alt="T"></label>
-				<input type="checkbox" id="ScoringFlagT" name="ScoringFlagT" {{if .FlagT}}checked{{end}} value="T">
+			<span class="button {{if .FlagT}}selected{{end}}" title="Receipt/ticket needed">
+				<img class="icon" src="/img?i=receipt" alt="T" onclick="toggleButton(this)">
+				<input type="checkbox" class="quietcheck" id="ScoringFlagT" name="ScoringFlagT" {{if .FlagT}}checked{{end}} value="T">
 			</span>
 		</fieldset>
 		<fieldset>
 			<label for="Image">Image</label>
 			<input type="text" id="Image" name="Image" class="Image" value="{{.B.Image}}">
 		</fieldset><fieldset>
-			<img alt="*" data-bimg-folder="{{.BonusImgFldr}}" src="{{.BonusImgFldr}}/{{.B.Image}}">
+			<img alt="*" data-bimg-folder="{{.BonusImgFldr}}"class="thumbnail" src="{{.BonusImgFldr}}/{{.B.Image}}" onclick="this.classList.toggle('thumbnail')">
 		</fieldset>
 		<fieldset>
 			<label for="Compulsory">Compulsory?</label> 
@@ -121,7 +147,7 @@ var BonusDisplayScreen = `
 		</fieldset>
 		<fieldset>
 			<label for="Waffle">Waffle</label> 
-			<input id="Waffle" name="Waffle" class="Waffle" value="{{.B.Waffle}}">
+			<textarea id="Waffle" name="Waffle" class="Waffle">{{.B.Waffle}}</textarea>
 		</fieldset>
 	</article>
 `
@@ -175,17 +201,32 @@ func show_bonus(w http.ResponseWriter, r *http.Request) {
 	for i := 1; i <= NumCategoryAxes; i++ {
 		sqlx += ", Cat" + strconv.Itoa(i)
 	}
-	sqlx += " FROM bonuses WHERE BonusID='" + bonus + "'"
+	sqlx += " FROM bonuses WHERE BonusID"
 
-	if r.FormValue("back") != "" {
-		startHTMLBL(w, "Bonus detail", r.FormValue("back"))
+	rel := "="
+	ord := "BonusID"
+	ok := r.Form.Has("next")
+	if ok {
+		rel = ">"
 	} else {
-		startHTML(w, "Bonus detail")
+		ok = r.Form.Has("prev")
+		if ok {
+			ord += " DESC"
+			rel = "<"
+		}
 	}
+
+	sqlx += rel + "'" + bonus + "'"
+	sqlx += " ORDER BY " + ord
+
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
 	defer rows.Close()
 	if !rows.Next() {
+		if rel != "=" {
+			list_bonuses(w, r)
+			return
+		}
 		fmt.Fprintf(w, `<p class="error">No such bonus '%v'</p>`, bonus)
 		return
 	}
@@ -219,6 +260,13 @@ func show_bonus(w http.ResponseWriter, r *http.Request) {
 	br.FlagN = strings.Contains(b.Flags, "N")
 	br.FlagR = strings.Contains(b.Flags, "R")
 	br.FlagT = strings.Contains(b.Flags, "T")
+
+	if r.FormValue("back") != "" {
+		startHTMLBL(w, "Bonus detail", r.FormValue("back"))
+	} else {
+		startHTML(w, "Bonus detail")
+	}
+	fmt.Fprint(w, `</header>`)
 
 	t, err := template.New("BonusDetail").Parse(BonusDisplayScreen)
 	checkerr(err)

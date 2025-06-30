@@ -5,10 +5,18 @@
 
 :root {
   --default-max-width: 50em;
-  --regular-background: #ccffcc;
+  --regular-background: #e7f8e7;
   --regular-text: black;
   --error-background: red;
   --error-text: white;
+  --button-background: rgb(238, 238, 140);
+  --button-text: black;
+  --button-disabled-back: gray;
+  --button-disabled-text: black;
+  --input-background: white;
+  --input-text: black;
+  --topline-background: burlywood;
+  --topline-color: black;
 }
 * {
   margin: 0;
@@ -16,6 +24,7 @@
   box-sizing: border-box;
   font-family: Verdana, Geneva, Tahoma, sans-serif;
   font-size: 14pt;
+  background-color: var(--regular-background);
 }
 .singlerule {
   max-width: var(--default-max-width);
@@ -237,22 +246,51 @@ article.bonus {
     border: none;
     margin: 0 0 1em 0;
 
-    label,
+    label {
+      margin-right: 0.5em;
+    }
     input,
     select {
       display: inline-block;
       margin-right: 0.5em;
+      padding: 4px;
+      border: none;
+      background-color: var(--input-background);
+      color: var(--input-text);
+      border-radius: 12px;
+      font-weight: bold;
+    }
+    .quietcheck {
+      display: none;
     }
     .Notes,
     .Waffle {
       width: 98%;
       max-width: 30em;
+      padding: 2px;
+      background-color: var(--input-background);
+      color: var(--input-text);
+
+      font-weight: bold;
+    }
+    .button {
+      padding: 3px 3px 3px 6px;
+    }
+    .button.selected {
+      border: 6px solid darkgray;
+      border-radius: 6px;
+      background-color: var(--button-background);
+      margin: 2px;
     }
   }
 }
 img.icon {
   width: 36px;
   margin-right: 0.5em;
+}
+img.thumbnail {
+  width: 222px;
+  height: 150px;
 }
 
 article.config {
@@ -443,10 +481,31 @@ div.claim {
 .topline {
   margin: -1em 0 2em 0;
   font-weight: normal;
-  background-color: burlywood;
+  background-color: var(--topline-background);
   padding: 8px 2em 8px 2em;
   display: flex;
   justify-content: space-between;
+  fieldset {
+    border: none;
+    background-color: inherit;
+  }
+  input[type="button"],
+  button {
+    padding: 0 0.5em 0 0.5em;
+    margin: 3px;
+    min-height: 36px;
+    background-color: var(--button-background);
+    color: var(--button-text);
+    border-radius: 6px;
+  }
+  input[type="button"]:disabled,
+  button:disabled {
+    padding: 0 0.5em 0 0.5em;
+    margin: 3px;
+    min-height: 36px;
+    background-color: var(--button-back-disabled);
+    color: var(--button-disabled-text);
+  }
 }
 .topline.left {
   justify-content: flex-start;

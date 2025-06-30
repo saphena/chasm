@@ -61,6 +61,20 @@ function chgAxis(obj) {
     });
 }
 
+function enableDelete(ok) {
+  console.log("enableDelete ",ok)
+  let del = document.getElementById("enableDelete");
+  if (!del) return;
+  del.checked = !del.checked;
+  enableSave(ok);
+}
+function enableSave(ok) {
+  console.log("enableSave",ok)
+  let sav = document.getElementById("updatedb");
+  if (!sav) return;
+  sav.disabled = !ok;
+}
+
 function fetchBonusDetails(obj) {
   const allflags = "ABDFNRT";
 
@@ -659,6 +673,16 @@ function leaveUndecided() {
 }
 
 function loadPage(pg) {
-  console.log("loadPage called with '"+pg+"'")
+  console.log("loadPage called with '" + pg + "'");
   window.location.href = pg;
+}
+
+// span includes img and input
+function toggleButton(obj) {
+
+  let spn = obj.parentElement
+  let inp = spn.getElementsByTagName('input')
+  inp.checked=!inp.checked
+  spn.classList.toggle('selected')
+
 }

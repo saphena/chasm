@@ -115,10 +115,10 @@ func builtin_images(w http.ResponseWriter, r *http.Request) {
 	}
 	dec := base64.NewDecoder(base64.StdEncoding, strings.NewReader(imgdata))
 	w.Header().Set("Content-Type", "image/png;")
-	n, err := io.Copy(w, dec)
+	_, err := io.Copy(w, dec)
 	checkerr(err)
 
-	fmt.Printf("Img %v sent %v bytes (%v)\n", img, n, len(imgdata))
+	//fmt.Printf("Img %v sent %v bytes (%v)\n", img, n, len(imgdata))
 }
 func send_css(w http.ResponseWriter, r *http.Request) {
 
