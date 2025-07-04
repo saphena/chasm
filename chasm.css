@@ -5,15 +5,15 @@
 
 :root {
   --default-max-width: 50em;
-  --regular-background: #e7f8e7;
+  --regular-background: white;
   --regular-text: black;
   --error-background: red;
   --error-text: white;
-  --button-background: rgb(238, 238, 140);
+  --button-background: rgb(204, 204, 79);
   --button-text: black;
   --button-disabled-back: gray;
   --button-disabled-text: black;
-  --input-background: white;
+  --input-background: whitesmoke;
   --input-text: black;
   --topline-background: burlywood;
   --topline-color: black;
@@ -24,8 +24,20 @@
   box-sizing: border-box;
   font-family: Verdana, Geneva, Tahoma, sans-serif;
   font-size: 14pt;
-  background-color: var(--regular-background);
 }
+
+input,
+select {
+  display: inline-block;
+  margin-right: 0.5em;
+  padding: 4px;
+  border: none;
+  background-color: var(--input-background);
+  color: var(--input-text);
+  border-radius: 12px;
+  font-weight: bold;
+}
+
 .singlerule {
   max-width: var(--default-max-width);
   margin: auto;
@@ -119,6 +131,10 @@ button.plus {
   max-width: 20em;
   padding: 5px;
   margin: 1em 1em 0.5em 0;
+}
+.closebutton:hover {
+  background-color: lightblue;
+  cursor: pointer;
 }
 .judgesnotes {
   width: 98%;
@@ -292,6 +308,10 @@ img.thumbnail {
   width: 222px;
   height: 150px;
 }
+img.standard {
+  width: 600px;
+  height: 800px;
+}
 
 article.config {
   width: 98%;
@@ -341,7 +361,7 @@ article.config label {
 .bonuslist {
   margin: 0.2em;
   display: grid;
-  grid-template-columns: 1fr 2fr 1fr 1fr 1fr;
+  grid-template-columns: 1fr 2fr 1fr 1fr;
   max-width: var(--default-max-width);
 }
 .error {
@@ -423,6 +443,7 @@ div.claim {
   display: flex;
   flex-direction: column;
   padding: 1em;
+  max-width: var(--default-max-width);
   margin: auto;
 }
 

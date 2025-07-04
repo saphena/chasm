@@ -715,7 +715,7 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprint(w, `<fieldset class="claimfield">`)
 	fmt.Fprint(w, `<label for="JudgesNotes">Notes</label>`)
-	fmt.Fprintf(w, `<input type="text" tabindex="11" id="JudgesNotes" name="JudgesNotes" class="judgesnotes" value="%v">`, cr.JudgesNotes)
+	fmt.Fprintf(w, `<textarea tabindex="11" id="JudgesNotes" name="JudgesNotes" class="judgesnotes">%v</textarea>`, cr.JudgesNotes)
 	fmt.Fprint(w, `</fieldset>`)
 
 	fmt.Fprint(w, `<button class="closebutton" tabindex="12" onclick="saveUpdatedClaim(this);return false">Save updated claim</botton>`)

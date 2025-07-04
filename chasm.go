@@ -170,6 +170,7 @@ func main() {
 	http.HandleFunc("/ebc", showEBC)
 	http.HandleFunc("/ebclist", list_EBC_claims)
 	http.HandleFunc("/editcert", edit_certificate)
+	http.HandleFunc("/entrants", list_entrants)
 	http.HandleFunc("/help", show_help)
 	http.HandleFunc("/img", builtin_images)
 	http.HandleFunc("/import", showImport)

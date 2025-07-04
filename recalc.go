@@ -405,26 +405,6 @@ func BuildRallyParameters(Leg int) {
 
 }
 
-func calcEntrantSpeed(Miles int, et EntrantTimes, TotalRest int) string {
-
-	var res string
-
-	if Miles < 1 {
-		return res
-	}
-	if !et.FinishTime.After(et.StartTime) {
-		return res
-	}
-	timediff := et.FinishTime.Sub(et.StartTime)
-	mins := timediff.Minutes() - float64(TotalRest)
-	hrs := mins / 60.0
-	speed := float64(Miles) / hrs
-
-	res = fmt.Sprintf("%5.2f", speed)
-	//fmt.Printf("M=%v, Hrs=%v, speed=%v\n", Miles, hrs, res)
-	return res
-
-}
 func calcEntrantStatus(Miles int, et EntrantTimes, TotalPoints int) ([]ScorexLine, int) {
 
 	const DNF_icon = "DNF" //"&#9760;"
@@ -1188,7 +1168,7 @@ func processCompoundNZ() ([]ScorexLine, int) {
 
 func recalc_all() {
 
-	DebugCount := 33 // For debugging purposes, only recalc the first n records
+	DebugCount := 200 // For debugging purposes, only recalc the first n records
 
 	//fmt.Println("Attempting transaction")
 	_, err := DBH.Exec("BEGIN TRANSACTION")
@@ -1197,7 +1177,8 @@ func recalc_all() {
 
 	//fmt.Println("Transaction ok")
 
-	sqlx := fmt.Sprintf("SELECT EntrantID FROM entrants WHERE EntrantStatus <> %v ORDER BY EntrantID", EntrantDNS)
+	//sqlx := fmt.Sprintf("SELECT EntrantID FROM entrants WHERE EntrantStatus <> %v ORDER BY EntrantID", EntrantDNS)
+	sqlx := "SELECT EntrantID FROM entrants ORDER BY EntrantID"
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
 	defer rows.Close()
@@ -1240,10 +1221,11 @@ func recalc_scorecard(entrant int) {
 	BonusesClaimed = build_bonusclaim_array(entrant)
 
 	CorrectedMiles := 0
-	StartOdo := getIntegerFromDB("SELECT ifnull(OdoRallyStart,0) FROM entrants WHERE EntrantID="+strconv.Itoa(entrant), 0)
+	StartOdo := getIntegerFromDB(fmt.Sprintf("SELECT ifnull(OdoRallyStart,0) FROM entrants WHERE EntrantID=%v", entrant), 0)
 	LastOdo := StartOdo
-	FinishOdo := getIntegerFromDB("SELECT ifnull(OdoRallyFinish,0) FROM entrants WHERE EntrantID="+strconv.Itoa(entrant), 0)
-	OdoIsKm := getIntegerFromDB("SELECT OdoKms FROM entrants WHERE EntrantID="+strconv.Itoa(entrant), 0) != 0
+	FinishOdo := getIntegerFromDB(fmt.Sprintf("SELECT ifnull(OdoRallyFinish,0) FROM entrants WHERE EntrantID=%v", entrant), 0)
+	OdoIsKm := getIntegerFromDB(fmt.Sprintf("SELECT OdoKms FROM entrants WHERE EntrantID=%v", entrant), 0) != 0
+	EntrantStatus := getIntegerFromDB(fmt.Sprintf("SELECT EntrantStatus FROM entrants WHERE EntrantID=%v", entrant), 0)
 
 	var sx ScorexLine
 	TotalPoints := 0
@@ -1269,6 +1251,10 @@ func recalc_scorecard(entrant int) {
 				Scorex = append(Scorex, sx)
 			}
 			continue
+		}
+
+		if EntrantStatus == EntrantDNS && CS.StartOption == FirstClaimStart {
+			EntrantStatus = EntrantOK
 		}
 
 		ScorecardBonuses[BC.BonusScorecardIX].Scored = BC.Decision == ClaimDecision_GoodClaim // Only good claims count against "must score" flag
@@ -1433,11 +1419,13 @@ func recalc_scorecard(entrant int) {
 	Scorex = append(Scorex, nc...)
 
 	ntp, nm, et := calcTimePenalty(entrant)
-	for _, px := range ntp {
-		TotalPoints += px.Points
+	if EntrantStatus != EntrantDNS {
+		for _, px := range ntp {
+			TotalPoints += px.Points
+		}
+		Multipliers += nm
+		Scorex = append(Scorex, ntp...)
 	}
-	Multipliers += nm
-	Scorex = append(Scorex, ntp...)
 
 	if CS.UseCheckinForOdo && FinishOdo > StartOdo {
 		LastOdo = FinishOdo
@@ -1449,11 +1437,13 @@ func recalc_scorecard(entrant int) {
 	CorrectedMiles = calcRallyDistance(StartOdo, LastOdo, OdoIsKm)
 
 	ntp, nm = calcMileagePenalty(CorrectedMiles)
-	for _, px := range ntp {
-		TotalPoints += px.Points
+	if EntrantStatus != EntrantDNS {
+		for _, px := range ntp {
+			TotalPoints += px.Points
+		}
+		Multipliers += nm
+		Scorex = append(Scorex, ntp...)
 	}
-	Multipliers += nm
-	Scorex = append(Scorex, ntp...)
 
 	if Multipliers > 1 {
 		var sx ScorexLine
@@ -1467,26 +1457,26 @@ func recalc_scorecard(entrant int) {
 		Scorex = append(Scorex, sx)
 	}
 
-	sxs, status := calcEntrantStatus(CorrectedMiles, et, TotalPoints)
+	if EntrantStatus != EntrantDNS {
+		sxs, status := calcEntrantStatus(CorrectedMiles, et, TotalPoints)
+		EntrantStatus = status
+		Scorex = append(Scorex, sxs...)
+	}
 
-	speed := calcEntrantSpeed(CorrectedMiles, et, TotalRest)
-
-	Scorex = append(Scorex, sxs...)
-
-	htmlSX := htmlScorex(Scorex, entrant, status, TotalPoints)
+	htmlSX := htmlScorex(Scorex, entrant, EntrantStatus, TotalPoints)
 
 	/* 	_, err = DBH.Exec("COMMIT")
 	   	checkerr(err)
 	*/
 
 	//fmt.Println("attempting update")
-	sqlx := "UPDATE entrants SET ScoreX=?,EntrantStatus=?,TotalPoints=?,CorrectedMiles=?,OdoRallyFinish=?,AvgSpeed=? WHERE EntrantID=?"
+	sqlx := "UPDATE entrants SET ScoreX=?,EntrantStatus=?,TotalPoints=?,CorrectedMiles=?,OdoRallyFinish=? WHERE EntrantID=?"
 	stmt, err := DBH.Prepare(sqlx)
 	checkerr(err)
 	defer stmt.Close()
 	//fmt.Println("update ok")
 
-	_, err = stmt.Exec(htmlSX, status, TotalPoints, CorrectedMiles, FinishOdo, speed, entrant)
+	_, err = stmt.Exec(htmlSX, EntrantStatus, TotalPoints, CorrectedMiles, FinishOdo, entrant)
 	checkerr(err)
 
 	// Debugging code below

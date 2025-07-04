@@ -163,7 +163,7 @@ func list_bonuses(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, ` <input type="text" onchange="showBonus(this.value)" placeholder="Code to show">`)
 	fmt.Fprint(w, `</div>`)
 	fmt.Fprint(w, `<div class="bonuslist hdr">`)
-	fmt.Fprint(w, `<span>Code</span><span>Description</span><span>Points</span><span class="right">Claims</span>`)
+	fmt.Fprint(w, `<span>Code</span><span>Description</span><span>Points</span><span>Claims</span>`)
 	fmt.Fprint(w, `</div>`)
 	fmt.Fprint(w, `</header>`)
 
@@ -186,7 +186,12 @@ func list_bonuses(w http.ResponseWriter, r *http.Request) {
 		oe = !oe
 		fmt.Fprintf(w, `<div class="bonuslist row link %v" onclick="window.location.href='/bonus?b=%v&back=bonuses'">`, oex, bonus)
 		fmt.Fprintf(w, `<span>%v</span><span>%v</span><span>%v</span>`, bonus, descr, points)
-		fmt.Fprint(w, `<span class="claims"></span>`)
+		n := getIntegerFromDB("SELECT count(DISTINCT EntrantID) FROM claims WHERE BonusID='"+bonus+"'", 0)
+		fmt.Fprint(w, `<span class="claims">`)
+		if n > 0 {
+			fmt.Fprintf(w, `<a href="/claims?bsel=%v"> %v </a>`, bonus, n)
+		}
+		fmt.Fprint(w, `</span>`)
 		fmt.Fprint(w, `</div>`)
 	}
 }

@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"reflect"
 	"strings"
+	"text/template"
 	"time"
 )
 
@@ -36,6 +38,23 @@ const (
 	CheckoutStart = iota
 	FirstClaimStart
 )
+
+var configLiteralsTemplate = `
+
+<article class="config literals">
+<fieldset>
+	<legend>Literals</legend>
+	<input type="text" id="UnitMilesLit" name="UnitMilesLit" value="{{.UnitMilesLit}}" oninput="oi(this)" data-save="saveSetupConfig">
+	<input type="text" id="UnitKmsLit" name="UnitKmsLit" value="{{.UnitKmsLit}}" oninput="oi(this)" data-save="saveSetupConfig" onchange="saveSetupConfig(this)" onblur="saveSetupConfig(this)">
+	<fieldset class="framed">
+		<legend>EBC Decisions</legend>
+		{{range $ix,$el := .CloseEBC}}
+			<input type="text" name="CloseEBC[{{$ix}}]" id="CloseEBC[{{$ix}}]" value="{{$el}}" oninput="oi(this)" data-save="saveSetupConfig" onchange="saveSetupConfig(this)" onblur="saveSetupConfig(this)">
+		{{end}}
+	</fieldset>
+</fieldset>
+</article>
+`
 
 type chasmSettings struct {
 	StartOption         int
@@ -219,6 +238,11 @@ func ajaxUpdateSettings(w http.ResponseWriter, r *http.Request) {
 		_, err = stmt.Exec(rs)
 		checkerr(err)
 		CS.StartOption = intval(rs)
+	case "FinishOption":
+		rs := r.FormValue("v")
+		ok = "true"
+		msg = "ok"
+		CS.AutoFinisher = rs == "1"
 	case "LocalTZ":
 		CS.Basics.RallyTimezone = r.FormValue("v")
 		ok = "true"
@@ -241,6 +265,37 @@ func ajaxUpdateSettings(w http.ResponseWriter, r *http.Request) {
 		defer stmt.Close()
 		_, err = stmt.Exec(rs)
 		checkerr(err)
+	default:
+		fn := r.FormValue("ff")
+		fv := r.FormValue("v")
+		if strings.Contains(fn, "CloseEBC") {
+			index := intval(fn[9:10])
+			CS.CloseEBC[index] = fv
+			ok = "true"
+			msg = "ok"
+			break
+		}
+		ps := reflect.ValueOf(&CS)
+		s := ps.Elem()
+		f := s.FieldByName(fn)
+		if !f.IsValid() {
+			break
+		}
+		if !f.CanSet() {
+			break
+		}
+		switch f.Kind() {
+		case reflect.String:
+			f.SetString(fv)
+		case reflect.Int:
+			f.SetInt(int64(intval(fv)))
+		case reflect.Bool:
+			f.SetBool(fv == "1")
+		default:
+			break
+		}
+		ok = "true"
+		msg = "ok"
 
 	}
 	saveSettings()
@@ -254,7 +309,7 @@ func editConfigMain(w http.ResponseWriter, r *http.Request) {
 	startHTML(w, "Rally configuration")
 	fmt.Fprint(w, `</header>`)
 
-	fmt.Fprint(w, `<article class="config">`)
+	fmt.Fprint(w, `<article class="config basic">`)
 	fmt.Fprint(w, `<fieldset>`)
 	fmt.Fprint(w, `<label for="RallyTitle">Rally title</label>`)
 	fmt.Fprintf(w, `<input type="text" class="RallyTitle" name="RallyTitle" id="RallyTitle" oninput="oi(this)" data-save="saveSetupConfig" value="%v">`, CS.Basics.RallyTitle)
@@ -289,13 +344,30 @@ func editConfigMain(w http.ResponseWriter, r *http.Request) {
 	if so != 1 {
 		selected = "selected"
 	}
-	fmt.Fprintf(w, `<option value="0" %v>Fixed start time</option>`, selected)
+	fmt.Fprintf(w, `<option value="0" %v>Fixed with check-out</option>`, selected)
 	selected = ""
 	if so == 1 {
 		selected = "selected"
 	}
 	fmt.Fprintf(w, `<option value="1" %v>Start by first claim</option>`, selected)
 	fmt.Fprint(w, `,</select>`)
+	fmt.Fprint(w, `</fieldset>`)
+
+	fmt.Fprint(w, `<fieldset>`)
+	fmt.Fprint(w, `<label for="FinishOption">Rally Finish option</label>`)
+	fmt.Fprint(w, `<select id="FinishOption" name="FinishOption" onchange="saveSetupConfig(this)">`)
+	selected = ""
+	if !CS.AutoFinisher {
+		selected = "selected"
+	}
+	fmt.Fprintf(w, `<option value="0" %v>Finish at check-in</option>`, selected)
+	selected = ""
+	if CS.AutoFinisher {
+		selected = "selected"
+	}
+	fmt.Fprintf(w, `<option value="1" %v>Autofinish with last claim</option>`, selected)
+
+	fmt.Fprint(w, `</select>`)
 	fmt.Fprint(w, `</fieldset>`)
 
 	fmt.Fprint(w, `<fieldset>`)
@@ -306,12 +378,12 @@ func editConfigMain(w http.ResponseWriter, r *http.Request) {
 	if mk != 1 {
 		selected = "selected"
 	}
-	fmt.Fprintf(w, `<option value="0" %v>Miles</option>`, selected)
+	fmt.Fprintf(w, `<option value="0" %v>%v</option>`, selected, CS.UnitMilesLit)
 	selected = ""
 	if mk == 1 {
 		selected = "selected"
 	}
-	fmt.Fprintf(w, `<option value="1" %v>Kilometres</option>`, selected)
+	fmt.Fprintf(w, `<option value="1" %v>%v</option>`, selected, CS.UnitKmsLit)
 	fmt.Fprint(w, `,</select>`)
 	fmt.Fprint(w, `</fieldset>`)
 
@@ -330,7 +402,16 @@ func editConfigMain(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `,</select>`)
 	fmt.Fprint(w, `</fieldset>`)
 
+	fmt.Fprint(w, `</article>`) // basic
+
+	fmt.Fprint(w, `<article class="config regional">`)
+
 	fmt.Fprint(w, `</article>`)
+
+	t, err := template.New("literals").Parse(configLiteralsTemplate)
+	checkerr(err)
+	err = t.Execute(w, CS)
+	checkerr(err)
 }
 
 func loadRallyBasics(rb *RallyBasics) {
