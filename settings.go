@@ -39,23 +39,6 @@ const (
 	FirstClaimStart
 )
 
-var configLiteralsTemplate = `
-
-<article class="config literals">
-<fieldset>
-	<legend>Literals</legend>
-	<input type="text" id="UnitMilesLit" name="UnitMilesLit" value="{{.UnitMilesLit}}" oninput="oi(this)" data-save="saveSetupConfig">
-	<input type="text" id="UnitKmsLit" name="UnitKmsLit" value="{{.UnitKmsLit}}" oninput="oi(this)" data-save="saveSetupConfig" onchange="saveSetupConfig(this)" onblur="saveSetupConfig(this)">
-	<fieldset class="framed">
-		<legend>EBC Decisions</legend>
-		{{range $ix,$el := .CloseEBC}}
-			<input type="text" name="CloseEBC[{{$ix}}]" id="CloseEBC[{{$ix}}]" value="{{$el}}" oninput="oi(this)" data-save="saveSetupConfig" onchange="saveSetupConfig(this)" onblur="saveSetupConfig(this)">
-		{{end}}
-	</fieldset>
-</fieldset>
-</article>
-`
-
 type chasmSettings struct {
 	StartOption         int
 	AutoFinisher        bool
@@ -182,6 +165,40 @@ var tzlist = []string{
 const RiderNameSQL = "ifnull(entrants.RiderName,ifnull(entrants.RiderFirst,'') || ' ' || ifnull(entrants.RiderLast,'')) AS RiderName"
 const PillionNameSQL = "ifnull(entrants.PillionName,ifnull(entrants.PillionFirst,'') || ' ' || ifnull(entrants.PillionLast,'')) AS PillionName"
 
+var configBasicsTemplate = `
+`
+var configRegionalTemplate = `
+`
+var configEmailTemplate = `
+`
+
+var configRallyVarsTemplate = `
+`
+
+var configLiteralsTemplate = `
+
+<article class="config literals">
+<fieldset>
+	<legend onclick="swapconfig(this)">LITERALS</legend>
+	<fieldset class="hide">
+		<legend>Distance</legend>
+		<input type="text" id="UnitMilesLit" name="UnitMilesLit" value="{{.UnitMilesLit}}" oninput="oi(this)" data-save="saveSetupConfig">
+		<input type="text" id="UnitKmsLit" name="UnitKmsLit" value="{{.UnitKmsLit}}" oninput="oi(this)" data-save="saveSetupConfig" onchange="saveSetupConfig(this)" onblur="saveSetupConfig(this)">
+	</fieldset>
+	<fieldset class="hide">
+		<legend>EBC Decisions</legend>
+		{{range $ix,$el := .CloseEBC}}
+			<input type="text" name="CloseEBC[{{$ix}}]" id="CloseEBC[{{$ix}}]" value="{{$el}}" oninput="oi(this)" data-save="saveSetupConfig" onchange="saveSetupConfig(this)" onblur="saveSetupConfig(this)">
+		{{end}}
+	</fieldset>
+	<fieldset class="hide">
+		<legend>Flag titles<legend>
+			##FLAGS##
+	</fieldset>
+</fieldset>
+</article>
+`
+
 func ajaxUpdateSettings(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
@@ -302,6 +319,128 @@ func ajaxUpdateSettings(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `{"ok":%v,"msg":"%v"}`, ok, msg)
 
 }
+
+func buildFlagTitles() string {
+
+	x := emitConfigText("FlagTeamTitle")
+	x += emitConfigText("FlagAlertTitle")
+	x += emitConfigText("FlagBikeTitle")
+	x += emitConfigText("FlagDaylightTitle")
+	x += emitConfigText("FlagFaceTitle")
+	x += emitConfigText("FlagNightTitle")
+	x += emitConfigText("FlagRestrictedTitle")
+	x += emitConfigText("FlagReceiptTitle")
+
+	return x
+}
+
+func buildRallyVarsSettings() string {
+
+	du := "mile"
+	dus := CS.UnitMilesLit
+	if CS.Basics.RallyUnitKms {
+		du = "km"
+		dus = CS.UnitKmsLit
+	}
+
+	x := `<article class="config RallyVars">`
+
+	x += `<fieldset><legend onclick="swapconfig(this)">OPTIONS</legend>`
+
+	x += `<fieldset class="hide"><label for="PenaltyMilesDNF">`
+	x += `DNF if ` + dus + ` &gt;</label>`
+	x += emitConfigNum("PenaltyMilesDNF") + `</fieldset>`
+
+	x += `<fieldset class="hide"><label for="RallyMinMiles">`
+	x += `DNF if ` + dus + ` &lt;</label>`
+	x += emitConfigNum("RallyMinMiles") + `</fieldset>`
+
+	x += `<fieldset class="hide"><label for="RallyMinPoints">`
+	x += `DNF if points &lt;</label>`
+	x += emitConfigNum("RallyMinPoints") + `</fieldset>`
+
+	x += `<fieldset class="hide"><label for="RallyUseQA">`
+	x += `Use questions/answers</label>`
+	x += emitConfigBool("RallyUseQA", []string{"no", "yes"}, CS.RallyUseQA)
+
+	x += `<label for="RallyQAPoints">`
+	x += `QA points value</label>`
+	x += emitConfigNum("RallyQAPoints") + `</fieldset>`
+
+	x += `<fieldset class="hide"><label for="RallyUsePctPen">`
+	x += `Use minor points reduction</label>`
+	x += emitConfigBool("RallyUsePctPen", []string{"no", "yes"}, CS.RallyUsePctPen)
+
+	x += `<label for="RallyPctPenVal">`
+	x += `Points reduction percentage</label>`
+	x += emitConfigNum("RallyPctPenVal") + `</fieldset>`
+
+	x += `<fieldset class="hide"><label for="RallyRankEfficiency">`
+	x += `Rank finishers by</label>`
+	x += emitConfigBool("RallyRankEfficiency", []string{"total points", "points per " + du}, CS.RallyRankEfficiency) + `</fieldset>`
+
+	x += `<fieldset class="hide"><label for="RallySplitTies">`
+	x += `Split ties</label>`
+	x += emitConfigBool("RallySplitTies", []string{"leave as tied", "split on distance"}, CS.RallySplitTies) + `</fieldset>`
+
+	x += `<fieldset class="hide"><label for="RallyTeamMethod">`
+	x += `Team ranking</label>`
+	x += emitConfigSelect("RallyTeamMethod", []string{"individual placing", "highest ranked member", "lowest ranked member", "team cloning"}, CS.RallyTeamMethod) + `</fieldset>`
+
+	x += `</fieldset></article>`
+	return x
+
+}
+
+func emitConfigNum(varName string) string {
+
+	x := `<input type="number" class="` + varName + `" id="` + varName + `" name="` + varName + `" `
+	x += `value="{{.` + varName + `}}" oninput="oi(this)" data-save="saveSetupConfig" onchange="saveSetupConfig(this)" `
+	x += `onblur="saveSetupConfig(this)">`
+	return x
+}
+func emitConfigText(varName string) string {
+
+	x := `<input type="text" class="` + varName + `" id="` + varName + `" name="` + varName + `" placeholder="{{.` + varName + `}}" `
+	x += `value="{{.` + varName + `}}" oninput="oi(this)" data-save="saveSetupConfig" onchange="saveSetupConfig(this)" `
+	x += `onblur="saveSetupConfig(this)">`
+	return x
+}
+
+func emitConfigBool(varName string, varOptions []string, varBool bool) string {
+
+	x := `<select id="` + varName + `" name="` + varName + `" `
+	varIx := 0
+	if varBool {
+		varIx = 1
+	}
+	x += `onchange="saveSetupConfig(this)" onblur="saveSetupConfig(this)">`
+	for i, o := range varOptions {
+		x += `<option `
+		if i == varIx {
+			x += ` selected `
+		}
+		x += fmt.Sprintf(` value="%v">%v</option>`, i, o)
+	}
+	x += `</select>`
+	return x
+}
+
+func emitConfigSelect(varName string, varOptions []string, varIx int) string {
+
+	x := `<select id="` + varName + `" name="` + varName + `" `
+	x += `onchange="saveSetupConfig(this)" onblur="saveSetupConfig(this)">`
+	for i, o := range varOptions {
+		x += `<option `
+		if i == varIx {
+			x += ` selected `
+		}
+		x += fmt.Sprintf(` value="%v">%v</option>`, i, o)
+	}
+	x += `</select>`
+	return x
+}
+
 func editConfigMain(w http.ResponseWriter, r *http.Request) {
 
 	var selected string
@@ -310,6 +449,7 @@ func editConfigMain(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `</header>`)
 
 	fmt.Fprint(w, `<article class="config basic">`)
+	fmt.Fprint(w, `<fieldset><legend onclick="swapconfig(this)">BASIC</legend>`)
 	fmt.Fprint(w, `<fieldset>`)
 	fmt.Fprint(w, `<label for="RallyTitle">Rally title</label>`)
 	fmt.Fprintf(w, `<input type="text" class="RallyTitle" name="RallyTitle" id="RallyTitle" oninput="oi(this)" data-save="saveSetupConfig" value="%v">`, CS.Basics.RallyTitle)
@@ -370,6 +510,10 @@ func editConfigMain(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `</select>`)
 	fmt.Fprint(w, `</fieldset>`)
 
+	//fmt.Fprint(w, `</fieldset></article>`) // basic
+
+	//fmt.Fprint(w, `<article class="config regional"><fieldset><legend>REGIONAL</legend>`)
+
 	fmt.Fprint(w, `<fieldset>`)
 	fmt.Fprint(w, `<label for="MilesKms">Unit of distance</label>`)
 	mk := getIntegerFromDB("SELECT MilesKms FROM rallyparams", 0)
@@ -402,16 +546,18 @@ func editConfigMain(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `,</select>`)
 	fmt.Fprint(w, `</fieldset>`)
 
-	fmt.Fprint(w, `</article>`) // basic
+	fmt.Fprint(w, `</fieldset></article>`) // basic
 
-	fmt.Fprint(w, `<article class="config regional">`)
-
-	fmt.Fprint(w, `</article>`)
-
-	t, err := template.New("literals").Parse(configLiteralsTemplate)
+	t, err := template.New("rally vars").Parse(buildRallyVarsSettings())
 	checkerr(err)
 	err = t.Execute(w, CS)
 	checkerr(err)
+
+	t, err = template.New("literals").Parse(strings.ReplaceAll(configLiteralsTemplate, "##FLAGS##", buildFlagTitles()))
+	checkerr(err)
+	err = t.Execute(w, CS)
+	checkerr(err)
+
 }
 
 func loadRallyBasics(rb *RallyBasics) {

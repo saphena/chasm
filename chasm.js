@@ -62,14 +62,14 @@ function chgAxis(obj) {
 }
 
 function enableDelete(ok) {
-  console.log("enableDelete ",ok)
+  console.log("enableDelete ", ok);
   let del = document.getElementById("enableDelete");
   if (!del) return;
   del.checked = !del.checked;
   enableSave(ok);
 }
 function enableSave(ok) {
-  console.log("enableSave",ok)
+  console.log("enableSave", ok);
   let sav = document.getElementById("updatedb");
   if (!sav) return;
   sav.disabled = !ok;
@@ -383,6 +383,25 @@ function stackTransaction(url, objid) {
   */
 }
 
+function swapconfig(obj) {
+  let art = obj.parentElement.parentElement;
+  let arts = document.querySelectorAll("article");
+  console.log('arts == ',arts.length)
+  for (let i = 0; i < arts.length; i++) {
+    let flds = arts[i].querySelectorAll("fieldset");
+    if (arts[i] === art) {
+      console.log('showing ',flds.length)
+      for (let j = 1; j < flds.length; j++) {
+        flds[j].classList.remove("hide");
+      }
+    } else {
+      console.log('hifdng ',flds.length)
+      for (let j = 1; j < flds.length; j++) {
+        flds[j].classList.add("hide");
+      }
+    }
+  }
+}
 function swapimg(img) {
   let me = img.getAttribute("src");
   let main = document.getElementById("imgdivimg");
@@ -679,10 +698,8 @@ function loadPage(pg) {
 
 // span includes img and input
 function toggleButton(obj) {
-
-  let spn = obj.parentElement
-  let inp = spn.getElementsByTagName('input')
-  inp.checked=!inp.checked
-  spn.classList.toggle('selected')
-
+  let spn = obj.parentElement;
+  let inp = spn.getElementsByTagName("input");
+  inp.checked = !inp.checked;
+  spn.classList.toggle("selected");
 }

@@ -196,9 +196,6 @@ button.plus {
   cursor: pointer;
 }
 
-.hide {
-  display: none;
-}
 #about_chasm {
   background-color: lightgray;
   color: black;
@@ -317,18 +314,25 @@ article.config {
   width: 98%;
   max-width: var(--default-max-width);
   margin: auto;
+  legend {
+    cursor: pointer;
+  }
+  fieldset {
+    display: block;
+    border: none;
+    margin: 0 0 1em 0;
+    fieldset {
+      margin: 0 0 0 1em;
+    }
+  }
+  label {
+    display: table-cell;
+    /*min-width: 10em;*/
+    text-align: right;
+    margin-right: 1em;
+  }
 }
-article.config fieldset {
-  display: block;
-  border: none;
-  margin: 0 0 1em 0;
-}
-article.config label {
-  display: table-cell;
-  /*min-width: 10em;*/
-  text-align: right;
-  margin-right: 1em;
-}
+
 .menu {
   display: flex;
   flex-direction: column;
@@ -658,6 +662,19 @@ td.sxtotalpoints {
   }
 }
 
+.PenaltyMilesDNF,
+.RallyMinMiles {
+  width: 6em;
+}
+.RallyMinPoints,
+.RallyQAPoints {
+  width: 5em;
+}
+
+.RallyPctPenVal {
+  width: 3em;
+}
+
 .importmap {
   max-width: var(--default-max-width);
   margin: auto;
@@ -668,7 +685,7 @@ td.sxtotalpoints {
 }
 
 .hide {
-  display: none;
+  display: none !important;
 }
 
 @media print {
