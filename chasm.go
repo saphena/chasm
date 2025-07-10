@@ -187,7 +187,7 @@ func main() {
 	http.HandleFunc("/score", showScorecard)
 	http.HandleFunc("/setup", show_setup)
 	http.HandleFunc("/updtcrule", update_rule)
-	http.HandleFunc("/upload", uploadImport)
+	http.HandleFunc("/upload", uploadImportDatafile)
 	http.HandleFunc("/x", json_requests)
 	http.HandleFunc("/", central_dispatch)
 	http.ListenAndServe(":"+*HTTPPort, nil)

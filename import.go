@@ -12,15 +12,26 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-// var SpecialEntrantFields = map[string]string(`[
-//
-//	{"RiderName": "ifnull(RiderFirst,'') || ' ' || ifnull(RiderLast,'')"},
-//
-// ]
-var SpecialEntrantFields = map[string]string{
-	"RiderName":   "ifnull(RiderFirst,'') || ' ' || ifnull(RiderLast,'')",
-	"PillionName": "ifnull(PillionFirst,'') || ' '  || ifnull(PillionLast,'')",
-	"Bike":        "",
+type SpecialConstructors = map[string]string
+
+// TableSpecials are used to complete 'missing' fields when importing
+// data from CSV files.
+var TableSpecials = map[string]SpecialConstructors{
+	"entrants": {
+		"RiderName":   "trim(RiderFirst || ' ' || RiderLast)",
+		"PillionName": "trim(PillionFirst || ' '  || PillionLast)",
+		"RiderFirst":  "trim(substr(RiderName,1,instr(RiderName,' ')))",
+		"RiderLast":   "trim(substr(RiderName,instr(RiderName,' ')))",
+		"Bike":        "trim(BikeMake || ' ' || BikeModel)",
+		"BikeMake":    "trim(substr(Bike,1,instr(Bike,' ')))",
+		"BikeModel":   "trim(substr(Bike,instr(Bike,' ')))",
+	},
+	"bonuses": {
+		"BriefDesc": "BonusID",
+	},
+	"combos": {
+		"BriefDesc": "ComboID",
+	},
 }
 
 const uploadSpace = (10 << 20) // 10MB
@@ -31,6 +42,9 @@ var import1form = `
 function uploadFile(obj) {
 	console.log('Uploading file '+obj.value);
 	document.getElementById('csvname').value=obj.value;
+	let frm = obj.form;
+	let btn = frm.querySelector('input[type=submit]');
+	if (btn) btn.disabled = false;
 }
 </script>
 <article class="import">
@@ -39,9 +53,7 @@ function uploadFile(obj) {
 <fieldset>
 	<label for="filetype">What are we importing? </label>
 	<select id="filetype" name="filetype">
-		<option selected value="entrants"> Entrants </option>
-		<option value="bonuses"> Bonuses </option>
-		<option value="combos"> Combos </option>
+	##OPTIONS##
 	</select>
 </fieldset>
 <fieldset>
@@ -49,7 +61,7 @@ function uploadFile(obj) {
 	<input type="file" id="csvfile" name="csvfile" onchange="uploadFile(this)">
 	<input type="hidden" id="csvname" name="csvname">
 </fieldset>
-<input type="submit" value=" Upload the file ">
+<input disabled type="submit" value=" Upload the file ">
 </form>
 </article>
 `
@@ -68,11 +80,18 @@ var import2form = `
 	<span><strong>%v</strong></span>
 	<input type="hidden" name="csvname" value="%v">
 </fieldset>
+
 <fieldset>
+	<select name="overwrite">
+		<option selected value="add">Add new records only</option>
+		<option value="replace">Replace whole dataset</option>
+	</select>
+</fieldset>
+
 <input type="hidden" name="fieldmap" value="%v">
 
 <input type="submit" value="Go ahead, import me">
-</fieldset>
+
 <hr>
 </article>
 `
@@ -107,30 +126,37 @@ func importMappedData(w http.ResponseWriter, r *http.Request) {
 
 	startHTML(w, "Importing data")
 	fmt.Fprint(w, `</header>`)
+
 	hdr := strings.Split(r.FormValue("fieldmap"), ",")
-	fmt.Fprint(w, `<ul>`)
 	fldx := ""
 	valx := ""
+	table := r.FormValue("filetype")
+	overwrite := r.FormValue("overwrite") == "replace"
+	specials := TableSpecials[table]
+
 	colx := make([]int, 0)
 	k := 0
 	for i := 0; i < len(hdr); i++ {
 		fld := r.FormValue(fmt.Sprintf("mapcol%v", i))
 		if fld != "" {
-			fmt.Fprintf(w, `<li>%v == %v</li>`, fld, i)
 			if fldx != "" {
 				fldx += ","
 				valx += ","
 			}
 			fldx += fld
+
+			_, ok := specials[fld]
+			if ok {
+				delete(specials, fld)
+			}
+
 			valx += "?"
 			colx = append(colx, i)
 			k++
 
 		}
 	}
-	sqlx := fmt.Sprintf(`INSERT OR IGNORE INTO %v (%v) VALUES(%v)`, r.FormValue("filetype"), fldx, valx)
-	fmt.Fprint(w, `</ul>`)
-	fmt.Fprintf(w, `<p>%v</p>`, sqlx)
+	sqlx := fmt.Sprintf(`INSERT OR IGNORE INTO %v (%v) VALUES(%v)`, table, fldx, valx)
 	stmt, err := DBH.Prepare(sqlx)
 	checkerr(err)
 	defer stmt.Close()
@@ -145,6 +171,18 @@ func importMappedData(w http.ResponseWriter, r *http.Request) {
 	_, err = DBH.Exec("BEGIN TRANSACTION")
 	checkerr(err)
 	defer DBH.Exec("ROLLBACK")
+
+	if overwrite {
+		_, err = DBH.Exec("DELETE FROM " + table)
+		checkerr(err)
+	}
+
+	fmt.Fprint(w, `<article class="import">`)
+
+	fmt.Fprintf(w, `<h1>Importing %v</h1>`, table)
+
+	fmt.Fprint(w, `<ul class="loadlist">`)
+	nrex := 0
 	for {
 		rec, err := csvReader.Read()
 		if err == io.EOF {
@@ -160,26 +198,56 @@ func importMappedData(w http.ResponseWriter, r *http.Request) {
 
 			args = append(args, rec[colx[i]])
 		}
-		_, err = stmt.Exec(args...)
+		res, err := stmt.Exec(args...)
 		checkerr(err)
+		n, err := res.RowsAffected()
+		checkerr(err)
+		if n == 1 {
+			fmt.Fprintf(w, `<li>%v</li>`, rec)
+			nrex++
+		}
 
+	}
+	fmt.Fprint(w, `</ul>`)
+	for k, v := range specials {
+		sqlx = "UPDATE " + table + " SET " + k + "=" + v
+		_, err = DBH.Exec(sqlx)
+		checkerr(err)
 	}
 	_, err = DBH.Exec("COMMIT")
 	checkerr(err)
+
+	fmt.Fprintf(w, `<hr><p>%v records imported</p>`, nrex)
+	fmt.Fprint(w, `</article>`)
 
 }
 
 func showImport(w http.ResponseWriter, r *http.Request) {
 
+	var tabs = []string{"entrants", "bonuses", "combos"}
+
 	startHTML(w, "Data import")
 
 	fmt.Fprint(w, `</header>`)
 
-	fmt.Fprint(w, import1form)
+	tab := r.FormValue("type")
+	if tab == "" {
+		tab = tabs[0]
+	}
+	x := ""
+	for k := range tabs {
+		x += `<option `
+		if tab == tabs[k] {
+			x += "selected "
+		}
+		x += `value="` + tabs[k] + `">` + tabs[k] + `</option>`
+	}
+
+	fmt.Fprint(w, strings.ReplaceAll(import1form, "##OPTIONS##", x))
 
 }
 
-func uploadImport(w http.ResponseWriter, r *http.Request) {
+func uploadImportDatafile(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
@@ -220,7 +288,7 @@ func uploadImport(w http.ResponseWriter, r *http.Request) {
 	tempFile.Close()
 
 	table := r.FormValue("filetype")
-	cols := tableFields(table)
+	cols := tableFields(table) // get all fields declared for this table
 
 	var ignore = []string{""}
 	cols = append(cols, ignore...)
@@ -248,8 +316,8 @@ func uploadImport(w http.ResponseWriter, r *http.Request) {
 
 	for i := 0; i < len(hdr); i++ {
 		fmt.Fprint(w, `<div class="row">`)
-		fmt.Fprintf(w, `<span class="col">%v</span>`, hdr[i])
-		fmt.Fprintf(w, `<span class="col">%v</span>`, dta[i])
+		fmt.Fprintf(w, `<span class="col src">%v</span>`, hdr[i])
+		fmt.Fprintf(w, `<span class="col dta">%v</span>`, dta[i])
 		fmt.Fprintf(w, `<select name="mapcol%v">`, i)
 		for j := 0; j < len(cols); j++ {
 			fmt.Fprintf(w, `<option value="%v"`, cols[j])

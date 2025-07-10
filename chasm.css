@@ -314,15 +314,19 @@ article.config {
   width: 98%;
   max-width: var(--default-max-width);
   margin: auto;
-  legend {
+  button {
     cursor: pointer;
+    border: none;
+    padding: 0 0.5em 0 0.5em;
+    border-radius: 6px;
+    background-color: inherit;
   }
   fieldset {
     display: block;
     border: none;
     margin: 0 0 1em 0;
     fieldset {
-      margin: 0 0 0 1em;
+      margin: 0 0 1em 2em;
     }
   }
   label {
@@ -654,11 +658,19 @@ td.sxtotalpoints {
     border: none;
     margin: 2em;
   }
+  hr {
+    margin: 1em 0 0.5em 0;
+  }
   input[type="submit"] {
     margin: 0 0 0 3em;
     padding: 0.5em;
     width: 20em;
     max-width: calc(90% - 3em);
+    cursor: pointer;
+  }
+  input[type="submit"]:disabled {
+    color: darkgray;
+    cursor: default;
   }
 }
 
@@ -681,9 +693,22 @@ td.sxtotalpoints {
   .row {
     display: grid;
     grid-template-columns: 1fr 2fr 1fr;
+    .dta {
+      font-style: italic;
+    }
   }
 }
 
+.loadlist {
+  display: flex;
+  flex-direction: column;
+  li {
+    width: 90%;
+    overflow: hidden;
+    margin: auto;
+    font-size: 0.8em;
+  }
+}
 .hide {
   display: none !important;
 }

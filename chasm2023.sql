@@ -334,6 +334,8 @@ CREATE TABLE IF NOT EXISTS "entrants" (
 	"ReviewedByTeam"	INTEGER NOT NULL DEFAULT 0,
 	"AcceptedByEntrant"	INTEGER NOT NULL DEFAULT 0,
 	"LastReviewed"	TEXT,
+	"BikeMake"	TEXT,
+	"BikeModel"	TEXT,
 	PRIMARY KEY("EntrantID")
 );
 COMMIT;

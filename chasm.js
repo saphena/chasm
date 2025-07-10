@@ -263,6 +263,8 @@ function saveSetupConfig(obj) {
   if (obj.timer) {
     clearTimeout(obj.timer);
   }
+  if (obj.getAttribute("data-chg") == 0) return;
+  obj.setAttribute("data-chg", 0);
   let url = "/x?f=putcfg";
   url += "&ff=" + obj.name + "&v=" + encodeURIComponent(obj.value);
   stackTransaction(url, obj.id);
@@ -386,16 +388,16 @@ function stackTransaction(url, objid) {
 function swapconfig(obj) {
   let art = obj.parentElement.parentElement;
   let arts = document.querySelectorAll("article");
-  console.log('arts == ',arts.length)
+  console.log("arts == ", arts.length);
   for (let i = 0; i < arts.length; i++) {
     let flds = arts[i].querySelectorAll("fieldset");
     if (arts[i] === art) {
-      console.log('showing ',flds.length)
+      console.log("showing ", flds.length);
       for (let j = 1; j < flds.length; j++) {
         flds[j].classList.remove("hide");
       }
     } else {
-      console.log('hifdng ',flds.length)
+      console.log("hifdng ", flds.length);
       for (let j = 1; j < flds.length; j++) {
         flds[j].classList.add("hide");
       }

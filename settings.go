@@ -165,21 +165,11 @@ var tzlist = []string{
 const RiderNameSQL = "ifnull(entrants.RiderName,ifnull(entrants.RiderFirst,'') || ' ' || ifnull(entrants.RiderLast,'')) AS RiderName"
 const PillionNameSQL = "ifnull(entrants.PillionName,ifnull(entrants.PillionFirst,'') || ' ' || ifnull(entrants.PillionLast,'')) AS PillionName"
 
-var configBasicsTemplate = `
-`
-var configRegionalTemplate = `
-`
-var configEmailTemplate = `
-`
-
-var configRallyVarsTemplate = `
-`
-
 var configLiteralsTemplate = `
 
 <article class="config literals">
 <fieldset>
-	<legend onclick="swapconfig(this)">LITERALS</legend>
+	<button onclick="swapconfig(this)">LITERALS</button>
 	<fieldset class="hide">
 		<legend>Distance</legend>
 		<input type="text" id="UnitMilesLit" name="UnitMilesLit" value="{{.UnitMilesLit}}" oninput="oi(this)" data-save="saveSetupConfig">
@@ -345,7 +335,7 @@ func buildRallyVarsSettings() string {
 
 	x := `<article class="config RallyVars">`
 
-	x += `<fieldset><legend onclick="swapconfig(this)">OPTIONS</legend>`
+	x += `<fieldset><button onclick="swapconfig(this)">OPTIONS</button>`
 
 	x += `<fieldset class="hide"><label for="PenaltyMilesDNF">`
 	x += `DNF if ` + dus + ` &gt;</label>`
@@ -368,7 +358,7 @@ func buildRallyVarsSettings() string {
 	x += emitConfigNum("RallyQAPoints") + `</fieldset>`
 
 	x += `<fieldset class="hide"><label for="RallyUsePctPen">`
-	x += `Use minor points reduction</label>`
+	x += `Offer minor points reduction</label>`
 	x += emitConfigBool("RallyUsePctPen", []string{"no", "yes"}, CS.RallyUsePctPen)
 
 	x += `<label for="RallyPctPenVal">`
@@ -381,11 +371,11 @@ func buildRallyVarsSettings() string {
 
 	x += `<fieldset class="hide"><label for="RallySplitTies">`
 	x += `Split ties</label>`
-	x += emitConfigBool("RallySplitTies", []string{"leave as tied", "split on distance"}, CS.RallySplitTies) + `</fieldset>`
+	x += emitConfigBool("RallySplitTies", []string{"leave as tied", "prefer shorter distance"}, CS.RallySplitTies) + `</fieldset>`
 
 	x += `<fieldset class="hide"><label for="RallyTeamMethod">`
 	x += `Team ranking</label>`
-	x += emitConfigSelect("RallyTeamMethod", []string{"individual placing", "highest ranked member", "lowest ranked member", "team cloning"}, CS.RallyTeamMethod) + `</fieldset>`
+	x += emitConfigSelect("RallyTeamMethod", []string{"individual placing", "highest ranked member", "lowest ranked member", "clone team member scores"}, CS.RallyTeamMethod) + `</fieldset>`
 
 	x += `</fieldset></article>`
 	return x
@@ -395,14 +385,14 @@ func buildRallyVarsSettings() string {
 func emitConfigNum(varName string) string {
 
 	x := `<input type="number" class="` + varName + `" id="` + varName + `" name="` + varName + `" `
-	x += `value="{{.` + varName + `}}" oninput="oi(this)" data-save="saveSetupConfig" onchange="saveSetupConfig(this)" `
-	x += `onblur="saveSetupConfig(this)">`
+	x += `value="{{.` + varName + `}}" oninput="oi(this);this.setAttribute('data-chg',1)" data-save="saveSetupConfig" onchange="saveSetupConfig(this)" `
+	x += `onblur1="s1aveSetupConfig(this)">`
 	return x
 }
 func emitConfigText(varName string) string {
 
 	x := `<input type="text" class="` + varName + `" id="` + varName + `" name="` + varName + `" placeholder="{{.` + varName + `}}" `
-	x += `value="{{.` + varName + `}}" oninput="oi(this)" data-save="saveSetupConfig" onchange="saveSetupConfig(this)" `
+	x += `value="{{.` + varName + `}}" oninput="oi(this);this.setAttribute('data-chg',1)" data-save="saveSetupConfig" onchange="saveSetupConfig(this)" `
 	x += `onblur="saveSetupConfig(this)">`
 	return x
 }
@@ -414,7 +404,7 @@ func emitConfigBool(varName string, varOptions []string, varBool bool) string {
 	if varBool {
 		varIx = 1
 	}
-	x += `onchange="saveSetupConfig(this)" onblur="saveSetupConfig(this)">`
+	x += `onchange=";this.setAttribute('data-chg',1);saveSetupConfig(this)">`
 	for i, o := range varOptions {
 		x += `<option `
 		if i == varIx {
@@ -429,7 +419,7 @@ func emitConfigBool(varName string, varOptions []string, varBool bool) string {
 func emitConfigSelect(varName string, varOptions []string, varIx int) string {
 
 	x := `<select id="` + varName + `" name="` + varName + `" `
-	x += `onchange="saveSetupConfig(this)" onblur="saveSetupConfig(this)">`
+	x += `onchange=";this.setAttribute('data-chg',1);saveSetupConfig(this)">`
 	for i, o := range varOptions {
 		x += `<option `
 		if i == varIx {
@@ -449,10 +439,10 @@ func editConfigMain(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `</header>`)
 
 	fmt.Fprint(w, `<article class="config basic">`)
-	fmt.Fprint(w, `<fieldset><legend onclick="swapconfig(this)">BASIC</legend>`)
+	fmt.Fprint(w, `<fieldset><button  onclick="swapconfig(this)">BASIC</button>`)
 	fmt.Fprint(w, `<fieldset>`)
 	fmt.Fprint(w, `<label for="RallyTitle">Rally title</label>`)
-	fmt.Fprintf(w, `<input type="text" class="RallyTitle" name="RallyTitle" id="RallyTitle" oninput="oi(this)" data-save="saveSetupConfig" value="%v">`, CS.Basics.RallyTitle)
+	fmt.Fprintf(w, `<input type="text" autofocus class="RallyTitle" name="RallyTitle" id="RallyTitle" oninput="oi(this)" data-save="saveSetupConfig" value="%v">`, CS.Basics.RallyTitle)
 	fmt.Fprint(w, `</fieldset>`)
 	fmt.Fprint(w, `<fieldset>`)
 	fmt.Fprint(w, `<label for="RallyStartDate">Rally starts</label>`)

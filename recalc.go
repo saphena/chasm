@@ -841,7 +841,7 @@ func loadCombos(comboid string) []ComboBonus {
 	for i := 2; i <= NumCategoryAxes; i++ {
 		sqlx += fmt.Sprintf(",Cat%d", i)
 	}
-	sqlx += " FROM combinations"
+	sqlx += " FROM combos"
 	if comboid != "" {
 		sqlx += " WHERE ComboID='" + comboid + "'"
 	}
