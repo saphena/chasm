@@ -58,9 +58,17 @@ func show_combos(w http.ResponseWriter, r *http.Request) {
 
 	startHTML(w, "Combos")
 
+	fmt.Fprintf(w, `<p class="intro">%v</p>`, Combox)
+
+	fmt.Fprint(w, `<div class="intro bonuslist">`)
+	fmt.Fprint(w, `<button class="plus" autofocus title="Add new combo" onclick="window.location.href='/combo?back=combos'">+</button>`)
+	fmt.Fprint(w, ` <input type="text" onchange="showCombo(this.value)" onblur="showCombothis.value)"  placeholder="Code to show">`)
+	fmt.Fprint(w, `</div>`)
+	fmt.Fprint(w, `<div class="bonuslist hdr">`)
+	fmt.Fprint(w, `<span>Code</span><span>Description</span><span>Points</span><span>Claims</span>`)
+	fmt.Fprint(w, `</div>`)
 	fmt.Fprint(w, `</header>`)
 
-	fmt.Fprintf(w, `<p class="intro">%v</p>`, Combox)
 	fmt.Fprint(w, `<div class="combos">`)
 	for _, cb := range ComboBonuses {
 		var mp string

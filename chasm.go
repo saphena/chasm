@@ -176,6 +176,7 @@ func main() {
 	http.HandleFunc("/import", showImport)
 	http.HandleFunc("/js", send_js)
 	http.HandleFunc("/menu", show_menu)
+	http.HandleFunc("/niy", niy)
 	http.HandleFunc("/odos", show_odo_checks)
 	http.HandleFunc("/qlist", show_qlist)
 	http.HandleFunc("/recalc", recalc_handler)
@@ -231,6 +232,9 @@ func json_requests(w http.ResponseWriter, r *http.Request) {
 	case "addb":
 		createBonus(w, r)
 		return
+	case "delb":
+		deleteBonus(w, r)
+		return
 	case "saveb":
 		saveBonus(w, r)
 
@@ -263,20 +267,45 @@ func json_requests(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintf(w, `{"ok":false,"msg":"[%v] not implemented yet"}`, f)
 }
+
+func niy(w http.ResponseWriter, r *http.Request) {
+
+	startHTML(w, "NIY")
+
+	fmt.Fprint(w, `<p class="error">NOT IMPLEMENTED YET</p><p>%v</p>`, r)
+}
 func recalc_handler(w http.ResponseWriter, r *http.Request) {
 
+	const recalcfrm = `
+	<article class="recalc">
+	<p>This procedure will recalculate all scorecards. This involves rebuilding them from scratch by reprocessing the claims log. This should only take a few moments but it will need exclusive access to the database.</p>
+	<p>It's quite safe to do this during a live rally.</p>
+	<form action="/recalc">
+		<input type="hidden" name="ok" value="ok">
+		<input type="submit" autofocus value="Recalculate scorecards">
+	</form>
+	</article>
+	`
+	startHTML(w, "Recalc scorecards")
+
 	e := r.FormValue("e")
-	if e == "" {
-		recalc_all()
-	} else {
-		n, err := strconv.Atoi(e)
-		if err != nil {
-			w.Write([]byte(`{ok:false,msg:"e not numeric"}`))
-			return
+	ok := r.FormValue("ok")
+	if ok == "ok" {
+		if e == "" {
+			recalc_all()
+		} else {
+			n, err := strconv.Atoi(e)
+			if err != nil {
+				fmt.Fprintf(w, `<p class="error">%v is not numeric</p>`, e)
+				return
+			}
+			recalc_scorecard(n)
 		}
-		recalc_scorecard(n)
+		fmt.Fprint(w, `<p>Scorecards recalculated</p>`)
+		return
 	}
-	w.Write([]byte(`{ok:true,msg:"ok"}`))
+	fmt.Fprint(w, recalcfrm)
+
 }
 
 func show_combo(w http.ResponseWriter, r *http.Request) {

@@ -9,7 +9,7 @@
   --regular-text: black;
   --error-background: red;
   --error-text: white;
-  --button-background: rgb(204, 204, 79);
+  --button-background: yellow;
   --button-text: black;
   --button-disabled-back: gray;
   --button-disabled-text: black;
@@ -38,6 +38,9 @@ select {
   font-weight: bold;
 }
 
+table, th, td, tr {
+  border: none;
+}
 .singlerule {
   max-width: var(--default-max-width);
   margin: auto;
@@ -132,6 +135,9 @@ img.flagicon {
 }
 
 button.plus {
+  background-color: var(--button-background);
+  color: var(--button-text);
+  border-radius: 10px;
   width: 3em;
   margin: 0 1em 0 0;
 }
@@ -190,7 +196,7 @@ button.plus {
   margin: 3px 0.3em 3px 0.3em;
   font-size: 1.1em;
   padding: 4px 8px 6px 8px;
-  border-radius: 16px;
+  border-radius: 10px;
   background-color: yellow;
   color: red;
   cursor: pointer;
@@ -209,6 +215,22 @@ button.plus {
   background-color: lightgray;
   color: black;
   padding: 2px 5px 5px 5px;
+}
+
+article.recalc {
+  display: block;
+  width: 98%;
+  max-width: var(--default-max-width);
+  margin: auto;
+  p {
+    margin: 2em 0 2em 0;
+  }
+  input {
+    padding: .5em 1em .7em 1em;
+    background-color: var(--button-background);
+    color: var(--button-text);
+    cursor: pointer;
+  }
 }
 
 article.about {
@@ -377,7 +399,7 @@ article.config {
   margin: 1em;
 }
 .bonuslist {
-  margin: 0.2em auto .2em auto;
+  margin: 0.2em auto 0.2em auto;
   display: grid;
   grid-template-columns: 1fr 2fr 1fr 1fr;
   max-width: var(--default-max-width);

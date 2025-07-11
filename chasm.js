@@ -273,15 +273,18 @@ function oi(obj) {
 function addBonus(obj) {
   let b = obj.value.toUpperCase();
   let bd = document.getElementById("BriefDesc");
+  console.log('addBonus called with "'+b+'"')
+  if (b=='') {
+    bd.value="Blank code!"
+    return
+  }
   let url = "/x?f=addb&b=" + encodeURIComponent(b);
   fetch(url)
     .then((response) => {
       if (!response.ok) {
         // Handle HTTP errors
         bd.value = `HTTP error! Status: ${response.status}`;
-        //if (errlog){errlog.innerHTML=`HTTP error! Status: ${response.status}`}
-
-        throw new Error(`HTTP error! Status: ${response.status}`);
+        return
       }
       return response.json();
     })
@@ -290,16 +293,17 @@ function addBonus(obj) {
         // Handle JSON error field
         console.error(`Error: ${data.msg}`);
         bd.value = `Error: ${data.msg}`;
-      } else {
+        return
+      } else if (data.ok) {
         // Process the data if no error
-        //if (errlog){errlog.innerHTML="Hello sailor: "+JSON.stringify(data)}
-        console.log("Data:", data);
         window.location.href = "/bonus?b=" + encodeURIComponent(b);
+      } else {
+        bd.value = `Error: ${data.msg}`;
+        bd.setAttribute('title',bd.value)
       }
     })
     .catch((error) => {
       // Handle network or other errors
-      //if (errlog) {errlog.innerHTML="ERROR CAUGHT"}
       console.error("Fetch error:", error);
       bd.value = "Fetch error";
       return;
@@ -782,4 +786,45 @@ function toggleButton(obj) {
   inp.checked = !inp.checked;
   spn.classList.toggle("selected");
   saveBonus(inp);
+}
+
+function updateBonusDB(obj) {
+
+  let del = document.getElementById('enableDelete')
+  let bonus = document.getElementById('BonusID')
+  if (!del || !del.checked || !bonus || bonus.value=='') {
+    obj.disabled = true
+    return
+  }
+    let url = "/x?f=delb&b=" + encodeURIComponent(bonus.value);
+  fetch(url)
+    .then((response) => {
+      if (!response.ok) {
+        // Handle HTTP errors
+        bd.value = `HTTP error! Status: ${response.status}`;
+        return
+      }
+      return response.json();
+    })
+    .then((data) => {
+      if (data.err) {
+        // Handle JSON error field
+        console.error(`Error: ${data.msg}`);
+        bd.value = `Error: ${data.msg}`;
+        return
+      } else if (data.ok) {
+        // Process the data if no error
+        window.location.href = "/bonuses"
+      } else {
+        bd.value = `Error: ${data.msg}`;
+        bd.setAttribute('title',bd.value)
+      }
+    })
+    .catch((error) => {
+      // Handle network or other errors
+      console.error("Fetch error:", error);
+      bd.value = "Fetch error";
+      return;
+    });
+
 }

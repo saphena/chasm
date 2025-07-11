@@ -223,7 +223,7 @@ func list_claims(w http.ResponseWriter, r *http.Request) {
 		sel = "selected"
 	}
 	fmt.Fprintf(w, `<div class="select"">%v `, filter_icon)
-	fmt.Fprintf(w, `<button autofocus title="Add new claim" onclick="window.location.href='/claim?c=0';return false">%v</button> <span id="fcc"></span>`, addnew_icon)
+	fmt.Fprintf(w, `<button autofocus title="Add new claim" class="plus" onclick="window.location.href='/claim?c=0';return false">%v</button> <span id="fcc"></span>`, addnew_icon)
 	fmt.Fprintf(w, ` <select name="esel" value="%v" onchange="reloadClaimslog()">`, esel)
 	fmt.Fprintf(w, `<option value="0" %v>all claims</option>`, sel)
 

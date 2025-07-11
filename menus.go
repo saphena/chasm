@@ -51,7 +51,13 @@ var bonusmenu = menu{
 	{"Import combos", "Load combinations from spreadsheet", "/import?type=combos", ""},
 }
 
-var menus = map[string]*menu{"main": &mainMenu, "setup": &setupmenu, "entrants": &entrantmenu, "bonuses": &bonusmenu}
+var advancedmenu = menu{
+	{"Categories", "Categories for use with compound rules", "/niy", ""},
+	{"Compound calculation rules", "Scoring rules for use with categories", "/niy", ""},
+	{"Classes", "Classes", "/niy", ""},
+	{"Recalculate scorecards", "Recalculate scorecards", "/recalc", ""},
+}
+var menus = map[string]*menu{"main": &mainMenu, "setup": &setupmenu, "entrants": &entrantmenu, "bonuses": &bonusmenu, "asetup": &advancedmenu}
 
 func showMenu(w http.ResponseWriter, menu string) {
 

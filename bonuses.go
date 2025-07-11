@@ -55,11 +55,11 @@ var BonusDisplayScreen = `
 		{{if ne .B.BonusID ""}}
 		<fieldset>
 			<button title="Delete this Bonus?" onclick="enableDelete(!document.getElementById('enableDelete').checked)">   ` + TrashcanIcon + `</button>
-			<input type="checkbox" id="enableDelete" onchange="enableSave(this.checked)">
+			<input type="checkbox" style="display:none;" id="enableDelete" onchange="enableSave(this.checked)">
 		</fieldset>
 		{{end}}
 		<fieldset>
-			<button id="updatedb" title="Update DB" disabled>` + FloppyDiskIcon + `</button>
+			<button id="updatedb" title="Update DB" disabled onclick="updateBonusDB(this)">` + FloppyDiskIcon + `</button>
 		</fieldset>
 		<fieldset>
 			<input type="button" title="show next" value="⋘" onclick="window.location.href='/bonus?b={{.B.BonusID}}&prev'">
@@ -165,7 +165,11 @@ func createBonus(w http.ResponseWriter, r *http.Request) {
 	checkerr(err)
 	defer stmt.Close()
 	res, err := stmt.Exec(bonus, bonus)
-	checkerr(err)
+	if err != nil {
+		fmt.Fprint(w, `{"ok":false,"msg":"`+err.Error()+`"}`)
+		return
+	}
+	//checkerr(err)
 	ra, err := res.RowsAffected()
 	checkerr(err)
 	if ra != 1 {
@@ -174,6 +178,27 @@ func createBonus(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `{"ok":true,"msg":"`+bonus+`"}`)
 	}
 }
+
+func deleteBonus(w http.ResponseWriter, r *http.Request) {
+
+	bonus := strings.ToUpper(r.FormValue("b"))
+	if bonus == "" {
+		fmt.Fprint(w, `{"ok":false,"msg":"Blank BonusID"}`)
+		return
+	}
+
+	sqlx := "DELETE FROM bonuses WHERE BonusID=?"
+	stmt, err := DBH.Prepare(sqlx)
+	checkerr(err)
+	defer stmt.Close()
+	_, err = stmt.Exec(bonus)
+	if err != nil {
+		fmt.Fprint(w, `{"ok":false,"msg":"`+err.Error()+`"}`)
+		return
+	}
+	fmt.Fprint(w, `{"ok":true,"msg":"`+bonus+`"}`)
+}
+
 func list_bonuses(w http.ResponseWriter, r *http.Request) {
 
 	startHTML(w, "Bonuses")
@@ -270,33 +295,40 @@ func show_bonus(w http.ResponseWriter, r *http.Request) {
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
 	defer rows.Close()
+	newrec := false
 	if !rows.Next() {
 		if rel != "=" {
 			list_bonuses(w, r)
 			return
 		}
-		fmt.Fprintf(w, `<p class="error">No such bonus '%v'</p>`, bonus)
-		return
+		if bonus == "" {
+			newrec = true
+		} else {
+			fmt.Fprintf(w, `<p class="error">No such bonus '%v'</p>`, bonus)
+			return
+		}
 	}
 	var b BonusRec
 
-	s := reflect.ValueOf(&b).Elem()
-	numCols := s.NumField() + NumCategoryAxes - 1
-	columns := make([]interface{}, numCols)
-	for i := 0; i < s.NumField(); i++ {
-		field := s.Field(i)
+	if !newrec {
+		s := reflect.ValueOf(&b).Elem()
+		numCols := s.NumField() + NumCategoryAxes - 1
+		columns := make([]interface{}, numCols)
+		for i := 0; i < s.NumField(); i++ {
+			field := s.Field(i)
 
-		if field.Kind() == reflect.Array {
-			for j := 0; j < field.Len(); j++ {
-				columns[i+j] = field.Index(j).Addr().Interface()
+			if field.Kind() == reflect.Array {
+				for j := 0; j < field.Len(); j++ {
+					columns[i+j] = field.Index(j).Addr().Interface()
+				}
+			} else {
+				columns[i] = field.Addr().Interface()
 			}
-		} else {
-			columns[i] = field.Addr().Interface()
 		}
-	}
 
-	err = rows.Scan(columns...)
-	checkerr(err)
+		err = rows.Scan(columns...)
+		checkerr(err)
+	}
 
 	var br BonusDisplayRec
 	br.B = b
