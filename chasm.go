@@ -228,6 +228,14 @@ func json_requests(w http.ResponseWriter, r *http.Request) {
 		log.Println(string(b))
 		fmt.Fprint(w, string(b))
 		return
+	case "addb":
+		createBonus(w, r)
+		return
+	case "saveb":
+		saveBonus(w, r)
+
+		return
+
 	case "saveclaim":
 		saveClaim(r)
 		fmt.Fprint(w, `{"ok":true,"msg":"ok"}`)
@@ -283,7 +291,7 @@ func show_combo(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "no such comboid")
 		return
 	}
-	showSingleCombo(w, cr[0])
+	showSingleCombo(w, cr[0], r.FormValue("back"))
 }
 
 func show_help(w http.ResponseWriter, r *http.Request) {

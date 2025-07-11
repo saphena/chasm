@@ -161,6 +161,14 @@ function fetchEntrantDetails(obj) {
     });
 }
 
+function showBonus(b) {
+  let bonus = b.toUpperCase();
+  if (bonus=='') return;
+  let url = "/bonus?b=" + encodeURIComponent(bonus);
+  url += "&back=bonuses";
+  window.location.href = url;
+}
+
 function showEvidence(obj) {
   if (typeof window.killReload === "function") killReload();
   let ft = document.getElementById("finetune");
@@ -244,12 +252,81 @@ function oi(obj) {
   }
   //obj.timer = setTimeout(obj.getAttribute('data-save'), 3000, obj);
 
+  switch (obj.getAttribute("data-save")) {
+    case "saveOdo":
+      obj.timer = setTimeout(saveOdo, 3000, obj);
+      break;
+    case "saveBonus":
+      obj.timer = setTimeout(saveBonus, 3000, obj);
+      break;
+    default:
+      obj.timer = setTimeout(saveSetupConfig, 3000, obj);
+  }
+  /*
   if (obj.getAttribute("data-save") == "saveOdo")
     obj.timer = setTimeout(saveOdo, 3000, obj);
   else obj.timer = setTimeout(saveSetupConfig, 3000, obj);
+  */
   console.log("oi complete " + JSON.stringify(obj));
 }
 
+function addBonus(obj) {
+  let b = obj.value.toUpperCase();
+  let bd = document.getElementById("BriefDesc");
+  let url = "/x?f=addb&b=" + encodeURIComponent(b);
+  fetch(url)
+    .then((response) => {
+      if (!response.ok) {
+        // Handle HTTP errors
+        bd.value = `HTTP error! Status: ${response.status}`;
+        //if (errlog){errlog.innerHTML=`HTTP error! Status: ${response.status}`}
+
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then((data) => {
+      if (data.err) {
+        // Handle JSON error field
+        console.error(`Error: ${data.msg}`);
+        bd.value = `Error: ${data.msg}`;
+      } else {
+        // Process the data if no error
+        //if (errlog){errlog.innerHTML="Hello sailor: "+JSON.stringify(data)}
+        console.log("Data:", data);
+        window.location.href = "/bonus?b=" + encodeURIComponent(b);
+      }
+    })
+    .catch((error) => {
+      // Handle network or other errors
+      //if (errlog) {errlog.innerHTML="ERROR CAUGHT"}
+      console.error("Fetch error:", error);
+      bd.value = "Fetch error";
+      return;
+    });
+}
+
+function saveBonus(obj) {
+  if (obj.timer) clearTimeout(obj.timer);
+  let b = obj.getAttribute("data-b");
+  let url = "/x?f=saveb&b=" + b;
+  let nm = obj.name;
+  let ov = obj.value;
+  if (nm == "ScoringFlag") {
+    let fs = obj.parentElement.parentElement;
+    let flgs = fs.querySelectorAll("input[name=ScoringFlag]");
+    let fx = "";
+    for (let f = 0; f < flgs.length; f++) {
+      if (flgs[f].checked) fx = fx + flgs[f].value;
+    }
+    nm = "Flags";
+    ov = fx;
+  }
+  url += "&ff=" + nm + "&" + nm + "=" + encodeURIComponent(ov);
+  console.log("saveBonus: " + url);
+  stackTransaction(url, obj.id);
+  sendTransactions();
+}
 function saveRS(obj) {
   let e = obj.getAttribute("data-e");
   let url = "/x?f=savers&e=" + e;
@@ -701,7 +778,8 @@ function loadPage(pg) {
 // span includes img and input
 function toggleButton(obj) {
   let spn = obj.parentElement;
-  let inp = spn.getElementsByTagName("input");
+  let inp = spn.getElementsByTagName("input")[0];
   inp.checked = !inp.checked;
   spn.classList.toggle("selected");
+  saveBonus(inp);
 }

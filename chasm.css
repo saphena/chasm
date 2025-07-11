@@ -48,7 +48,7 @@ select {
   margin: 1em;
   border: none;
   display: grid;
-  grid-template-columns: 15em 15em 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
 }
 .field label {
   text-align: right;
@@ -59,13 +59,22 @@ select {
   display: inline;
   margin: 0;
 }
+.combos {
+  display: flex;
+  flex-direction: column;
+  max-width: var(--default-max-width);
+  margin: auto;
+  .BriefDesc {
+    font-style: italic;
+  }
+}
 .row {
   display: grid;
   grid-template-columns: repeat(6, 8em);
   border: none;
 }
 .row.combo {
-  grid-template-columns: 8em 8em 2em 8em 1fr;
+  grid-template-columns: 2fr 2fr 1fr 3fr 4fr;
 }
 .row.ebc {
   grid-template-columns: 4fr 2fr 2fr 1fr;
@@ -247,7 +256,8 @@ article.about dd {
   font-size: inherit;
 }
 
-article.bonus {
+article.bonus,
+article.combo {
   max-width: var(--default-max-width);
   padding: 2px;
   margin: 0 auto 0 auto;
@@ -367,7 +377,7 @@ article.config {
   margin: 1em;
 }
 .bonuslist {
-  margin: 0.2em;
+  margin: 0.2em auto .2em auto;
   display: grid;
   grid-template-columns: 1fr 2fr 1fr 1fr;
   max-width: var(--default-max-width);
@@ -408,6 +418,10 @@ header {
 
 .bignumber {
   width: 6em;
+}
+
+.MinimumTicks {
+  width: 3em;
 }
 
 .odolist,

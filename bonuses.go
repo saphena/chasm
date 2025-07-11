@@ -71,16 +71,16 @@ var BonusDisplayScreen = `
 	<article class="bonus">
 		<fieldset>
 			<label for="BonusID">Code</label>
-			<input type="text" id="BonusID" name="BonusID" class="BonusID" value="{{.B.BonusID}}">
+			<input type="text" id="BonusID" name="BonusID" {{if ne "" .B.BonusID}}readonly{{else}}autofocus{{end}} class="BonusID" value="{{.B.BonusID}}" onchange="addBonus(this)">
 		</fieldset>
 		<fieldset>
 			<label for="BriefDesc">Description</label>
-			<input type="text" id="BriefDesc" name="BriefDesc" class="BriefDesc" value="{{.B.BriefDesc}}">
+			<input type="text" id="BriefDesc" data-b="{{.B.BonusID}}" data-save="saveBonus" oninput="oi(this)" onchange="saveBonus(this)" name="BriefDesc" class="BriefDesc" value="{{.B.BriefDesc}}">
 		</fieldset>
 		<fieldset>
 			<label for="Points">Points</label>
-			<input type="number" id="Points" name="Points" class="Points" value="{{.B.Points}}">
-			<select id="AskPoints" name="AskPoints">
+			<input type="number" id="Points"  data-b="{{.B.BonusID}}" data-save="saveBonus"  oninput="oi(this)" onchange="saveBonus(this)" name="Points" class="Points" value="{{.B.Points}}">
+			<select id="AskPoints" name="AskPoints"  data-b="{{.B.BonusID}}" onchange="saveBonus(this)" >
 				<option value="0" {{if eq .B.AskPoints 0}}selected{{end}}>Fixed</option>
 				<option value="1" {{if eq .B.AskPoints 1}}selected{{end}}>Variable</option>
 				<option value="2" {{if eq .B.AskPoints 2}}selected{{end}}>Multiply last</option>
@@ -88,79 +88,101 @@ var BonusDisplayScreen = `
 		</fieldset>
 		<fieldset>
 			<label for="Notes">Scoring notes</label>
-			<textarea id="Notes" name="Notes" class="Notes">{{.B.Notes}}</textarea>
+			<textarea id="Notes" name="Notes"  data-b="{{.B.BonusID}}" data-save="saveBonus" oninput="oi(this)" onchange="saveBonus(this)" class="Notes">{{.B.Notes}}</textarea>
 		</fieldset>
 		<fieldset>
 			<span class="button {{if.FlagA}}selected{{end}}" title="Alert!">
 				<img class="icon" src="/img?i=alert" alt="!" onclick="toggleButton(this)">
-				<input type="checkbox" class="quietcheck" id="ScoringFlagB" name="ScoringFlagB" {{if .FlagB}}checked{{end}} value="B">
+				<input type="checkbox" class="quietcheck" id="ScoringFlagA"  data-b="{{.B.BonusID}}"  onclick="saveBonus(this)" name="ScoringFlag" {{if .FlagB}}checked{{end}} value="A">
 			</span>
 			<span class="button {{if .FlagB}}selected{{end}}" title="Bike in photo">
 				<img class="icon" src="/img?i=bike" alt="B" onclick="toggleButton(this)">
-				<input type="checkbox" class="quietcheck" id="ScoringFlagB" name="ScoringFlagB" {{if .FlagB}}checked{{end}} value="B">
+				<input type="checkbox" class="quietcheck" id="ScoringFlagB"  data-b="{{.B.BonusID}}"  onchange="saveBonus(this)" name="ScoringFlag" {{if .FlagB}}checked{{end}} value="B">
 			</span>
 			<span class="button {{if .FlagD}}selected{{end}}" title="Daylight only">
 				<img class="icon" src="/img?i=daylight" alt="D" onclick="toggleButton(this)">
-				<input type="checkbox"  class="quietcheck" id="ScoringFlagD" name="ScoringFlagD" {{if .FlagD}}checked{{end}} value="D">
+				<input type="checkbox"  class="quietcheck" id="ScoringFlagD"  data-b="{{.B.BonusID}}"  onchange="saveBonus(this)" name="ScoringFlag" {{if .FlagD}}checked{{end}} value="D">
 			</span>
 			<span class="button {{if .FlagF}}selected{{end}}" title="Face in photo">
 				<img class="icon" src="/img?i=face" alt="F" onclick="toggleButton(this)">
-				<input type="checkbox"  class="quietcheck" id="ScoringFlagF" name="ScoringFlagF" {{if .FlagF}}checked{{end}} value="F">
+				<input type="checkbox"  class="quietcheck" id="ScoringFlagF"  data-b="{{.B.BonusID}}"  onchange="saveBonus(this)" name="ScoringFlag" {{if .FlagF}}checked{{end}} value="F">
 			</span>
 			<span class="button {{if .FlagN}}selected{{end}}" title="Nighttime only">
 				<img class="icon" src="/img?i=night" alt="N" onclick="toggleButton(this)">
-				<input type="checkbox" class="quietcheck" id="ScoringFlagN" name="ScoringFlagN" {{if .FlagN}}checked{{end}} value="N">
+				<input type="checkbox" class="quietcheck" id="ScoringFlagN"  data-b="{{.B.BonusID}}"  onchange="saveBonus(this)" name="ScoringFlag" {{if .FlagN}}checked{{end}} value="N">
 			</span>
 			<span class="button {{if .FlagR}}selected{{end}}" title="Restricted access/hours">
 				<img class="icon" src="/img?i=restricted" alt="R" onclick="toggleButton(this)">
-				<input type="checkbox" class="quietcheck" id="ScoringFlagR" name="ScoringFlagR" {{if .FlagR}}checked{{end}} value="R">
+				<input type="checkbox" class="quietcheck" id="ScoringFlagR"  data-b="{{.B.BonusID}}"  onchange="saveBonus(this)" name="ScoringFlag" {{if .FlagR}}checked{{end}} value="R">
 			</span>
 			<span class="button {{if .FlagT}}selected{{end}}" title="Receipt/ticket needed">
 				<img class="icon" src="/img?i=receipt" alt="T" onclick="toggleButton(this)">
-				<input type="checkbox" class="quietcheck" id="ScoringFlagT" name="ScoringFlagT" {{if .FlagT}}checked{{end}} value="T">
+				<input type="checkbox" class="quietcheck" id="ScoringFlagT"  data-b="{{.B.BonusID}}"  onchange="saveBonus(this)" name="ScoringFlag" {{if .FlagT}}checked{{end}} value="T">
 			</span>
 		</fieldset>
 		<fieldset>
 			<label for="Image">Image</label>
-			<input type="text" id="Image" name="Image" class="Image" value="{{.B.Image}}">
+			<input type="text" id="Image"  data-b="{{.B.BonusID}}" data-save="saveBonus"oninput="oi(this)" onchange="saveBonus(this)" name="Image" class="Image" value="{{.B.Image}}">
 		</fieldset><fieldset>
 			<img alt="*" data-bimg-folder="{{.BonusImgFldr}}"class="thumbnail" src="{{.BonusImgFldr}}/{{.B.Image}}" onclick="this.classList.toggle('thumbnail')">
 		</fieldset>
 		<fieldset>
 			<label for="Compulsory">Compulsory?</label> 
-			<select id="Compulsory" >
+			<select id="Compulsory"  data-b="{{.B.BonusID}}"  name="Compulsory" onchange="saveBonus(this)">
 				<option value="0" {{if eq .B.Compulsory 0}}selected{{end}}>Optional</option>
 				<option value="1" {{if eq .B.Compulsory 1}}selected{{end}}>Compulsory</option>
 			</select>
 		</fieldset>
 		<fieldset>
 			<label for="RestMinutes">Rest minutes</label> 
-			<input id="RestMinutes" name="RestMinutes" class="RestMinutes" value="{{.B.RestMinutes}}">
-			<select name="AskMinutes">
+			<input id="RestMinutes" type="number" name="RestMinutes"  data-b="{{.B.BonusID}}" data-save="saveBonus" oninput="oi(this)" onchange="saveBonus(this)" class="RestMinutes" value="{{.B.RestMinutes}}">
+			<select id="AskMinutes"  data-b="{{.B.BonusID}}" name="AskMinutes"  onchange="saveBonus(this)" >
 				<option value="0" {{if eq .B.AskMinutes 0}}selected{{end}}>Fixed</option>
 				<option value="1" {{if eq .B.AskMinutes 1}}selected{{end}}>Variable</option>
 			</select>
 		</fieldset>
 		<fieldset>
 			<label for="Coords">Coords</label> 
-			<input id="Coords" name="Coords" class="Coords" value="{{.B.Coords}}">
+			<input id="Coords" name="Coords"  data-b="{{.B.BonusID}}" data-save="saveBonus" oninput="oi(this)" onchange="saveBonus(this)" class="Coords" value="{{.B.Coords}}">
 		</fieldset>
 		<fieldset>
 			<label for="Waffle">Waffle</label> 
-			<textarea id="Waffle" name="Waffle" class="Waffle">{{.B.Waffle}}</textarea>
+			<textarea id="Waffle" name="Waffle"  data-b="{{.B.BonusID}}" data-save="saveBonus" oninput="oi(this)" onchange="saveBonus(this)" class="Waffle">{{.B.Waffle}}</textarea>
 		</fieldset>
 	</article>
 `
 
+func createBonus(w http.ResponseWriter, r *http.Request) {
+
+	bonus := strings.ToUpper(r.FormValue("b"))
+	if bonus == "" {
+		fmt.Fprint(w, `{"ok":false,"msg":"Blank BonusID"}`)
+		return
+	}
+
+	sqlx := "INSERT INTO bonuses (BonusID,BriefDesc) VALUES(?,?)"
+	stmt, err := DBH.Prepare(sqlx)
+	checkerr(err)
+	defer stmt.Close()
+	res, err := stmt.Exec(bonus, bonus)
+	checkerr(err)
+	ra, err := res.RowsAffected()
+	checkerr(err)
+	if ra != 1 {
+		fmt.Fprint(w, `{"ok":false,"msg":"Duplicate BonusID"}`)
+	} else {
+		fmt.Fprint(w, `{"ok":true,"msg":"`+bonus+`"}`)
+	}
+}
 func list_bonuses(w http.ResponseWriter, r *http.Request) {
 
 	startHTML(w, "Bonuses")
 
 	fmt.Fprint(w, `<p class="intro">Ordinary bonuses generally represent physical locations that entrants must visit and complete some task, typically take a photo.  Descriptions may include limited HTML to affect formatting on score explanations.</p>`)
 
-	fmt.Fprint(w, `<div class="intro">`)
-	fmt.Fprint(w, `<button class="plus" onclick="addNewBonus()" title="Add new bonus">+</button>`)
-	fmt.Fprint(w, ` <input type="text" onchange="showBonus(this.value)" placeholder="Code to show">`)
+	fmt.Fprint(w, `<div class="intro bonuslist">`)
+	fmt.Fprint(w, `<button class="plus" autofocus title="Add new bonus" onclick="window.location.href='/bonus?back=bonuses'">+</button>`)
+	fmt.Fprint(w, ` <input type="text" onchange="showBonus(this.value)" onblur="showBonus(this.value)"  placeholder="Code to show">`)
 	fmt.Fprint(w, `</div>`)
 	fmt.Fprint(w, `<div class="bonuslist hdr">`)
 	fmt.Fprint(w, `<span>Code</span><span>Description</span><span>Points</span><span>Claims</span>`)
@@ -196,6 +218,27 @@ func list_bonuses(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func saveBonus(w http.ResponseWriter, r *http.Request) {
+
+	bonus := r.FormValue("b")
+	if bonus == "" {
+		fmt.Fprint(w, `{"ok":false,"msg":"no BonusID supplied"}`)
+		return
+	}
+	fld := r.FormValue("ff")
+	if fld == "" {
+		fmt.Fprint(w, `{"ok":false,"msg":"no fieldname supplied"}`)
+		return
+	}
+	val := r.FormValue(fld)
+	sqlx := "UPDATE bonuses SET " + fld + "=? WHERE BonusID=?"
+	stmt, err := DBH.Prepare(sqlx)
+	checkerr(err)
+	defer stmt.Close()
+	_, err = stmt.Exec(val, bonus)
+	checkerr(err)
+	fmt.Fprint(w, `{"ok":true,"msg":"ok"}`)
+}
 func show_bonus(w http.ResponseWriter, r *http.Request) {
 
 	bonus := strings.ToUpper(r.FormValue("b"))
