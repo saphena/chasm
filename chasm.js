@@ -65,6 +65,9 @@ function enableDelete(ok) {
   console.log("enableDelete ", ok);
   let del = document.getElementById("enableDelete");
   if (!del) return;
+  let sav = document.getElementById("updatedb");
+  if (sav && ok) sav.value = "Confirm DELETE";
+  if (sav && !ok) sav.value = "";
   del.checked = !del.checked;
   enableSave(ok);
 }
@@ -163,9 +166,17 @@ function fetchEntrantDetails(obj) {
 
 function showBonus(b) {
   let bonus = b.toUpperCase();
-  if (bonus=='') return;
+  if (bonus == "") return;
   let url = "/bonus?b=" + encodeURIComponent(bonus);
   url += "&back=bonuses";
+  window.location.href = url;
+}
+
+function showCombo(c) {
+  let bonus = c;
+  if (bonus == "") return;
+  let url = "/combo?c=" + encodeURIComponent(bonus);
+  url += "&back=combos";
   window.location.href = url;
 }
 
@@ -273,10 +284,10 @@ function oi(obj) {
 function addBonus(obj) {
   let b = obj.value.toUpperCase();
   let bd = document.getElementById("BriefDesc");
-  console.log('addBonus called with "'+b+'"')
-  if (b=='') {
-    bd.value="Blank code!"
-    return
+  console.log('addBonus called with "' + b + '"');
+  if (b == "") {
+    bd.value = "Blank code!";
+    return;
   }
   let url = "/x?f=addb&b=" + encodeURIComponent(b);
   fetch(url)
@@ -284,7 +295,7 @@ function addBonus(obj) {
       if (!response.ok) {
         // Handle HTTP errors
         bd.value = `HTTP error! Status: ${response.status}`;
-        return
+        return;
       }
       return response.json();
     })
@@ -293,13 +304,53 @@ function addBonus(obj) {
         // Handle JSON error field
         console.error(`Error: ${data.msg}`);
         bd.value = `Error: ${data.msg}`;
-        return
+        return;
       } else if (data.ok) {
         // Process the data if no error
         window.location.href = "/bonus?b=" + encodeURIComponent(b);
       } else {
         bd.value = `Error: ${data.msg}`;
-        bd.setAttribute('title',bd.value)
+        bd.setAttribute("title", bd.value);
+      }
+    })
+    .catch((error) => {
+      // Handle network or other errors
+      console.error("Fetch error:", error);
+      bd.value = "Fetch error";
+      return;
+    });
+}
+
+function addCombo(obj) {
+  let b = obj.value;
+  let bd = document.getElementById("BriefDesc");
+  console.log('addCombo called with "' + b + '"');
+  if (b == "") {
+    bd.value = "Blank code!";
+    return;
+  }
+  let url = "/x?f=addco&b=" + encodeURIComponent(b);
+  fetch(url)
+    .then((response) => {
+      if (!response.ok) {
+        // Handle HTTP errors
+        bd.value = `HTTP error! Status: ${response.status}`;
+        return;
+      }
+      return response.json();
+    })
+    .then((data) => {
+      if (data.err) {
+        // Handle JSON error field
+        console.error(`Error: ${data.msg}`);
+        bd.value = `Error: ${data.msg}`;
+        return;
+      } else if (data.ok) {
+        // Process the data if no error
+        window.location.href = "/combo?c=" + encodeURIComponent(b);
+      } else {
+        bd.value = `Error: ${data.msg}`;
+        bd.setAttribute("title", bd.value);
       }
     })
     .catch((error) => {
@@ -331,6 +382,23 @@ function saveBonus(obj) {
   stackTransaction(url, obj.id);
   sendTransactions();
 }
+
+function saveCombo(obj) {
+  if (obj.timer) clearTimeout(obj.timer);
+  let b = obj.getAttribute("data-c");
+  let url = "/x?f=saveco&c=" + b;
+  let nm = obj.name;
+  let ov = obj.value;
+  url += "&ff=" + nm + "&" + nm + "=" + encodeURIComponent(ov);
+  console.log("saveCombo: " + url);
+  stackTransaction(url, obj.id);
+  sendTransactions();
+  if (nm == "MinimumTicks") {
+    extractComboPointsArray();
+    updateComboPointsList();
+  }
+}
+
 function saveRS(obj) {
   let e = obj.getAttribute("data-e");
   let url = "/x?f=savers&e=" + e;
@@ -789,20 +857,20 @@ function toggleButton(obj) {
 }
 
 function updateBonusDB(obj) {
-
-  let del = document.getElementById('enableDelete')
-  let bonus = document.getElementById('BonusID')
-  if (!del || !del.checked || !bonus || bonus.value=='') {
-    obj.disabled = true
-    return
+  let del = document.getElementById("enableDelete");
+  let bonus = document.getElementById("BonusID");
+  if (!del || !del.checked || !bonus || bonus.value == "") {
+    obj.disabled = true;
+    return;
   }
-    let url = "/x?f=delb&b=" + encodeURIComponent(bonus.value);
+  let bd = document.getElementById("BriefDesc");
+  let url = "/x?f=delb&b=" + encodeURIComponent(bonus.value);
   fetch(url)
     .then((response) => {
       if (!response.ok) {
         // Handle HTTP errors
         bd.value = `HTTP error! Status: ${response.status}`;
-        return
+        return;
       }
       return response.json();
     })
@@ -811,13 +879,13 @@ function updateBonusDB(obj) {
         // Handle JSON error field
         console.error(`Error: ${data.msg}`);
         bd.value = `Error: ${data.msg}`;
-        return
+        return;
       } else if (data.ok) {
         // Process the data if no error
-        window.location.href = "/bonuses"
+        window.location.href = "/bonuses";
       } else {
         bd.value = `Error: ${data.msg}`;
-        bd.setAttribute('title',bd.value)
+        bd.setAttribute("title", bd.value);
       }
     })
     .catch((error) => {
@@ -826,5 +894,110 @@ function updateBonusDB(obj) {
       bd.value = "Fetch error";
       return;
     });
+}
 
+function updateComboDB(obj) {
+  let del = document.getElementById("enableDelete");
+  let bonus = document.getElementById("ComboID");
+  if (!del || !del.checked || !bonus || bonus.value == "") {
+    obj.disabled = true;
+    return;
+  }
+  let bd = document.getElementById("BriefDesc");
+
+  let url = "/x?f=delco&c=" + encodeURIComponent(bonus.value);
+  fetch(url)
+    .then((response) => {
+      if (!response.ok) {
+        // Handle HTTP errors
+        bd.value = `HTTP error! Status: ${response.status}`;
+        return;
+      }
+      return response.json();
+    })
+    .then((data) => {
+      if (data.err) {
+        // Handle JSON error field
+        console.error(`Error: ${data.msg}`);
+        bd.value = `Error: ${data.msg}`;
+        return;
+      } else if (data.ok) {
+        // Process the data if no error
+        window.location.href = "/combos";
+      } else {
+        bd.value = `Error: ${data.msg}`;
+        bd.setAttribute("title", bd.value);
+      }
+    })
+    .catch((error) => {
+      // Handle network or other errors
+      console.error("Fetch error:", error);
+      bd.value = "Fetch error";
+      return;
+    });
+}
+
+// extractComboPointsArray takes the value of the PointsList comma-separated value string
+// and creates the corresponding array of number fields. I should be called from the
+// comma-separated text field.
+function extractComboPointsArray() {
+  console.log("extractComboPointsArray called");
+  let BL = document.getElementById("BonusList");
+  let PL = document.getElementById("PointsList");
+  let hdrs = document.getElementById("PointsListArrayHdrs");
+  let vals = document.getElementById("PointsListArrayVals");
+  let mint = parseInt(document.getElementById("MinimumTicks").value);
+  let xb = BL.value.split(",");
+  let xv = PL.value.split(",");
+
+  console.log(xv);
+
+  // Zap the space
+  hdrs.textContent = "";
+  vals.textContent = "";
+
+  let v = xv[0]; // starting value
+  let maxt = xb.length;
+  let maxv = xv.length;
+
+  if (mint < 1 || mint == maxt) {
+    // Special case, all bonuses compulsory so only one score value
+    let n = document.createElement("input");
+    n.type = "number";
+    n.classList.add("Points");
+    n.value = v;
+    n.onchange = function () {
+      updateComboPointsList();
+    };
+    vals.appendChild(n);
+    return;
+  }
+  for (let i = 0; i < maxt - mint + 1; i++) {
+    if (i < xv.length) v = xv[i];
+    let n = document.createElement("input");
+    n.type = "number";
+    n.classList.add("Points");
+    n.value = v;
+    n.onchange = function () {
+      updateComboPointsList();
+    };
+    vals.appendChild(n);
+    let h = document.createElement("span");
+    h.classList.add("Points");
+    h.innerHTML = i + mint + "/" + maxt;
+    hdrs.appendChild(h);
+  }
+}
+
+function updateComboPointsList() {
+  let PL = document.getElementById("PointsList");
+  let vals = document.getElementById("PointsListArrayVals");
+  let inps = vals.querySelectorAll("input");
+  let x = "";
+  for (let i = 0; i < inps.length; i++) {
+    if (x != "") x += ",";
+    x += "" + inps[i].value;
+  }
+  PL.value = x;
+  saveCombo(PL);
 }

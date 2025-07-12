@@ -53,7 +53,7 @@ var bonusmenu = menu{
 
 var advancedmenu = menu{
 	{"Categories", "Categories for use with compound rules", "/niy", ""},
-	{"Compound calculation rules", "Scoring rules for use with categories", "/niy", ""},
+	{"Complex calculation rules", "Scoring rules for use with categories", "/niy", ""},
 	{"Classes", "Classes", "/niy", ""},
 	{"Recalculate scorecards", "Recalculate scorecards", "/recalc", ""},
 }

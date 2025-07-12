@@ -837,7 +837,7 @@ func loadCombos(comboid string) []ComboBonus {
 	var cb ComboBonus
 	res := make([]ComboBonus, 0)
 
-	sqlx := "SELECT ComboID,BriefDesc,ScoreMethod,MinimumTicks,ScorePoints,Bonuses,Compulsory,Cat1"
+	sqlx := "SELECT ComboID,BriefDesc,ScoreMethod,MinimumTicks,ScorePoints,ifnull(Bonuses,''),Compulsory,Cat1"
 	for i := 2; i <= NumCategoryAxes; i++ {
 		sqlx += fmt.Sprintf(",Cat%d", i)
 	}

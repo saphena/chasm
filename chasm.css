@@ -38,7 +38,10 @@ select {
   font-weight: bold;
 }
 
-table, th, td, tr {
+table,
+th,
+td,
+tr {
   border: none;
 }
 .singlerule {
@@ -226,7 +229,7 @@ article.recalc {
     margin: 2em 0 2em 0;
   }
   input {
-    padding: .5em 1em .7em 1em;
+    padding: 0.5em 1em 0.7em 1em;
     background-color: var(--button-background);
     color: var(--button-text);
     cursor: pointer;
@@ -326,6 +329,10 @@ article.combo {
       border-radius: 6px;
       background-color: var(--button-background);
       margin: 2px;
+    }
+    .BonusList {
+      max-width: var(--default-max-width);
+      width: 98%;
     }
   }
 }
@@ -499,11 +506,26 @@ div.claim {
   text-transform: uppercase;
   width: 6em;
 }
+.ComboID {
+  width: 6em;
+}
 .MaxHours {
   width: 4em;
 }
 .Points {
-  width: 4em;
+  width: 5em;
+}
+#PointsListArray {
+  display: flex;
+  flex-direction: column;
+  fieldset {
+    display: flex;
+    flex-direction: row;
+    margin: 0;
+    span.Points {
+      width: 5.5em;
+    }
+  }
 }
 
 .RestMinutes {
@@ -562,6 +584,7 @@ div.claim {
     background-color: var(--button-background);
     color: var(--button-text);
     border-radius: 6px;
+    cursor: pointer;
   }
   input[type="button"]:disabled,
   button:disabled {

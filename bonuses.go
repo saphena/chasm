@@ -59,7 +59,8 @@ var BonusDisplayScreen = `
 		</fieldset>
 		{{end}}
 		<fieldset>
-			<button id="updatedb" title="Update DB" disabled onclick="updateBonusDB(this)">` + FloppyDiskIcon + `</button>
+			<!-- <button" id="updatedb" title="Update DB" disabled onclick="updateBonusDB(this)">` + FloppyDiskIcon + `</button> -->
+			<input type="button" id="updatedb" class="hideuntil" title="Delete Bonus" disabled onclick="updateBonusDB(this)" value="">
 		</fieldset>
 		<fieldset>
 			<input type="button" title="show next" value="⋘" onclick="window.location.href='/bonus?b={{.B.BonusID}}&prev'">

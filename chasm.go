@@ -232,14 +232,22 @@ func json_requests(w http.ResponseWriter, r *http.Request) {
 	case "addb":
 		createBonus(w, r)
 		return
+	case "addco":
+		createCombo(w, r)
+		return
 	case "delb":
 		deleteBonus(w, r)
+		return
+	case "delco":
+		deleteCombo(w, r)
 		return
 	case "saveb":
 		saveBonus(w, r)
 
 		return
-
+	case "saveco":
+		saveCombo(w, r)
+		return
 	case "saveclaim":
 		saveClaim(r)
 		fmt.Fprint(w, `{"ok":true,"msg":"ok"}`)
@@ -272,7 +280,7 @@ func niy(w http.ResponseWriter, r *http.Request) {
 
 	startHTML(w, "NIY")
 
-	fmt.Fprint(w, `<p class="error">NOT IMPLEMENTED YET</p><p>%v</p>`, r)
+	fmt.Fprintf(w, `<p class="error">NOT IMPLEMENTED YET</p><p>%v</p>`, r)
 }
 func recalc_handler(w http.ResponseWriter, r *http.Request) {
 
@@ -311,16 +319,22 @@ func recalc_handler(w http.ResponseWriter, r *http.Request) {
 func show_combo(w http.ResponseWriter, r *http.Request) {
 
 	comboid := r.FormValue("c")
-	if comboid == "" {
-		fmt.Fprint(w, "no comboid!")
-		return
+	var cb ComboBonus
+	/*
+		if comboid == "" {
+			fmt.Fprint(w, "no comboid!")
+			return
+		}
+	*/
+	if comboid != "" {
+		cr := loadCombos(comboid)
+		if len(cr) < 1 {
+			fmt.Fprint(w, "no such comboid")
+			return
+		}
+		cb = cr[0]
 	}
-	cr := loadCombos(comboid)
-	if len(cr) < 1 {
-		fmt.Fprint(w, "no such comboid")
-		return
-	}
-	showSingleCombo(w, cr[0], r.FormValue("back"))
+	showSingleCombo(w, cb, r.FormValue("back"))
 }
 
 func show_help(w http.ResponseWriter, r *http.Request) {
