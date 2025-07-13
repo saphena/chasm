@@ -10,6 +10,14 @@ const CAT_DNF_If_Triggered = 2;
 const CAT_PlaceholderRule = 3;
 const CAT_OrdinaryScoringSequence = 4;
 
+// This is the maximum number of axes or sets of categories
+const NumCategoryAxes = 9;
+
+const ordered_list_icon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-list-ol" viewBox="0 0 16 16">
+  <path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5"/>
+  <path d="M1.713 11.865v-.474H2c.217 0 .363-.137.363-.317 0-.185-.158-.31-.361-.31-.223 0-.367.152-.373.31h-.59c.016-.467.373-.787.986-.787.588-.002.954.291.957.703a.595.595 0 0 1-.492.594v.033a.615.615 0 0 1 .569.631c.003.533-.502.8-1.051.8-.656 0-1-.37-1.008-.794h.582c.008.178.186.306.422.309.254 0 .424-.145.422-.35-.002-.195-.155-.348-.414-.348h-.3zm-.004-4.699h-.604v-.035c0-.408.295-.844.958-.844.583 0 .96.326.96.756 0 .389-.257.617-.476.848l-.537.572v.03h1.054V9H1.143v-.395l.957-.99c.138-.142.293-.304.293-.508 0-.18-.147-.32-.342-.32a.33.33 0 0 0-.342.338zM2.564 5h-.635V2.924h-.031l-.598.42v-.567l.629-.443h.635z"/>
+</svg>`
+
 function chgRuleType(obj) {
   let div = obj.parentElement.parentElement;
 
@@ -1000,4 +1008,179 @@ function updateComboPointsList() {
   }
   PL.value = x;
   saveCombo(PL);
+}
+
+// Category/set handling
+
+function saveCatCat(obj) {
+  if (obj.timer) clearTimeout(obj.timer);
+  let s = obj.getAttribute("data-set");
+  let c = obj.getAttribute("data-cat");
+  let url = "/x?f=savecat&s=" + s;
+  let nm = "setname";
+  let ov = obj.value;
+  url += "&c=" + c;
+  url += "&ff=" + nm + "&" + nm + "=" + encodeURIComponent(ov);
+  console.log("saveCatCat: " + url);
+  stackTransaction(url, obj.id);
+  sendTransactions();
+}
+
+function saveCatSet(obj) {
+  if (obj.timer) clearTimeout(obj.timer);
+  let b = obj.getAttribute("data-set");
+  let url = "/x?f=saveset&s=" + b;
+  let nm = "setname";
+  let ov = obj.value;
+  url += "&ff=" + nm + "&" + nm + "=" + encodeURIComponent(ov);
+  console.log("saveCatSet: " + url);
+  stackTransaction(url, obj.id);
+  sendTransactions();
+}
+
+function showCatSet(obj) {
+  let art = document.getElementById("setcats");
+  let set = obj.getAttribute("data-set");
+  let url = "/x?f=fetchcats&s=" + set;
+  fetch(url)
+    .then((response) => {
+      if (!response.ok) {
+        // Handle HTTP errors
+        bd.value = `HTTP error! Status: ${response.status}`;
+        return;
+      }
+      return response.json();
+    })
+    .then((data) => {
+      if (data.err) {
+        // Handle JSON error field
+        console.error(`Error: ${data.msg}`);
+        bd.value = `Error: ${data.msg}`;
+        return;
+      } else if (data.ok) {
+        // Process the data if no error
+        art.innerText = "";
+        console.log(data);
+        let div = document.createElement("div");
+        div.innerText = `Categories for set ${data.Set} ${data.SetName}`;
+        art.appendChild(div);
+        let btn = document.createElement("button");
+        btn.classList.add("plus");
+        btn.setAttribute("data-set", `${data.Set}`);
+        btn.onclick = function () {
+          addCatCat(this);
+        };
+        btn.innerText = "+";
+        art.appendChild(btn);
+        for (let i = 0; i < data.Cats.length; i++) {
+          let fs = document.createElement("fieldset");
+          fs.classList.add("setcat");
+          let lbl = document.createElement("label");
+          let newid = `s${data.Set}c${data.Cats[i].Cat}`;
+          lbl.setAttribute("for", newid);
+          lbl.innerText = `${data.Cats[i].Cat}`;
+          fs.appendChild(lbl);
+          let inp = document.createElement("input");
+          inp.setAttribute("id",newid)
+          inp.classList.add("setcat");
+          inp.setAttribute("value", `${data.Cats[i].CatDesc}`);
+          inp.setAttribute("data-set", `${data.Set}`);
+
+          inp.setAttribute("data-cat", `${data.Cats[i].Cat}`);
+          inp.onchange = function () {
+            saveCatCat(this);
+          };
+          fs.appendChild(inp);
+          btn = document.createElement("button");
+          btn.classList.add("minus");
+          btn.setAttribute("data-set", `${data.Set}`);
+          btn.setAttribute("data-cat", `${data.Cats[i].Cat}`);
+          btn.onclick = function () {
+            delCatCat(this);
+          };
+          btn.innerText = "-";
+          fs.appendChild(btn);
+
+          art.appendChild(fs);
+        }
+      } else {
+        console.log(`Error: ${data.msg}`);
+      }
+    })
+    .catch((error) => {
+      // Handle network or other errors
+      console.error("Fetch error:", error);
+      return;
+    });
+}
+
+
+
+// addCatCat needs to add the record in order to get a new number
+function addCatCat(obj) {
+  let dad = obj.parentElement;
+  let sets = dad.querySelectorAll("input");
+  let lastIx = sets.length;
+  if (lastIx >= 0) {
+    if (sets[lastIx - 1].value == "") return;
+  }
+  console.log(sets, lastIx);
+  if (lastIx >= NumCategoryAxes) {
+    obj.disabled;
+    return;
+  }
+  let fs = document.createElement("fieldset");
+  fs.classList.add("sethdr");
+  let lbl = document.createElement("label");
+  lastIx++; // Make it 1 relative
+  let newid = "SetHdr" + lastIx;
+  lbl.setAttribute("for", newid);
+  lbl.innerText = "Set " + lastIx + " is";
+  fs.appendChild(lbl);
+  let inp = document.createElement("input");
+  inp.setAttribute("id", newid);
+  inp.setAttribute("name", newid);
+  inp.setAttribute("data-set", lastIx);
+  inp.onchange = function () {
+    saveCatSet(this);
+  };
+  inp.onclick = function () {
+    showCatSet(this);
+  };
+  fs.appendChild(inp);
+  dad.appendChild(fs);
+}
+
+function addCatSet(obj) {
+  let dad = obj.parentElement;
+  let sets = dad.querySelectorAll("input");
+  let lastIx = sets.length;
+  if (lastIx >= 0) {
+    if (sets[lastIx - 1].value == "") return;
+  }
+  console.log(sets, lastIx);
+  if (lastIx >= NumCategoryAxes) {
+    obj.disabled;
+    return;
+  }
+  let fs = document.createElement("fieldset");
+  fs.classList.add("sethdr");
+  let lbl = document.createElement("label");
+  lastIx++; // Make it 1 relative
+  let newid = "SetHdr" + lastIx;
+  lbl.setAttribute("for", newid);
+  lbl.innerText = "Set " + lastIx + " is";
+  fs.appendChild(lbl);
+  let inp = document.createElement("input");
+  inp.setAttribute("id", newid);
+  inp.setAttribute("name", newid);
+  inp.setAttribute("data-set", lastIx);
+  inp.onchange = function () {
+    saveCatSet(this);
+  };
+  inp.onclick = function () {
+    showCatSet(this);
+  };
+  fs.appendChild(inp);
+  dad.appendChild(fs);
 }

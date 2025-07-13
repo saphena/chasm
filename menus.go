@@ -52,9 +52,9 @@ var bonusmenu = menu{
 }
 
 var advancedmenu = menu{
-	{"Categories", "Categories for use with compound rules", "/niy", ""},
+	{"Categories", "Categories for use with compound rules", "/cats", ""},
 	{"Complex calculation rules", "Scoring rules for use with categories", "/niy", ""},
-	{"Classes", "Classes", "/niy", ""},
+	{"Certificate Classes", "Classes", "/niy", ""},
 	{"Recalculate scorecards", "Recalculate scorecards", "/recalc", ""},
 }
 var menus = map[string]*menu{"main": &mainMenu, "setup": &setupmenu, "entrants": &entrantmenu, "bonuses": &bonusmenu, "asetup": &advancedmenu}

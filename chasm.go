@@ -160,6 +160,7 @@ func main() {
 	http.HandleFunc("/bonus", show_bonus)
 	http.HandleFunc("/bonuses", list_bonuses)
 	http.HandleFunc("/cards", showScorecards)
+	http.HandleFunc("/cats", showCategorySets)
 	http.HandleFunc("/certs", print_certs)
 	http.HandleFunc("/claim", showClaim)
 	http.HandleFunc("/claims", list_claims)
@@ -245,6 +246,9 @@ func json_requests(w http.ResponseWriter, r *http.Request) {
 		saveBonus(w, r)
 
 		return
+	case "savecat":
+		updateCatName(w, r)
+		return
 	case "saveco":
 		saveCombo(w, r)
 		return
@@ -259,11 +263,18 @@ func json_requests(w http.ResponseWriter, r *http.Request) {
 	case "savers":
 		updateReviewStatus(w, r)
 		return
+	case "saveset":
+		updateSetName(w, r)
+		return
 	case "fetche":
 		ajaxFetchEntrantDetails(w, r)
 		return
 	case "fetchb":
 		ajaxFetchBonusDetails(w, r)
+		return
+	case "fetchcats":
+		showCategoryCats(w, r)
+
 		return
 	case "putodo":
 		update_odo(w, r)

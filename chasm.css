@@ -137,7 +137,8 @@ img.flagicon {
   min-width: 20em;
 }
 
-button.plus {
+button.plus,
+button.minus {
   background-color: var(--button-background);
   color: var(--button-text);
   border-radius: 10px;
@@ -527,7 +528,29 @@ div.claim {
     }
   }
 }
-
+.setheads,
+.setcats {
+  width: 98%;
+  max-width: var(--default-max-width);
+  margin: auto;
+  div {
+    text-align: justify;
+    margin: 0 0 1em 0;
+  }
+  fieldset {
+    margin: 0 0 .5em 0;
+    border: none;
+  }
+  label {
+    margin: 0 .5em 0 0;
+  }
+  .plus {
+    margin: 0 0 .5em 0;
+  }
+  .minus {
+    width: 2em;
+  }
+}
 .RestMinutes {
   width: 3em;
 }

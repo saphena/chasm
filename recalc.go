@@ -49,9 +49,8 @@ const PointsCalcMethod_MultiplyLast = 2
 const ScoreMethodPoints = 0
 const ScoreMethodMults = 1
 
+// This is the maximum number of axes or sets of categories
 const NumCategoryAxes = 9
-
-const NumberOfAxes = 9
 
 const EntrantDNS = 0
 const EntrantOK = 1
@@ -221,7 +220,7 @@ var RallyParametersLoaded bool
 func build_axisLabels() []string {
 
 	sqlx := "SELECT IfNull(Cat1Label,'')"
-	for i := 2; i <= NumberOfAxes; i++ {
+	for i := 2; i <= NumCategoryAxes; i++ {
 		sqlx += ",IfNull(Cat" + strconv.Itoa(i) + "Label,'')"
 	}
 	sqlx += " FROM rallyparams"
@@ -229,7 +228,7 @@ func build_axisLabels() []string {
 	checkerr(err)
 	defer rows.Close()
 	var res []string
-	s := make([]string, NumberOfAxes)
+	s := make([]string, NumCategoryAxes)
 	for rows.Next() {
 		err = rows.Scan(&s[0], &s[1], &s[2], &s[3], &s[4], &s[5], &s[6], &s[7], &s[8])
 		checkerr(err)
@@ -296,7 +295,7 @@ func build_compoundRuleArray(CurrentLeg int) []CompoundRule {
 func build_emptyAxisCountsArray() axisCounts {
 
 	res := make(axisCounts, 0)
-	for i := 1; i <= NumberOfAxes; i++ {
+	for i := 1; i <= NumCategoryAxes; i++ {
 		var cf catFields
 		cf.CatCounts = make(map[int]int, 0)
 		res[i] = cf
