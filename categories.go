@@ -36,6 +36,40 @@ var tmplSetHeaders = `
 </article>
 `
 
+func addCatCat(w http.ResponseWriter, r *http.Request) {
+
+	fmt.Println("addCatCat")
+	set := r.FormValue("s")
+	if intval(set) < 1 {
+		fmt.Fprint(w, `{"ok":false,"msg":"Bad set index"}`)
+	}
+	sqlx := "SELECT max(Cat) FROM categories WHERE Axis=" + set
+	cat := getIntegerFromDB(sqlx, 0) + 1
+	sqlx = fmt.Sprintf("INSERT INTO categories(Axis,Cat) VALUES(%v,%v)", set, cat)
+	_, err := DBH.Exec(sqlx)
+	checkerr(err)
+	fmt.Fprintf(w, `{"ok":true,"msg":"%v"}`, cat)
+	fmt.Printf(" done = %v\n", cat)
+}
+
+func delCatCat(w http.ResponseWriter, r *http.Request) {
+
+	fmt.Println("delCatCat")
+	set := r.FormValue("s")
+	if intval(set) < 1 {
+		fmt.Fprint(w, `{"ok":false,"msg":"Bad set index"}`)
+	}
+	cat := r.FormValue("c")
+	if intval(cat) < 1 {
+		fmt.Fprint(w, `{"ok":false,"msg":"Bad cat index"}`)
+	}
+	sqlx := fmt.Sprintf("DELETE FROM categories WHERE Axis=%v AND Cat=%v", set, cat)
+	fmt.Println(sqlx)
+	_, err := DBH.Exec(sqlx)
+	checkerr(err)
+	fmt.Fprintf(w, `{"ok":true,"msg":"%v"}`, cat)
+}
+
 func showCategoryCats(w http.ResponseWriter, r *http.Request) {
 
 	type catEntry struct {
@@ -56,7 +90,7 @@ func showCategoryCats(w http.ResponseWriter, r *http.Request) {
 	}
 	sqlx := fmt.Sprintf("SELECT Cat%vLabel FROM rallyparams", set.Set)
 	set.SetName = getStringFromDB(sqlx, fmt.Sprintf("%v", set.Set))
-	sqlx = fmt.Sprintf("SELECT Cat,BriefDesc FROM categories WHERE Axis=%v ORDER BY Cat", set.Set)
+	sqlx = fmt.Sprintf("SELECT Cat,ifnull(BriefDesc,'') FROM categories WHERE Axis=%v ORDER BY Cat", set.Set)
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
 	defer rows.Close()

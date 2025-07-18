@@ -233,11 +233,17 @@ func json_requests(w http.ResponseWriter, r *http.Request) {
 	case "addb":
 		createBonus(w, r)
 		return
+	case "addcat":
+		addCatCat(w, r)
+		return
 	case "addco":
 		createCombo(w, r)
 		return
 	case "delb":
 		deleteBonus(w, r)
+		return
+	case "delcat":
+		delCatCat(w, r)
 		return
 	case "delco":
 		deleteCombo(w, r)
