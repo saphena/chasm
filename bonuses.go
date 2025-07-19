@@ -212,7 +212,7 @@ func list_bonuses(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `</div>`)
 	fmt.Fprint(w, `<div class="bonuslist hdr">`)
 	fmt.Fprint(w, `<span>Code</span><span>Description</span><span>Points</span><span>Claims</span>`)
-	fmt.Fprint(w, `</div>`)
+	fmt.Fprint(w, `</div><hr>`)
 	fmt.Fprint(w, `</header>`)
 
 	sqlx := "SELECT BonusID,BriefDesc,Points FROM bonuses ORDER BY BonusID"

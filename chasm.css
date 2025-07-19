@@ -27,7 +27,6 @@
   --hover-color: black;
 
   --selected-flag-border: 16px solid green;
-
 }
 * {
   margin: 0;
@@ -76,14 +75,11 @@ button:disabled,
   color: var(--button-disabled-text);
 }
 
-
 button:not(disabled):not(.icon):hover,
 .button:not(disabled):hover {
-
   background-color: var(--hover-background);
   color: var(--hover-text);
 }
-
 
 table,
 th,
@@ -158,6 +154,13 @@ tr {
   display: inline;
   text-align: left;
   margin: 0 0.2em 0 0;
+}
+.mid {
+  text-align: center;
+}
+.num {
+  text-align: right;
+  padding: 0 0.2em 0 0;
 }
 .hdr {
   font-weight: bold;
@@ -444,6 +447,7 @@ article.config {
   color: var(--hover-text);
 }
 
+.entrantlist,
 .ebclist,
 .claimslog,
 .rankhead,
@@ -454,6 +458,16 @@ article.config {
 
 .intro {
   margin: 1em;
+}
+.entrantlist .row {
+  margin: 0.2em auto 0.2em auto;
+  display: grid;
+  grid-template-columns: 1fr 3fr 2fr 3fr 1fr 1fr 1fr 1fr;
+
+  a {
+    text-decoration: none;
+    color: var(--regular-text);
+  }
 }
 .bonuslist {
   margin: 0.2em auto 0.2em auto;

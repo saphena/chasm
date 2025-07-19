@@ -341,7 +341,7 @@ func list_claims(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `<fieldset class="col claims hdr mid">Good?</fieldset>`)
 	fmt.Fprint(w, `</fieldset>`)
 
-	fmt.Fprint(w, `</div>`)
+	fmt.Fprint(w, `</div><hr>`)
 
 	fmt.Fprint(w, `</header><div class="claimslog">`)
 	for rows.Next() {
@@ -404,7 +404,7 @@ func list_EBC_claims(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `</fieldset>`)
 	fmt.Fprint(w, `</div>`)
 
-	fmt.Fprint(w, `</div></header>`)
+	fmt.Fprint(w, `</div><hr></header>`)
 	fmt.Fprint(w, `<div class="ebclist">`)
 	n := 0
 	for rows.Next() {

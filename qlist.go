@@ -56,7 +56,7 @@ func show_qlist(w http.ResponseWriter, r *http.Request) {
 
 	showReloadTicker(w, r.URL.String())
 
-	fmt.Fprint(w, `</div></header>`)
+	fmt.Fprint(w, `</div>`)
 	fmt.Fprint(w, `<div class="rankings">`)
 
 	fmt.Fprint(w, `<form id="rankingsfrm">`)
@@ -68,15 +68,15 @@ func show_qlist(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `<fieldset class="col hdr mid link" onclick="reloadRankings('seq','FinishPosition')">Rank</fieldset>`)
 	fmt.Fprint(w, `<fieldset class="col hdr link" onclick="reloadRankings('seq','RiderName')">Name</fieldset>`)
 
-	mk := "Miles"
+	mk := CS.UnitMilesLit
 	if CS.Basics.RallyUnitKms {
-		mk = "Kms"
+		mk = CS.UnitKmsLit
 
 	}
 	fmt.Fprintf(w, `<fieldset class="col hdr mid link" onclick="reloadRankings('seq','CorrectedMiles')">%v</fieldset>`, mk)
 	fmt.Fprint(w, `<fieldset class="col hdr right link" onclick="reloadRankings('seq','TotalPoints')">Points</fieldset>`)
 	fmt.Fprintf(w, `<fieldset class="col hdr right link" onclick="reloadRankings('seq','PPM')">P&divide;%v</fieldset>`, string(mk[0]))
-	fmt.Fprint(w, `</fieldset>`)
+	fmt.Fprint(w, `</fieldset></div><!-- rankings --><hr></header>`)
 
 	sqlx := "SELECT ifnull(FinishPosition,0)," + RiderNameSQL + ",ifnull(PillionName,''),ifnull(CorrectedMiles,0),ifnull(TotalPoints,0),EntrantStatus"
 	sqlx += ",IfNull((TotalPoints*1.0) / CorrectedMiles,0) As PPM,ifnull(AvgSpeed,''),EntrantID"
@@ -117,7 +117,7 @@ func show_qlist(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `<fieldset class="col right">%v</fieldset>`, rr.Points)
 		eff := ""
 		if rr.Distance > 0 && rr.Points != 0 {
-			eff = fmt.Sprintf("%.1f", rr.Eff)
+			eff = fmtDecimal("%.1f", rr.Eff)
 		}
 		fmt.Fprintf(w, `<fieldset class="col right">%v</fieldset>`, eff)
 

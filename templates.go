@@ -124,6 +124,16 @@ func builtin_images(w http.ResponseWriter, r *http.Request) {
 
 	//fmt.Printf("Img %v sent %v bytes (%v)\n", img, n, len(imgdata))
 }
+
+func fmtDecimal(ptn string, n float64) string {
+
+	x := fmt.Sprintf(ptn, n)
+	if CS.Basics.RallyPointIsComma {
+		x = strings.Replace(x, ".", ",", 1)
+	}
+	return x
+}
+
 func send_css(w http.ResponseWriter, r *http.Request) {
 
 	file := r.FormValue("file")

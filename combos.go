@@ -161,7 +161,7 @@ func show_combos(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `</div>`)
 	fmt.Fprint(w, `<div class="bonuslist hdr">`)
 	fmt.Fprint(w, `<span>Code</span><span>Description</span><span>Points</span><span>Claims</span>`)
-	fmt.Fprint(w, `</div>`)
+	fmt.Fprint(w, `</div><hr>`)
 	fmt.Fprint(w, `</header>`)
 
 	fmt.Fprint(w, `<div class="combos">`)

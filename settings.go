@@ -26,12 +26,13 @@ type emailSettings struct {
 	}
 }
 type RallyBasics struct {
-	RallyTitle      string
-	RallyStarttime  string
-	RallyFinishtime string
-	RallyMaxHours   int
-	RallyUnitKms    bool
-	RallyTimezone   string
+	RallyTitle        string
+	RallyStarttime    string
+	RallyFinishtime   string
+	RallyMaxHours     int
+	RallyUnitKms      bool
+	RallyTimezone     string
+	RallyPointIsComma bool
 }
 
 const (
@@ -250,6 +251,11 @@ func ajaxUpdateSettings(w http.ResponseWriter, r *http.Request) {
 		ok = "true"
 		msg = "ok"
 		CS.AutoFinisher = rs == "1"
+	case "PointIsComma":
+		rs := r.FormValue("v")
+		ok = "true"
+		msg = "ok"
+		CS.Basics.RallyPointIsComma = rs == "1"
 	case "LocalTZ":
 		CS.Basics.RallyTimezone = r.FormValue("v")
 		ok = "true"
@@ -533,6 +539,22 @@ func editConfigMain(w http.ResponseWriter, r *http.Request) {
 		}
 		fmt.Fprintf(w, `<option value="%v" %v>%v</option>`, itz, selected, itz)
 	}
+	fmt.Fprint(w, `,</select>`)
+	fmt.Fprint(w, `</fieldset>`)
+
+	fmt.Fprint(w, `<fieldset>`)
+	fmt.Fprint(w, `<label for="PointIsComma">Decimal point is</label>`)
+	fmt.Fprint(w, ` <select id="PointIsComma" name="PointIsComma" onchange="saveSetupConfig(this)">`)
+	selected = ""
+	if !CS.Basics.RallyPointIsComma {
+		selected = "selected"
+	}
+	fmt.Fprintf(w, `<option value="0" %v>%v</option>`, selected, "point ( . )")
+	selected = ""
+	if CS.Basics.RallyPointIsComma {
+		selected = "selected"
+	}
+	fmt.Fprintf(w, `<option value="1" %v>%v</option>`, selected, "Comma ( , )")
 	fmt.Fprint(w, `,</select>`)
 	fmt.Fprint(w, `</fieldset>`)
 

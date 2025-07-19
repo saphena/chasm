@@ -13,10 +13,11 @@ const ordered_list_icon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" he
 </svg>`
 
 var tmplSetHeaders = `
-<article class="setheads">
-	<div>
+	<div class="intro">
 	Categories allow for more complex scoring mechanisms. Each ordinary bonus or combo can be marked as belonging to a particular category within each set. Sets of categories can be used to represent entities such as county, country, activity, etc. Such memberships can be used to modify basic bonus scoring and/or apply a second level of scoring using complex calculation rules.
 	</div>
+
+<article class="setheads">
 	<button id="addset" class="plus" autofocus title="Add new set" onclick="addCatSet(this)">+</button>
 
 	{{range $ix,$el := .Sets}}

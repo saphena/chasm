@@ -110,6 +110,7 @@ func showScorecards(w http.ResponseWriter, r *http.Request) {
 	const chk = "&#10003;" //Regular checkmark
 	const xxx = "&#10007;"
 	const accepted = "<span class='bigtick'> &#10004;</span>" //Heavy checkmark
+	const rejected = "&#10008;"
 
 	r.ParseForm()
 
@@ -127,6 +128,11 @@ func showScorecards(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `<button> show </button>`)
 	fmt.Fprint(w, `</form></article>`)
 
+	fmt.Fprint(w, `<div class="reviewlist"><div class="row hdr">`)
+	fmt.Fprint(w, `<span class="col hdr">Flag</span>`)
+	fmt.Fprint(w, `<span class=" ">Name</span>`)
+	fmt.Fprintf(w, `<span class="col hdr">Claims <span class="rejects">%v</span></span>`, rejected)
+	fmt.Fprint(w, `</div></div><hr>`)
 	fmt.Fprint(w, `</header>`)
 
 	fmt.Fprint(w, `<article class="reviewlist">`)
