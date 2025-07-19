@@ -769,7 +769,7 @@ func showEBC(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `</header>`)
 
 	fmt.Fprint(w, `<article class="showebc">`)
-	showReloadTicker(w, r.URL.String())
+	//showReloadTicker(w, r.URL.String())
 	fmt.Fprint(w, `<h4>Judge this bonus claim or leave it undecided</h4>`)
 
 	fmt.Fprint(w, `<form id="ebcform" action="saveebc" method="post">`)
@@ -860,7 +860,7 @@ func showEBC(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprint(w, `<div>`)
 
-	fmt.Fprintf(w, `<input type="button" id="leavebutton" data-result="-1" name="Decision" onclick="closeEBC(this)" class="closebutton" value="%v">`, CS.CloseEBCUndecided)
+	fmt.Fprintf(w, `<button id="leavebutton" data-result="-1" name="Decision" onclick="closeEBC(this)" class="closebutton">%v</button>`, CS.CloseEBCUndecided)
 
 	hide = "hide"
 	//fmt.Printf("bd=%v\n", bd)
@@ -885,7 +885,7 @@ func showEBC(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `<input type="number" id="RestMinutes" name="RestMinutes" class="RestMinutes" value="%v"> `, bcv.RestMins)
 	fmt.Fprint(w, `</span>`)
 
-	fmt.Fprintf(w, `<input type="button" data-result="0"  name="Decision" autofocus onclick="closeEBC(this)" class="closebutton" value="%v">`, CS.CloseEBC[0])
+	fmt.Fprintf(w, `<button data-result="0"  name="Decision" autofocus onclick="closeEBC(this)" class="closebutton">%v</button>`, CS.CloseEBC[0])
 
 	hide = "hide"
 	if CS.RallyUsePctPen {
@@ -893,15 +893,16 @@ func showEBC(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Fprintf(w, ` <span class="%v">`, hide)
 	fmt.Fprintf(w, `<input type="hidden" id="valPercentPenalty" value="%v">`, CS.RallyPctPenVal)
-	fmt.Fprintf(w, `<input type="button" class="closebutton" data-result="0" id="PercentPenalty" onclick="closeEBC(this)" value="%v%% Penalty">`, CS.RallyPctPenVal)
+	fmt.Fprintf(w, `<button class="closebutton" data-result="0" id="PercentPenalty" onclick="closeEBC(this)">%v%% Penalty</button>`, CS.RallyPctPenVal)
 	fmt.Fprint(w, `</span>`)
 
 	x = ""
 	fmt.Fprintf(w, `<input type="text" id="judgesnotes" name="JudgesNotes" oninput="killReload(this)" class="judgesnotes" placeholder="Notes"  value="%v">`, x)
 	fmt.Fprint(w, `</div>`)
 	fmt.Fprint(w, `<div>`)
+
 	for i := 1; i < 10; i++ {
-		fmt.Fprintf(w, `<input type="button" data-result="%v"  name="Decision" onclick="closeEBC(this)" class="closebutton" value="%v">`, i, CS.CloseEBC[i])
+		fmt.Fprintf(w, `<button data-result="%v"  name="Decision" onclick="closeEBC(this)" class="closebutton">%v</button>`, i, CS.CloseEBC[i])
 	}
 	fmt.Fprint(w, `</div>`)
 	showPhotosEBC(w, ebc.EmailID, ebc.Bonusid)

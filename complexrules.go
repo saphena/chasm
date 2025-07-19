@@ -65,7 +65,7 @@ var tmpltSingleRule = `
   <fieldset class="field rule0 rule1 rule2 rule3 rule4">
 	<fieldset class="rule0 rule1 rule2 rule3 rule4"></fieldset>
 	<fieldset class="rule0 rule1 rule2 rule3 rule4 flexspread">
-    <input type="submit" name="save" value=" update database "> <input type="button" name="delete" value=" &#10006; ">
+    <button name="save"> update database </button> <button name="delete"> &#10006; </button>
 	</fieldset>
   </fieldset>
   </form>

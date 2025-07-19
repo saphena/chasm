@@ -84,11 +84,12 @@ p {
 /* End of RBLR */
 
 #savecert {
+  display: block;
     border-radius: 9px;
-    margin: 1em;
+    margin: 0 auto 1em auto;
     padding: 1em;
     background-color: yellow;
-    color: red;
+    color: black;
     cursor:pointer
 }
 #savecert:disabled {

@@ -307,7 +307,7 @@ func recalc_handler(w http.ResponseWriter, r *http.Request) {
 	<p>It's quite safe to do this during a live rally.</p>
 	<form action="/recalc">
 		<input type="hidden" name="ok" value="ok">
-		<input type="submit" autofocus value="Recalculate scorecards">
+		<button autofocus>Recalculate scorecards</button>
 	</form>
 	</article>
 	`
@@ -326,7 +326,7 @@ func recalc_handler(w http.ResponseWriter, r *http.Request) {
 			}
 			recalc_scorecard(n)
 		}
-		fmt.Fprint(w, `<p>Scorecards recalculated</p>`)
+		fmt.Fprint(w, `</header><p class="thatsall">Scorecards recalculated</p>`)
 		return
 	}
 	fmt.Fprint(w, recalcfrm)

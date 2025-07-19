@@ -90,7 +90,7 @@ func edit_certificate(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `<form action="/savecert">`)
 	fmt.Fprintf(w, `<input type="hidden" name="class" value="%v">`, class)
 	fmt.Fprintf(w, `<input type="hidden" name="e" value="%v">`, entrant)
-	fmt.Fprint(w, `<input type="submit" id="savecert" disabled="disabled"value="Save changes">`)
+	fmt.Fprint(w, `<button id="savecert" disabled="disabled">Save changes</button>`)
 	fmt.Fprint(w, `</header>`)
 	fmt.Fprintf(w, `<article class="certificate"><textarea id="editor" name="html">%v</textarea></article>`, html)
 	fmt.Fprint(w, `</form>`)

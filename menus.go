@@ -66,6 +66,7 @@ func showMenu(w http.ResponseWriter, menu string) {
 		return
 	}
 
+	fmt.Fprint(w, `</header>`)
 	fmt.Fprint(w, `<nav class="menu">`)
 	for _, v := range *m {
 		onclick := ""
@@ -74,7 +75,7 @@ func showMenu(w http.ResponseWriter, menu string) {
 		} else {
 			onclick = strings.ReplaceAll(v.Click, "#url#", "'"+v.Url+"'")
 		}
-		fmt.Fprintf(w, `<button onclick="%v" title="%v">%v</button>`, onclick, v.Hint, v.Tag)
+		fmt.Fprintf(w, `<button class="menu" onclick="%v" title="%v">%v</button>`, onclick, v.Hint, v.Tag)
 	}
 	fmt.Fprint(w, `</nav>`)
 

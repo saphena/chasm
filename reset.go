@@ -64,7 +64,7 @@ var resetDatabaseForm = `
     <option value="1">1 - Just clear out my testing claims, etc</option>
     <option value="2">2 - Clear all scoring and entrants</option>
     <option value="3">3 - Rebuild everything from scratch</option>
-    </select> <input type="button" id="firstchoiceplease" value="Do it now!" onclick="doit(this)"></fieldset>`
+    </select> <button id="firstchoiceplease" onclick="doit(this)">Do it now!</button></fieldset>`
 
 func doTheReset(w http.ResponseWriter, r *http.Request) {
 
@@ -79,7 +79,7 @@ func showResetChoiceConfirmation(w http.ResponseWriter, lvl int, txt string) {
     <select id="choice%v">
     <option value="0" selected>No! Get me back to safety please</option>
     <option value="%v">I know what I'm doing, just get on with it</option>
-    </select> <input type="button" id="choice%vplease" value="Do it now!" onclick="doit(this)"></fieldset>
+    </select> <button id="choice%vplease" onclick="doit(this)">Do it now!</button></fieldset>
     </div>`, lvl, txt, lvl, lvl, lvl, lvl)
 
 }

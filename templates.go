@@ -36,6 +36,9 @@ var iconreceipt string
 //go:embed chasm.js
 var mainscript string
 
+//go:embed normalize.css
+var normalize string
+
 //go:embed chasm.css
 var maincss string
 
@@ -46,6 +49,7 @@ var htmlheader = `
 <title>chasm</title>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="/css?file=normalize">
 <link rel="stylesheet" href="/css?file=maincss">
 <script src="/js?file=mainscript"></script>
 </head>
@@ -128,6 +132,8 @@ func send_css(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "text/css; charset=utf-8")
 	switch file {
+	case "normalize":
+		fmt.Fprint(w, normalize)
 	case "maincss":
 		fmt.Fprint(w, maincss)
 	case "certscss":

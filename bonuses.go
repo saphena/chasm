@@ -60,12 +60,12 @@ var BonusDisplayScreen = `
 		{{end}}
 		<fieldset>
 			<!-- <button" id="updatedb" title="Update DB" disabled onclick="updateBonusDB(this)">` + FloppyDiskIcon + `</button> -->
-			<input type="button" id="updatedb" class="hideuntil" title="Delete Bonus" disabled onclick="updateBonusDB(this)" value="">
+			<button id="updatedb" class="hideuntil" title="Delete Bonus" disabled onclick="updateBonusDB(this)"></button>
 		</fieldset>
 		<fieldset>
-			<input type="button" title="show next" value="⋘" onclick="window.location.href='/bonus?b={{.B.BonusID}}&prev'">
-			<input type="button" title="show previous" value="⋙" onclick="window.location.href='/bonus?b={{.B.BonusID}}&next'">
-			<input type="button" title="back to list" value="↥☰↥" onclick="window.location.href='/bonuses'">
+			<button title="show next" onclick="window.location.href='/bonus?b={{.B.BonusID}}&prev'">⋘</button>
+			<button title="show previous" onclick="window.location.href='/bonus?b={{.B.BonusID}}&next'">⋙</button>
+			<button title="back to list" onclick="window.location.href='/bonuses'">↥☰↥</button>
 		</fieldset>
 
 	</div>
@@ -92,31 +92,31 @@ var BonusDisplayScreen = `
 			<textarea id="Notes" name="Notes"  data-b="{{.B.BonusID}}" data-save="saveBonus" oninput="oi(this)" onchange="saveBonus(this)" class="Notes">{{.B.Notes}}</textarea>
 		</fieldset>
 		<fieldset>
-			<span class="button {{if.FlagA}}selected{{end}}" title="Alert!">
+			<span class="flag {{if.FlagA}}selected{{end}}" title="Alert!">
 				<img class="icon" src="/img?i=alert" alt="!" onclick="toggleButton(this)">
 				<input type="checkbox" class="quietcheck" id="ScoringFlagA"  data-b="{{.B.BonusID}}"  onclick="saveBonus(this)" name="ScoringFlag" {{if .FlagB}}checked{{end}} value="A">
 			</span>
-			<span class="button {{if .FlagB}}selected{{end}}" title="Bike in photo">
+			<span class="flag {{if .FlagB}}selected{{end}}" title="Bike in photo">
 				<img class="icon" src="/img?i=bike" alt="B" onclick="toggleButton(this)">
 				<input type="checkbox" class="quietcheck" id="ScoringFlagB"  data-b="{{.B.BonusID}}"  onchange="saveBonus(this)" name="ScoringFlag" {{if .FlagB}}checked{{end}} value="B">
 			</span>
-			<span class="button {{if .FlagD}}selected{{end}}" title="Daylight only">
+			<span class="flag {{if .FlagD}}selected{{end}}" title="Daylight only">
 				<img class="icon" src="/img?i=daylight" alt="D" onclick="toggleButton(this)">
 				<input type="checkbox"  class="quietcheck" id="ScoringFlagD"  data-b="{{.B.BonusID}}"  onchange="saveBonus(this)" name="ScoringFlag" {{if .FlagD}}checked{{end}} value="D">
 			</span>
-			<span class="button {{if .FlagF}}selected{{end}}" title="Face in photo">
+			<span class="flag {{if .FlagF}}selected{{end}}" title="Face in photo">
 				<img class="icon" src="/img?i=face" alt="F" onclick="toggleButton(this)">
 				<input type="checkbox"  class="quietcheck" id="ScoringFlagF"  data-b="{{.B.BonusID}}"  onchange="saveBonus(this)" name="ScoringFlag" {{if .FlagF}}checked{{end}} value="F">
 			</span>
-			<span class="button {{if .FlagN}}selected{{end}}" title="Nighttime only">
+			<span class="flag {{if .FlagN}}selected{{end}}" title="Nighttime only">
 				<img class="icon" src="/img?i=night" alt="N" onclick="toggleButton(this)">
 				<input type="checkbox" class="quietcheck" id="ScoringFlagN"  data-b="{{.B.BonusID}}"  onchange="saveBonus(this)" name="ScoringFlag" {{if .FlagN}}checked{{end}} value="N">
 			</span>
-			<span class="button {{if .FlagR}}selected{{end}}" title="Restricted access/hours">
+			<span class="flag {{if .FlagR}}selected{{end}}" title="Restricted access/hours">
 				<img class="icon" src="/img?i=restricted" alt="R" onclick="toggleButton(this)">
 				<input type="checkbox" class="quietcheck" id="ScoringFlagR"  data-b="{{.B.BonusID}}"  onchange="saveBonus(this)" name="ScoringFlag" {{if .FlagR}}checked{{end}} value="R">
 			</span>
-			<span class="button {{if .FlagT}}selected{{end}}" title="Receipt/ticket needed">
+			<span class="flag {{if .FlagT}}selected{{end}}" title="Receipt/ticket needed">
 				<img class="icon" src="/img?i=receipt" alt="T" onclick="toggleButton(this)">
 				<input type="checkbox" class="quietcheck" id="ScoringFlagT"  data-b="{{.B.BonusID}}"  onchange="saveBonus(this)" name="ScoringFlag" {{if .FlagT}}checked{{end}} value="T">
 			</span>

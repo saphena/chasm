@@ -5,18 +5,29 @@
 
 :root {
   --default-max-width: 50em;
-  --regular-background: white;
+  --regular-background: rgb(226, 223, 210);
   --regular-text: black;
+  --hilite-background: yellow;
+  --hilite-text: black;
   --error-background: red;
   --error-text: white;
-  --button-background: yellow;
+  --button-background: #7fbb98;
   --button-text: black;
   --button-disabled-back: gray;
   --button-disabled-text: black;
-  --input-background: whitesmoke;
+  --input-background: rgb(249, 246, 238);
   --input-text: black;
+  --topbar-background: lightblue;
+  --topbar-text: black;
   --topline-background: burlywood;
-  --topline-color: black;
+  --topline-text: black;
+  --scorex-background: lightblue;
+  --scorex-text: black;
+  --hover-background: yellow;
+  --hover-color: black;
+
+  --selected-flag-border: 16px solid green;
+
 }
 * {
   margin: 0;
@@ -26,17 +37,53 @@
   font-size: 14pt;
 }
 
+body {
+  background-color: var(--regular-background);
+}
+
+fieldset {
+  padding: 0;
+}
 input,
 select {
   display: inline-block;
   margin-right: 0.5em;
   padding: 4px;
   border: none;
+
   background-color: var(--input-background);
   color: var(--input-text);
   border-radius: 12px;
+
   font-weight: bold;
 }
+
+button:not(.icon),
+.button {
+  background-color: var(--button-background);
+  color: var(--button-text);
+  border-radius: 10px;
+  border: black 2px solid;
+
+  cursor: pointer;
+
+  padding: 0 0.5em 0.2em 0.5em;
+}
+
+button:disabled,
+.button:disabled {
+  background-color: var(--button-disabled-back);
+  color: var(--button-disabled-text);
+}
+
+
+button:not(disabled):not(.icon):hover,
+.button:not(disabled):hover {
+
+  background-color: var(--hover-background);
+  color: var(--hover-text);
+}
+
 
 table,
 th,
@@ -78,6 +125,7 @@ tr {
   display: grid;
   grid-template-columns: repeat(6, 8em);
   border: none;
+  padding: 0.5em 0 0.5em 0;
 }
 .row.combo {
   grid-template-columns: 2fr 2fr 1fr 3fr 4fr;
@@ -93,7 +141,8 @@ tr {
   grid-template-columns: 4em 4fr 1fr 1fr 1fr;
 }
 .row:not(.hdr):hover {
-  background: lightblue;
+  background: var(--hover-background);
+  color: var(--hover-text);
   cursor: pointer;
 }
 .row.rankings:hover {
@@ -101,7 +150,8 @@ tr {
 }
 .target:hover {
   cursor: pointer;
-  background: lightblue;
+  background: var(--hover-background);
+  color: var(--hover-text);
 }
 .col {
   border: none;
@@ -139,9 +189,6 @@ img.flagicon {
 
 button.plus,
 button.minus {
-  background-color: var(--button-background);
-  color: var(--button-text);
-  border-radius: 10px;
   width: 3em;
   margin: 0 1em 0 0;
 }
@@ -152,7 +199,8 @@ button.minus {
   margin: 1em 1em 0.5em 0;
 }
 .closebutton:hover {
-  background-color: lightblue;
+  background: var(--hover-background);
+  color: var(--hover-text);
   cursor: pointer;
 }
 .judgesnotes {
@@ -191,7 +239,8 @@ button.minus {
   display: flex;
   justify-content: space-between;
   flex-flow: row wrap;
-  background-color: lightblue;
+  background-color: var(--topbar-background);
+  color: var(--topbar-text);
   border-bottom: solid 2px black;
   margin-bottom: 1em;
 }
@@ -200,10 +249,6 @@ button.minus {
   margin: 3px 0.3em 3px 0.3em;
   font-size: 1.1em;
   padding: 4px 8px 6px 8px;
-  border-radius: 10px;
-  background-color: yellow;
-  color: red;
-  cursor: pointer;
 }
 
 .topbar span {
@@ -218,7 +263,8 @@ button.minus {
 #about_chasm {
   background-color: lightgray;
   color: black;
-  padding: 2px 5px 5px 5px;
+  padding: 2px 5px 3px 5px;
+  border-color: darkgray;
 }
 
 article.recalc {
@@ -322,14 +368,16 @@ article.combo {
 
       font-weight: bold;
     }
-    .button {
-      padding: 3px 3px 3px 6px;
+    .flag {
+      padding: 3px 3px 0 3px;
+      margin: 3px 3px 0px 3px;
     }
-    .button.selected {
-      border: 6px solid darkgray;
+    .flag img {
+      margin: auto;
+    }
+    .flag.selected {
+      border: var(--selected-flag-border);
       border-radius: 6px;
-      background-color: var(--button-background);
-      margin: 2px;
     }
     .BonusList {
       max-width: var(--default-max-width);
@@ -392,14 +440,15 @@ article.config {
 
 .menu button:hover {
   cursor: pointer;
-  background-color: lightblue;
+  background: var(--hover-background);
+  color: var(--hover-text);
 }
 
 .ebclist,
 .claimslog,
 .rankhead,
 .rankings {
-  margin: 0 1em;
+  margin: auto;
   max-width: var(--default-max-width);
 }
 
@@ -415,8 +464,8 @@ article.config {
 .error {
   margin: 1em;
   padding: 1em;
-  background-color: red;
-  color: yellow;
+  background-color: var(--error-background);
+  color: var(--error-text);
   font-weight: bold;
   font-size: 1.2em;
 }
@@ -437,7 +486,17 @@ h4 {
 header {
   position: sticky;
   top: 0;
-  background-color: white;
+  background: inherit;
+}
+
+.thatsall {
+  display: inline-block;
+  background-color: var(--hilite-background);
+  color: var(--hilite-text);
+  font-size: 2em;
+  padding: 1em;
+  border: 3px solid;
+  margin: 1em;
 }
 .mid {
   text-align: center;
@@ -459,12 +518,20 @@ header {
   width: 20em;
   margin: 0 auto 2em auto;
   text-align: center;
+  button {
+    padding: 0 0.5em 0.2em 0.5em;
+    border-radius: 10px;
+  }
 }
-.odorow span.name {
+.odorow label.name {
   display: inline-block;
   width: 10em;
   text-align: left;
   margin-right: 1em;
+}
+.odorow label.name:hover {
+  background-color: var(--hover-background);
+  color: var(--hover-text);
 }
 .oi {
   background-color: yellow;
@@ -538,14 +605,14 @@ div.claim {
     margin: 0 0 1em 0;
   }
   fieldset {
-    margin: 0 0 .5em 0;
+    margin: 0 0 0.5em 0;
     border: none;
   }
   label {
-    margin: 0 .5em 0 0;
+    margin: 0 0.5em 0 0;
   }
   .plus {
-    margin: 0 0 .5em 0;
+    margin: 0 0 0.5em 0;
   }
   .minus {
     width: 2em;
@@ -601,13 +668,11 @@ div.claim {
   }
   input[type="button"],
   button {
-    padding: 0 0.5em 0 0.5em;
+    padding: 0 0.5em 0.2em 0.5em;
     margin: 3px;
     min-height: 36px;
-    background-color: var(--button-background);
-    color: var(--button-text);
     border-radius: 6px;
-    cursor: pointer;
+    border: none;
   }
   input[type="button"]:disabled,
   button:disabled {
@@ -696,15 +761,18 @@ td.sxtotalpoints {
 }
 
 .reviewhdr {
-  margin: 0 0 1em 5px;
-  input[type="submit"] {
-    padding: 0 0.5em 0 0.5em;
+  margin: 0 auto 1em auto;
+  display: block;
+  max-width: var(--default-max-width);
+  button {
+    padding: 0 0.5em 0.2em 0.5em;
   }
 }
 .reviewlist {
   display: flex;
   flex-direction: column;
   max-width: var(--default-max-width);
+  margin: auto;
   .row {
     display: grid;
     grid-template-columns: 3em 1fr 1fr 1fr;

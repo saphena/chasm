@@ -115,18 +115,20 @@ func showScorecards(w http.ResponseWriter, r *http.Request) {
 
 	startHTML(w, "Scorecards")
 
-	fmt.Fprint(w, `</header>`)
 	sqlx := "SELECT ifnull(RiderFirst,''),ifnull(RiderLast,''),ifnull(PillionName,''),EntrantID,ReviewedByTeam,AcceptedByEntrant,ifnull(LastReviewed,'') FROM entrants ORDER BY RiderLast,RiderFirst"
 
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
 	defer rows.Close()
 
-	fmt.Fprint(w, `<form action="/score" class="reviewhdr">`)
+	fmt.Fprint(w, `<article class="reviewhdr"><form action="/score" class="reviewhdr">`)
 	fmt.Fprint(w, `<label for="EntrantID">Entrant</label> `)
-	fmt.Fprint(w, `<input type="number" id="EntrantID" class="EntrantID" name="e"> `)
-	fmt.Fprint(w, `<input type="submit" value=" show ">`)
-	fmt.Fprint(w, `</form>`)
+	fmt.Fprint(w, `<input type="number" autofocus id="EntrantID" class="EntrantID" name="e"> `)
+	fmt.Fprint(w, `<button> show </button>`)
+	fmt.Fprint(w, `</form></article>`)
+
+	fmt.Fprint(w, `</header>`)
+
 	fmt.Fprint(w, `<article class="reviewlist">`)
 
 	for rows.Next() {

@@ -43,7 +43,7 @@ function uploadFile(obj) {
 	console.log('Uploading file '+obj.value);
 	document.getElementById('csvname').value=obj.value;
 	let frm = obj.form;
-	let btn = frm.querySelector('input[type=submit]');
+	let btn = frm.querySelector('button');
 	if (btn) btn.disabled = false;
 }
 </script>
@@ -61,7 +61,7 @@ function uploadFile(obj) {
 	<input type="file" id="csvfile" name="csvfile" onchange="uploadFile(this)">
 	<input type="hidden" id="csvname" name="csvname">
 </fieldset>
-<input disabled type="submit" value=" Upload the file ">
+<button disabled> Upload the file </button>
 </form>
 </article>
 `
@@ -90,7 +90,7 @@ var import2form = `
 
 <input type="hidden" name="fieldmap" value="%v">
 
-<input type="submit" value="Go ahead, import me">
+<button>Go ahead, import me</button>
 
 <hr>
 </article>

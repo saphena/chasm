@@ -74,8 +74,8 @@ function enableDelete(ok) {
   let del = document.getElementById("enableDelete");
   if (!del) return;
   let sav = document.getElementById("updatedb");
-  if (sav && ok) sav.value = "Confirm DELETE";
-  if (sav && !ok) sav.value = "";
+  if (sav && ok) sav.innerText = "Confirm DELETE";
+  if (sav && !ok) sav.innerText = "";
   del.checked = !del.checked;
   enableSave(ok);
 }

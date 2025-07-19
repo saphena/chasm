@@ -19,7 +19,7 @@ var tmpltSingleCombo = `
 		</fieldset>
 	{{end}}
 	<fieldset>
-		<input type="button" id="updatedb" class="hideuntil" title="Delete this record" disabled onclick="updateComboDB(this)" value="">
+		<button id="updatedb" class="hideuntil" title="Delete this record" disabled onclick="updateComboDB(this)"></button>
 	</fieldset>
 </div>
 <p class="intro">Combos can be set to score different values depending on the number of underlying bonuses scored. 

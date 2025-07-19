@@ -123,7 +123,7 @@ func show_odo(w http.ResponseWriter, r *http.Request, showstart bool) {
 		oe = !oe
 		fmt.Fprint(w, `">`)
 
-		fmt.Fprintf(w, `<span class="name"><strong>%v</strong>, %v</span> `, RiderLast, RiderFirst)
+		fmt.Fprintf(w, `<label for="%v" class="name"><strong>%v</strong>, %v</label> `, itemno, RiderLast, RiderFirst)
 		pch := "finish odo"
 		val := OdoFinish
 		if showstart {
