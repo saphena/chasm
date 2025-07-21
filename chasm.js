@@ -250,9 +250,13 @@ function cycleImgSize(obj) {
   if (sz == "50%" || sz == "") {
     other.style.width = "100px";
     obj.style.width = "99%";
+    obj.classList.remove("cangrow");
+    obj.classList.add("canshrink");
   } else {
     other.style.width = "50%";
     obj.style.width = "50%";
+    obj.classList.remove("canshrink");
+    obj.classList.add("cangrow");
   }
 }
 
@@ -278,6 +282,8 @@ function oi(obj) {
     case "saveBonus":
       obj.timer = setTimeout(saveBonus, 3000, obj);
       break;
+    case "saveEntrant":
+      obj.timer = setTimeout(saveEntrant, 3000, obj);
     default:
       obj.timer = setTimeout(saveSetupConfig, 3000, obj);
   }
@@ -369,6 +375,44 @@ function addCombo(obj) {
     });
 }
 
+function addEntrant(obj) {
+  let b = obj.value;
+  let bd = document.getElementById("RiderLast");
+  console.log('addEntrant called with "' + b + '"');
+  let url = "/x?f=adde&e=" + encodeURIComponent(b);
+  fetch(url)
+    .then((response) => {
+      if (!response.ok) {
+        // Handle HTTP errors
+        bd.value = `HTTP error! Status: ${response.status}`;
+        return;
+      }
+      return response.json();
+    })
+    .then((data) => {
+      if (data.err) {
+        // Handle JSON error field
+        console.error(`Error: ${data.msg}`);
+        bd.value = `Error: ${data.msg}`;
+        return;
+      } else if (data.ok) {
+        // Process the data if no error
+        let x = "/entrant/" + encodeURIComponent(data.msg);
+        console.log(x);
+        window.location.href = x;
+      } else {
+        bd.value = `Error: ${data.msg}`;
+        bd.setAttribute("title", bd.value);
+      }
+    })
+    .catch((error) => {
+      // Handle network or other errors
+      console.error("Fetch error:", error);
+
+      return;
+    });
+}
+
 function saveBonus(obj) {
   if (obj.timer) clearTimeout(obj.timer);
   let b = obj.getAttribute("data-b");
@@ -405,6 +449,26 @@ function saveCombo(obj) {
     extractComboPointsArray();
     updateComboPointsList();
   }
+}
+
+async function deleteEntrant(obj) {
+  let e = obj.getAttribute("data-e");
+  if (e == "") return;
+  let url = "/entrant/" + e;
+  let response = await fetch(url, { method: "DELETE" });
+  window.location.href="/entrants"
+}
+
+function saveEntrant(obj) {
+  if (obj.timer) clearTimeout(obj.timer);
+  let e = document.getElementById("EntrantID").value;
+  let url = "/x?f=savee&e=" + e;
+  let nm = obj.name;
+  let ov = obj.value;
+  url += "&ff=" + nm + "&" + nm + "=" + encodeURIComponent(ov);
+  console.log("saveEntrant: " + url);
+  stackTransaction(url, obj.id);
+  sendTransactions();
 }
 
 function saveRS(obj) {

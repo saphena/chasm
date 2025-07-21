@@ -964,7 +964,7 @@ func showPhotoFrame(w http.ResponseWriter, photos []string, BonusID string) {
 	if maximg > 0 {
 		photo0 = photos[0]
 	}
-	fmt.Fprint(w, `<div class="ebcimgdiv" id="ebcimgdiv" onclick="cycleImgSize(this)">`)
+	fmt.Fprint(w, `<div class="ebcimgdiv cangrow" id="ebcimgdiv" onclick="cycleImgSize(this)">`)
 
 	fmt.Fprintf(w, `<img id="imgdivimg" alt="*" src="%v" title="%v">`, photo0, CS.EBCImgTitle)
 	fmt.Fprintf(w, `<input type="hidden" id="chosenPhoto" name="Photo" value="%v">`, photos[0])

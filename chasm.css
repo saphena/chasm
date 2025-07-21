@@ -235,6 +235,12 @@ button.minus {
   float: right;
 }
 
+.cangrow {
+  cursor: zoom-in;
+}
+.canshrink {
+  cursor: zoom-out;
+}
 .topbar {
   position: sticky;
   top: 0;
@@ -268,6 +274,37 @@ button.minus {
   color: black;
   padding: 2px 5px 3px 5px;
   border-color: darkgray;
+}
+
+.entrant {
+  max-width: var(--default-max-width);
+  margin: auto;
+  padding: 5px;
+  fieldset {
+    border: none;
+    margin: 0 0 1em 0;
+    label {
+      margin: 0 .5em 0 0;
+    }
+  }
+}
+
+.odo {
+  width: 5em;
+}
+.CorrectedMiles {
+  width: 5em;
+}
+.TotalPoints {
+  width: 5em;
+}
+.BikeReg {
+  width: 7em;
+}
+.RiderEmail,
+.PillionEmail {
+  width: 98%;
+  max-width: 20em;
 }
 
 article.recalc {

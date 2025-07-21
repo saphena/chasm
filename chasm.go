@@ -171,6 +171,8 @@ func main() {
 	http.HandleFunc("/ebc", showEBC)
 	http.HandleFunc("/ebclist", list_EBC_claims)
 	http.HandleFunc("/editcert", edit_certificate)
+	http.HandleFunc("DELETE /entrant/{e}", deleteEntrant)
+	http.HandleFunc("/entrant/{e}", showEntrant)
 	http.HandleFunc("/entrants", list_entrants)
 	http.HandleFunc("/help", show_help)
 	http.HandleFunc("/img", builtin_images)
@@ -239,6 +241,9 @@ func json_requests(w http.ResponseWriter, r *http.Request) {
 	case "addco":
 		createCombo(w, r)
 		return
+	case "adde":
+		createEntrant(w, r)
+		return
 	case "delb":
 		deleteBonus(w, r)
 		return
@@ -261,6 +266,9 @@ func json_requests(w http.ResponseWriter, r *http.Request) {
 	case "saveclaim":
 		saveClaim(r)
 		fmt.Fprint(w, `{"ok":true,"msg":"ok"}`)
+		return
+	case "savee":
+		saveEntrant(w, r)
 		return
 	case "saveebc":
 		saveEBC(w, r)

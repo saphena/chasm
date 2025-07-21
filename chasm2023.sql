@@ -298,7 +298,7 @@ CREATE TABLE IF NOT EXISTS "entrants" (
 	"PillionIBA"	INTEGER,
 	"TeamID"	INTEGER NOT NULL DEFAULT 0,
 	"Country"	TEXT DEFAULT 'UK',
-	"OdoKms"	INTEGER NOT NULL DEFAULT 0,
+	"OdoKms"	TEXT NOT NULL DEFAULT 'M',
 	"OdoCheckStart"	NUMERIC,
 	"OdoCheckFinish"	NUMERIC,
 	"OdoCheckTrip"	NUMERIC,
