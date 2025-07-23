@@ -51,6 +51,23 @@ type EntrantDBRecord struct {
 	TotalPoints          int
 }
 
+func ajaxFetchEntrantDetails(w http.ResponseWriter, r *http.Request) {
+
+	e := intval(r.FormValue("e"))
+	if e < 1 {
+		fmt.Fprint(w, `{"ok":false,"msg":"no e specified"}`)
+		return
+	}
+	ed := fetchEntrantDetails(e)
+	if ed.PillionName != "" {
+		ed.RiderName += " &amp; " + ed.PillionName
+	}
+	tr := jsonBool(ed.PillionName != "" || ed.TeamID > 0)
+
+	fmt.Fprintf(w, `{"ok":true,"msg":"ok","name":"%v","team":%v}`, ed.RiderName, tr)
+
+}
+
 func createEntrant(w http.ResponseWriter, r *http.Request) {
 
 	var sqlx string

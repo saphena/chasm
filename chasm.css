@@ -43,6 +43,7 @@ body {
 fieldset {
   padding: 0;
 }
+
 input,
 select {
   display: inline-block;
@@ -244,7 +245,6 @@ button.minus {
 .topbar {
   position: sticky;
   top: 0;
-  /*height: 50px;*/
   display: flex;
   justify-content: space-between;
   flex-flow: row wrap;
@@ -252,17 +252,15 @@ button.minus {
   color: var(--topbar-text);
   border-bottom: solid 2px black;
   margin-bottom: 1em;
-}
-
-.topbar button {
-  margin: 3px 0.3em 3px 0.3em;
-  font-size: 1.1em;
-  padding: 4px 8px 6px 8px;
-}
-
-.topbar span {
-  background-color: inherit;
-  margin: 0 2em 0 0.3em;
+  button {
+    margin: 3px 0.3em 3px 0.3em;
+    font-size: 1.1em;
+    padding: 4px 8px 6px 8px;
+  }
+  span {
+    background-color: inherit;
+    margin: 0 2em 0 0.3em;
+  }
 }
 
 .link {
@@ -284,7 +282,7 @@ button.minus {
     border: none;
     margin: 0 0 1em 0;
     label {
-      margin: 0 .5em 0 0;
+      margin: 0 0.5em 0 0;
     }
   }
 }
@@ -330,42 +328,39 @@ article.about {
   margin: 1em auto;
   border: solid 2px black;
   background-color: #f5f5f7;
-}
+  h1 {
+    text-align: center;
+    margin: 1em auto 0 auto;
+    font-size: 2em;
+  }
+  .h2 {
+    font-size: 0.3em;
+    font-style: italic;
+    color: blue;
+  }
+  p {
+    text-align: center;
+    font-style: italic;
+    margin: 1em;
+  }
+  dl {
+    margin-bottom: 1em;
+  }
+  dl.legal {
+    font-size: 0.8em;
+  }
+  dt {
+    margin: 0.6em 0 0.2em 0.5em;
+    font-size: inherit;
+  }
+  dd {
+    word-wrap: break-word;
+    margin: 0 0 0 2em;
+    max-width: calc(100% - 3em);
 
-article.about h1 {
-  text-align: center;
-  margin: 1em auto 0 auto;
-  font-size: 2em;
-}
-article.about .h2 {
-  font-size: 0.3em;
-  font-style: italic;
-  color: blue;
-}
-article.about p {
-  text-align: center;
-  font-style: italic;
-  margin: 1em;
-}
-
-article.about dl {
-  margin-bottom: 1em;
-}
-
-article.about dl.legal {
-  font-size: 0.8em;
-}
-article.about dt {
-  margin: 0.6em 0 0.2em 0.5em;
-  font-size: inherit;
-}
-article.about dd {
-  word-wrap: break-word;
-  margin: 0 0 0 3em;
-  max-width: calc(100% - 3em);
-
-  font-weight: bold;
-  font-size: inherit;
+    font-weight: bold;
+    font-size: inherit;
+  }
 }
 
 article.bonus,
@@ -422,6 +417,22 @@ article.combo {
     .BonusList {
       max-width: var(--default-max-width);
       width: 98%;
+      text-transform: uppercase;
+    }
+  }
+  #bonuses {
+    fieldset {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      margin: 0;
+    }
+    .bid::after {
+      content: " =";
+    }
+    .bname {
+      margin: 0 1em 0.5em 0.5em;
+      font-style: italic;
     }
   }
 }
@@ -432,6 +443,7 @@ img.icon {
 img.thumbnail {
   width: 222px;
   height: 150px;
+  cursor: zoom-in;
 }
 img.standard {
   width: 600px;
@@ -468,20 +480,18 @@ article.config {
 .menu {
   display: flex;
   flex-direction: column;
-}
-
-.menu button {
-  width: 98%;
-  max-width: 20em;
-  margin: 1em auto 0 auto;
-  border-radius: 12px;
-  padding: 5px;
-}
-
-.menu button:hover {
-  cursor: pointer;
-  background: var(--hover-background);
-  color: var(--hover-text);
+  button {
+    width: 98%;
+    max-width: 20em;
+    margin: 1em auto 0 auto;
+    border-radius: 12px;
+    padding: 5px;
+  }
+  button:hover {
+    cursor: pointer;
+    background: var(--hover-background);
+    color: var(--hover-text);
+  }
 }
 
 .entrantlist,
@@ -752,22 +762,22 @@ table.sxtable {
   background-color: lightblue;
   margin: 0 auto 0 auto;
   padding: 0 0.5em 0 0.5em;
-}
-table.sxtable caption {
-  background-color: lightblue;
-  border: solid;
-  padding: 0.5em;
-  margin: auto auto 0 auto;
-}
-table.sxtable tr {
-  height: 1.5em;
-}
-table.sxtable tr:last-of-type td {
-  border-top: solid;
-}
-table.sxtable td {
-  padding-right: 0.5em;
-  vertical-align: top;
+  caption {
+    background-color: lightblue;
+    border: solid;
+    padding: 0.5em;
+    margin: auto auto 0 auto;
+  }
+  tr {
+    height: 1.5em;
+  }
+  tr:last-of-type td {
+    border-top: solid;
+  }
+  td {
+    padding-right: 0.5em;
+    vertical-align: top;
+  }
 }
 .sxdescx {
   margin-left: 3px;

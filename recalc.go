@@ -217,28 +217,6 @@ const (
 
 var RallyParametersLoaded bool
 
-func build_axisLabels() []string {
-
-	sqlx := "SELECT IfNull(Cat1Label,'')"
-	for i := 2; i <= NumCategoryAxes; i++ {
-		sqlx += ",IfNull(Cat" + strconv.Itoa(i) + "Label,'')"
-	}
-	sqlx += " FROM rallyparams"
-	rows, err := DBH.Query(sqlx)
-	checkerr(err)
-	defer rows.Close()
-	var res []string
-	s := make([]string, NumCategoryAxes)
-	for rows.Next() {
-		err = rows.Scan(&s[0], &s[1], &s[2], &s[3], &s[4], &s[5], &s[6], &s[7], &s[8])
-		checkerr(err)
-	}
-	res = append(res, s...)
-	//log.Printf("AxisLabels = %v\n", res)
-	return res
-
-}
-
 // Build list of bonuses claimed
 func build_bonusclaim_array(entrant int) ClaimedBonusMap {
 

@@ -37,6 +37,30 @@ var TableSpecials = map[string]SpecialConstructors{
 const uploadSpace = (10 << 20) // 10MB
 const tempfilename = "uploadeddata.csv"
 
+var importImgform = `
+<script>
+function uploadFile(obj) {
+	console.log('Uploading file '+obj.value);
+	document.getElementById('imgname').value=obj.value;
+	let frm = obj.form;
+	let btn = frm.querySelector('button');
+	if (btn) btn.disabled = false;
+}
+</script>
+<article class="import">
+<h1>Upload bonus image</h1>
+<form action="/upload" method="post" enctype="multipart/form-data">
+<input type="hidden" name="filetype" value="bonusimage">
+<fieldset>
+	<label for="imgfile">Please choose the input file </label>
+	<input type="file" id="imgfile" name="imgfile" onchange="uploadFile(this)">
+	<input type="hidden" id="imgname" name="imgname">
+</fieldset>
+<button disabled> Upload the file </button>
+</form>
+</article>
+`
+
 var import1form = `
 <script>
 function uploadFile(obj) {
@@ -119,6 +143,33 @@ func tableFields(tab string) []string {
 	}
 	rows.Close()
 	return cols
+
+}
+
+func handleUploadedImage(w http.ResponseWriter, r *http.Request) {
+
+	file, _, err := r.FormFile("imgfile")
+	if err != nil {
+		http.Error(w, "Error retrieving file", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	imgname := strings.Split(r.FormValue("imgname"), "\\")
+	imgfile := filepath.Join(CS.ImgBonusFolder, imgname[len(imgname)-1])
+	tempFile, err := os.Create(imgfile)
+	if err != nil {
+		http.Error(w, "Unable to create file", http.StatusInternalServerError)
+		return
+	}
+	defer tempFile.Close()
+
+	_, err = io.Copy(tempFile, file)
+	if err != nil {
+		http.Error(w, "Unable to save file", http.StatusInternalServerError)
+		return
+	}
+	tempFile.Close()
 
 }
 
@@ -234,6 +285,10 @@ func showImport(w http.ResponseWriter, r *http.Request) {
 	if tab == "" {
 		tab = tabs[0]
 	}
+	if tab == "img" {
+		fmt.Fprint(w, importImgform)
+		return
+	}
 	x := ""
 	for k := range tabs {
 		x += `<option `
@@ -260,6 +315,10 @@ func uploadImportDatafile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if r.FormValue("filetype") == "bonusimage" {
+		handleUploadedImage(w, r)
+		return
+	}
 	if r.FormValue("fieldmap") != "" {
 		importMappedData(w, r)
 		return

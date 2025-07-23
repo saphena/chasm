@@ -59,6 +59,25 @@ var advancedmenu = menu{
 }
 var menus = map[string]*menu{"main": &mainMenu, "setup": &setupmenu, "entrants": &entrantmenu, "bonuses": &bonusmenu, "asetup": &advancedmenu}
 
+func show_menu(w http.ResponseWriter, r *http.Request) {
+
+	menu := r.FormValue("menu")
+	if menu == "" {
+		menu = "main"
+	}
+
+	startHTML(w, menu)
+	showMenu(w, menu)
+
+}
+
+func show_setup(w http.ResponseWriter, r *http.Request) {
+
+	startHTML(w, "setup")
+
+	showMenu(w, "setup")
+}
+
 func showMenu(w http.ResponseWriter, menu string) {
 
 	m, ok := menus[menu]

@@ -1,6 +1,12 @@
+// TODO
+//
+// # Category maint
+//
+// List of underlying bonuses
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -38,7 +44,10 @@ var tmpltSingleCombo = `
 		</fieldset>
 		<fieldset>
 			<label for="BonusList">Underlying bonuses</label>
-			<input type="text" id="BonusList" class="BonusList"  data-c="{{.Comboid}}"  data-save="saveCombo" oninput="oi(this)" onchange="saveCombo(this)" name="BonusList" value="{{.BonusList}}">
+			<input type="text" id="BonusList" class="BonusList"  data-c="{{.Comboid}}"  data-save="saveCombo" oninput="oi(this)" onchange="saveCombo(this)" name="Bonuses" value="{{.BonusList}}">
+		</fieldset>
+		<fieldset id="bonuses">
+
 		</fieldset>
 
 		<fieldset class="field">
@@ -75,6 +84,70 @@ var tmpltSingleCombo = `
 <script>extractComboPointsArray()</script>
 `
 
+type combocat struct {
+	Set     int
+	SetName string
+	ComboID string
+	CatNow  int
+	Cats    []CatDefinition
+}
+
+var ComboCatSelector = `
+<article class="combo">
+	<fieldset>
+		<label for="{{.Set}}cat">{{.SetName}}</label>
+		<select id="{{.Set}}cat" name="Cat{{.Set}}" data-c="{{.ComboID}}" onchange="saveCombo(this)">
+		<option value="0" {{if eq .CatNow 0}}selected{{end}}>{no selection}</option>
+		{{$cat := .CatNow}}
+		{{range $el := .Cats}}
+			<option value="{{$el.Cat}}" {{if eq $el.Cat $cat}}selected{{end}}>{{$el.CatName}}</option>
+		{{end}}
+		</select>
+	</fieldset>
+</article>
+`
+
+func comboBonusList(w http.ResponseWriter, r *http.Request) {
+
+	type bl struct {
+		BonusID   string `json:"BonusID"`
+		BriefDesc string `json:"BriefDesc"`
+	}
+	var resp struct {
+		OK      bool   `json:"ok"`
+		Msg     string `json:"msg"`
+		Bonuses []bl   `json:"bonuses"`
+	}
+
+	bonuses := strings.Split(r.FormValue("bl"), ",")
+	sqlx := "SELECT BonusID,BriefDesc FROM bonuses WHERE BonusID=?"
+	stmt, err := DBH.Prepare(sqlx)
+	checkerr(err)
+	defer stmt.Close()
+	for i := range bonuses {
+		if bonuses[i] == "" {
+			continue
+		}
+		var b bl
+		rows, err := stmt.Query(bonuses[i])
+		checkerr(err)
+		defer rows.Close()
+		if rows.Next() {
+			err = rows.Scan(&b.BonusID, &b.BriefDesc)
+			checkerr(err)
+		} else {
+			b.BonusID = bonuses[i]
+			b.BriefDesc = "*** NO SUCH BONUS ***"
+		}
+		resp.Bonuses = append(resp.Bonuses, b)
+		rows.Close()
+	}
+	resp.OK = true
+	resp.Msg = "ok"
+	bytes, err := json.Marshal(resp)
+	checkerr(err)
+	fmt.Fprint(w, string(bytes))
+}
 func createCombo(w http.ResponseWriter, r *http.Request) {
 	bonus := r.FormValue("b")
 	if bonus == "" {
@@ -143,6 +216,27 @@ func saveCombo(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `{"ok":true,"msg":"ok"}`)
 }
 
+func show_combo(w http.ResponseWriter, r *http.Request) {
+
+	comboid := r.FormValue("c")
+	var cb ComboBonus
+	/*
+		if comboid == "" {
+			fmt.Fprint(w, "no comboid!")
+			return
+		}
+	*/
+	if comboid != "" {
+		cr := loadCombos(comboid)
+		if len(cr) < 1 {
+			fmt.Fprint(w, "no such comboid")
+			return
+		}
+		cb = cr[0]
+	}
+	showSingleCombo(w, cb, r.FormValue("back"))
+}
+
 func show_combos(w http.ResponseWriter, r *http.Request) {
 
 	const Combox = `
@@ -196,10 +290,30 @@ func showSingleCombo(w http.ResponseWriter, c ComboBonus, bl string) {
 	t, err := template.New("combo").Parse(tmpltSingleCombo)
 	checkerr(err)
 
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	startHTMLBL(w, "Combo detail", bl)
 	fmt.Fprint(w, `</header>`)
 
 	err = t.Execute(w, c)
 	checkerr(err)
+
+	sets := build_axisLabels()
+	for i := range sets {
+		if sets[i] == "" {
+			continue
+		}
+		var set combocat
+		set.Set = i + 1
+		set.SetName = sets[i]
+		set.ComboID = c.Comboid
+		set.CatNow = c.Cat[i]
+		set.Cats = fetchSetCats(set.Set, true)
+		fmt.Printf("%v\n", set)
+		t, err := template.New("ComboCat").Parse(ComboCatSelector)
+		checkerr(err)
+		err = t.Execute(w, set)
+		checkerr(err)
+
+	}
+	fmt.Fprintf(w, `<script>showComboBonusList("%v")</script>`, c.BonusList)
+
 }

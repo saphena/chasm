@@ -303,8 +303,8 @@ function addBonus(obj) {
     bd.value = "Blank code!";
     return;
   }
-  let url = "/x?f=addb&b=" + encodeURIComponent(b);
-  fetch(url)
+  let url = "/bonus/" + encodeURIComponent(b);
+  fetch(url, { method: "POST" })
     .then((response) => {
       if (!response.ok) {
         // Handle HTTP errors
@@ -433,6 +433,15 @@ function saveBonus(obj) {
   console.log("saveBonus: " + url);
   stackTransaction(url, obj.id);
   sendTransactions();
+  switch (obj.name) {
+    case "Image":
+      let img = document.getElementById("imgImage");
+      if (!img) break;
+      img.setAttribute(
+        "src",
+        img.getAttribute("data-bimg-folder") + "/" + obj.value
+      );
+  }
 }
 
 function saveCombo(obj) {
@@ -441,22 +450,73 @@ function saveCombo(obj) {
   let url = "/x?f=saveco&c=" + b;
   let nm = obj.name;
   let ov = obj.value;
+  switch(obj.name) {
+    case "Bonuses":
+      ov=ov.toUpperCase();
+  }
   url += "&ff=" + nm + "&" + nm + "=" + encodeURIComponent(ov);
   console.log("saveCombo: " + url);
   stackTransaction(url, obj.id);
   sendTransactions();
-  if (nm == "MinimumTicks") {
-    extractComboPointsArray();
-    updateComboPointsList();
+  switch (nm) {
+    case "MinimumTicks":
+      extractComboPointsArray();
+      updateComboPointsList();
+      return;
+    case "Bonuses":
+      showComboBonusList(ov);
+      return;
   }
 }
 
+function showComboBonusList(bonuses) {
+  let url = "/x?f=ulist&bl=" + encodeURIComponent(bonuses);
+  fetch(url)
+    .then((response) => {
+      if (!response.ok) {
+        // Handle HTTP errors
+        return;
+      }
+      return response.json();
+    })
+    .then((data) => {
+      if (data.err) {
+        // Handle JSON error field
+        console.error(`Error: ${data.msg}`);
+        return;
+      } else if (data.ok) {
+        // Process the data if no error
+        let bonuses = document.getElementById("bonuses");
+        if (!bonuses) return;
+        bonuses.innerText = "";
+        console.log(data)
+        for (let i = 0; i < data.bonuses.length; i++) {
+          let fs = document.createElement("fieldset");
+          let spn = document.createElement("span");
+          spn.innerText = data.bonuses[i].BonusID;
+          spn.classList.add("bid")
+          fs.appendChild(spn);
+          let sp2 = document.createElement("span")
+          sp2.innerHTML = data.bonuses[i].BriefDesc;
+          sp2.classList.add("bname")
+          fs.appendChild(sp2);
+          bonuses.appendChild(fs);
+        }
+      }
+    })
+    .catch((error) => {
+      // Handle network or other errors
+      console.error("Fetch error:", error);
+
+      return;
+    });
+}
 async function deleteEntrant(obj) {
   let e = obj.getAttribute("data-e");
   if (e == "") return;
   let url = "/entrant/" + e;
   let response = await fetch(url, { method: "DELETE" });
-  window.location.href="/entrants"
+  window.location.href = "/entrants";
 }
 
 function saveEntrant(obj) {
@@ -928,7 +988,7 @@ function toggleButton(obj) {
   saveBonus(inp);
 }
 
-function updateBonusDB(obj) {
+function deleteBonus(obj) {
   let del = document.getElementById("enableDelete");
   let bonus = document.getElementById("BonusID");
   if (!del || !del.checked || !bonus || bonus.value == "") {
@@ -936,8 +996,8 @@ function updateBonusDB(obj) {
     return;
   }
   let bd = document.getElementById("BriefDesc");
-  let url = "/x?f=delb&b=" + encodeURIComponent(bonus.value);
-  fetch(url)
+  let url = "/bonus/" + encodeURIComponent(bonus.value);
+  fetch(url, { method: "DELETE" })
     .then((response) => {
       if (!response.ok) {
         // Handle HTTP errors

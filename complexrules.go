@@ -116,6 +116,24 @@ func selectOptionArray(vals []int, lbls []string, sel int) []string {
 	return res
 }
 
+func show_rule(w http.ResponseWriter, r *http.Request) {
+
+	const Leg = 0
+
+	n, err := strconv.Atoi(r.FormValue("r"))
+	if err != nil {
+		n = 1
+	}
+	CompoundRules = build_compoundRuleArray(Leg)
+	for _, cr := range CompoundRules {
+		if cr.Ruleid == n {
+			showSingleRule(w, cr)
+			return
+		}
+	}
+	fmt.Fprint(w, `OMG`)
+}
+
 func showSingleRule(w http.ResponseWriter, r CompoundRule) {
 
 	//fmt.Printf("SSR = %v\n", r)

@@ -1,8 +1,16 @@
+// TODO
+//
+// Trap case of scoring variables changed during rally, may need to propagate changes.
+//
+// Rest/matching group maintenance.
+//
+// Image selector / image upload.
 package main
 
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -40,16 +48,6 @@ type BonusDisplayRec struct {
 	BonusImgFldr string
 }
 
-const TrashcanIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-  <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
-  <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
-</svg>`
-
-const FloppyDiskIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-floppy" viewBox="0 0 16 16">
-  <path d="M11 2H9v3h2z"/>
-  <path d="M1.5 0h11.586a1.5 1.5 0 0 1 1.06.44l1.415 1.414A1.5 1.5 0 0 1 16 2.914V14.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 14.5v-13A1.5 1.5 0 0 1 1.5 0M1 1.5v13a.5.5 0 0 0 .5.5H2v-4.5A1.5 1.5 0 0 1 3.5 9h9a1.5 1.5 0 0 1 1.5 1.5V15h.5a.5.5 0 0 0 .5-.5V2.914a.5.5 0 0 0-.146-.353l-1.415-1.415A.5.5 0 0 0 13.086 1H13v4.5A1.5 1.5 0 0 1 11.5 7h-7A1.5 1.5 0 0 1 3 5.5V1H1.5a.5.5 0 0 0-.5.5m3 4a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5V1H4zM3 15h10v-4.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5z"/>
-</svg>`
-
 var BonusDisplayScreen = `
 	<div class="topline">
 		{{if ne .B.BonusID ""}}
@@ -59,8 +57,7 @@ var BonusDisplayScreen = `
 		</fieldset>
 		{{end}}
 		<fieldset>
-			<!-- <button" id="updatedb" title="Update DB" disabled onclick="updateBonusDB(this)">` + FloppyDiskIcon + `</button> -->
-			<button id="updatedb" class="hideuntil" title="Delete Bonus" disabled onclick="updateBonusDB(this)"></button>
+			<button id="updatedb" class="hideuntil" title="Delete Bonus" disabled onclick="deleteBonus(this)"></button>
 		</fieldset>
 		<fieldset>
 			<button title="show next" onclick="window.location.href='/bonus?b={{.B.BonusID}}&prev'">⋘</button>
@@ -76,7 +73,7 @@ var BonusDisplayScreen = `
 		</fieldset>
 		<fieldset>
 			<label for="BriefDesc">Description</label>
-			<input type="text" id="BriefDesc" data-b="{{.B.BonusID}}" data-save="saveBonus" oninput="oi(this)" onchange="saveBonus(this)" name="BriefDesc" class="BriefDesc" value="{{.B.BriefDesc}}">
+			<input type="text" id="BriefDesc" data-b="{{.B.BonusID}}" {{if ne .B.BonusID ""}}autofocus{{end}} data-save="saveBonus" oninput="oi(this)" onchange="saveBonus(this)" name="BriefDesc" class="BriefDesc" value="{{.B.BriefDesc}}">
 		</fieldset>
 		<fieldset>
 			<label for="Points">Points</label>
@@ -123,9 +120,14 @@ var BonusDisplayScreen = `
 		</fieldset>
 		<fieldset>
 			<label for="Image">Image</label>
+			<!--
 			<input type="text" id="Image"  data-b="{{.B.BonusID}}" data-save="saveBonus"oninput="oi(this)" onchange="saveBonus(this)" name="Image" class="Image" value="{{.B.Image}}">
+			-->
+			<select id="Image" data-b="{{.B.BonusID}}" name="Image" class="Image" onchange="saveBonus(this)">
+			%v
+			</select>
 		</fieldset><fieldset>
-			<img alt="*" data-bimg-folder="{{.BonusImgFldr}}"class="thumbnail" src="{{.BonusImgFldr}}/{{.B.Image}}" onclick="this.classList.toggle('thumbnail')">
+			<img alt="*" id="imgImage" data-bimg-folder="{{.BonusImgFldr}}"class="thumbnail toggle" src="{{.BonusImgFldr}}/{{.B.Image}}" onclick="this.classList.toggle('thumbnail')">
 		</fieldset>
 		<fieldset>
 			<label for="Compulsory">Compulsory?</label> 
@@ -134,6 +136,34 @@ var BonusDisplayScreen = `
 				<option value="1" {{if eq .B.Compulsory 1}}selected{{end}}>Compulsory</option>
 			</select>
 		</fieldset>
+		</article>
+`
+
+type bonuscat struct {
+	Set     int
+	SetName string
+	BonusID string
+	CatNow  int
+	Cats    []CatDefinition
+}
+
+var BonusCatSelector = `
+<article class="bonus">
+	<fieldset>
+		<label for="{{.Set}}cat">{{.SetName}}</label>
+		<select id="{{.Set}}cat" name="Cat{{.Set}}" data-b="{{.BonusID}}" onchange="saveBonus(this)">
+		<option value="0" {{if eq .CatNow 0}}selected{{end}}>{no selection}</option>
+		{{$cat := .CatNow}}
+		{{range $el := .Cats}}
+			<option value="{{$el.Cat}}" {{if eq $el.Cat $cat}}selected{{end}}>{{$el.CatName}}</option>
+		{{end}}
+		</select>
+	</fieldset>
+</article>
+`
+
+var OtherBonusData = `
+		<hr>
 		<fieldset>
 			<label for="RestMinutes">Rest minutes</label> 
 			<input id="RestMinutes" type="number" name="RestMinutes"  data-b="{{.B.BonusID}}" data-save="saveBonus" oninput="oi(this)" onchange="saveBonus(this)" class="RestMinutes" value="{{.B.RestMinutes}}">
@@ -153,9 +183,39 @@ var BonusDisplayScreen = `
 	</article>
 `
 
+func buildBonusImageList() []string {
+
+	file, err := os.Open(CS.ImgBonusFolder)
+	checkerr(err)
+	defer file.Close()
+	names, err := file.Readdirnames(0)
+	checkerr(err)
+	return names
+}
+
+func buildImageSelectOptions(imgname string) string {
+
+	il := buildBonusImageList()
+	opts := `<option value="">{no selection}</option>`
+	currentfound := false
+	for _, img := range il {
+		opts += `<option value="` + img + `" `
+		if img == imgname {
+			opts += "selected"
+			currentfound = true
+		}
+		opts += `>` + img + `</option>`
+	}
+	if !currentfound {
+		opts += `<option selected value="` + imgname + `">` + imgname + `</option>`
+	}
+
+	return opts
+
+}
 func createBonus(w http.ResponseWriter, r *http.Request) {
 
-	bonus := strings.ToUpper(r.FormValue("b"))
+	bonus := strings.ToUpper(r.PathValue("b"))
 	if bonus == "" {
 		fmt.Fprint(w, `{"ok":false,"msg":"Blank BonusID"}`)
 		return
@@ -182,7 +242,7 @@ func createBonus(w http.ResponseWriter, r *http.Request) {
 
 func deleteBonus(w http.ResponseWriter, r *http.Request) {
 
-	bonus := strings.ToUpper(r.FormValue("b"))
+	bonus := strings.ToUpper(r.PathValue("b"))
 	if bonus == "" {
 		fmt.Fprint(w, `{"ok":false,"msg":"Blank BonusID"}`)
 		return
@@ -198,6 +258,31 @@ func deleteBonus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fmt.Fprint(w, `{"ok":true,"msg":"`+bonus+`"}`)
+}
+
+func fetchBonusDetails(w http.ResponseWriter, r *http.Request) {
+
+	b := r.FormValue("b")
+	if b == "" {
+		fmt.Fprint(w, `{"ok":false,"msg":"no b specified"}`)
+		return
+	}
+	bd := fetchBonusVars(b)
+	fmt.Fprintf(w, `{"ok":true,"msg":"ok","name":"%v"`, bd.BriefDesc)
+	fmt.Fprintf(w, `,"flags":"%v","img":"%v"`, bd.Flags, bd.Image)
+	fmt.Fprintf(w, `,"notes":"%v"`, bd.Notes)
+	fmt.Fprintf(w, `,"askpoints":%v`, jsonBool(bd.AskPoints))
+	pm := "p"
+	if bd.PointsAreMults {
+		pm = "m"
+	}
+	fmt.Fprintf(w, `,"pointsaremults":"%v"`, pm)
+	fmt.Fprintf(w, `,"askmins":%v`, jsonBool(bd.AskMins))
+	fmt.Fprintf(w, `,"points":%v`, bd.Points)
+	fmt.Fprintf(w, `,"question":"%v"`, bd.Question)
+	fmt.Fprintf(w, `,"answer":"%v"`, bd.Answer)
+	fmt.Fprintf(w, `,"restmins":%v`, bd.RestMins)
+	fmt.Fprint(w, `}`)
 }
 
 func list_bonuses(w http.ResponseWriter, r *http.Request) {
@@ -305,7 +390,7 @@ func show_bonus(w http.ResponseWriter, r *http.Request) {
 		if bonus == "" {
 			newrec = true
 		} else {
-			fmt.Fprintf(w, `<p class="error">No such bonus '%v'</p>`, bonus)
+			list_bonuses(w, r)
 			return
 		}
 	}
@@ -333,6 +418,7 @@ func show_bonus(w http.ResponseWriter, r *http.Request) {
 
 	var br BonusDisplayRec
 	br.B = b
+	bonus = br.B.BonusID
 	br.BonusImgFldr = CS.ImgBonusFolder
 	br.FlagA = strings.Contains(b.Flags, "A")
 	br.FlagB = strings.Contains(b.Flags, "B")
@@ -349,9 +435,29 @@ func show_bonus(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Fprint(w, `</header>`)
 
-	t, err := template.New("BonusDetail").Parse(BonusDisplayScreen)
+	imgopts := buildImageSelectOptions(br.B.Image)
+	t, err := template.New("BonusDetail").Parse(fmt.Sprintf(BonusDisplayScreen, imgopts))
 	checkerr(err)
 	err = t.Execute(w, br)
 	checkerr(err)
+
+	sets := build_axisLabels()
+	for i := range sets {
+		if sets[i] == "" {
+			continue
+		}
+		var set bonuscat
+		set.Set = i + 1
+		set.SetName = sets[i]
+		set.BonusID = bonus
+		set.CatNow = br.B.Cat[i]
+		set.Cats = fetchSetCats(set.Set, true)
+		fmt.Printf("%v\n", set)
+		t, err := template.New("BonusCat").Parse(BonusCatSelector)
+		checkerr(err)
+		err = t.Execute(w, set)
+		checkerr(err)
+
+	}
 
 }

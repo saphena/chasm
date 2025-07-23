@@ -33,6 +33,40 @@ type ScorecardRec struct {
 	LastReviewed      string
 }
 
+func recalc_handler(w http.ResponseWriter, r *http.Request) {
+
+	const recalcfrm = `
+	<article class="recalc">
+	<p>This procedure will recalculate all scorecards. This involves rebuilding them from scratch by reprocessing the claims log. This should only take a few moments but it will need exclusive access to the database.</p>
+	<p>It's quite safe to do this during a live rally.</p>
+	<form action="/recalc">
+		<input type="hidden" name="ok" value="ok">
+		<button autofocus>Recalculate scorecards</button>
+	</form>
+	</article>
+	`
+	startHTML(w, "Recalc scorecards")
+
+	e := r.FormValue("e")
+	ok := r.FormValue("ok")
+	if ok == "ok" {
+		if e == "" {
+			recalc_all()
+		} else {
+			n, err := strconv.Atoi(e)
+			if err != nil {
+				fmt.Fprintf(w, `<p class="error">%v is not numeric</p>`, e)
+				return
+			}
+			recalc_scorecard(n)
+		}
+		fmt.Fprint(w, `</header><p class="thatsall">Scorecards recalculated</p>`)
+		return
+	}
+	fmt.Fprint(w, recalcfrm)
+
+}
+
 func showScorecard(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()

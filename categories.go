@@ -4,8 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"text/template"
 )
+
+type CatDefinition struct {
+	Set     int
+	Cat     int
+	CatName string
+}
 
 const ordered_list_icon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-list-ol" viewBox="0 0 16 16">
   <path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5"/>
@@ -36,6 +43,28 @@ var tmplSetHeaders = `
 <article class="setcats" id="setcats">
 </article>
 `
+
+func build_axisLabels() []string {
+
+	sqlx := "SELECT IfNull(Cat1Label,'')"
+	for i := 2; i <= NumCategoryAxes; i++ {
+		sqlx += ",IfNull(Cat" + strconv.Itoa(i) + "Label,'')"
+	}
+	sqlx += " FROM rallyparams"
+	rows, err := DBH.Query(sqlx)
+	checkerr(err)
+	defer rows.Close()
+	var res []string
+	s := make([]string, NumCategoryAxes)
+	for rows.Next() {
+		err = rows.Scan(&s[0], &s[1], &s[2], &s[3], &s[4], &s[5], &s[6], &s[7], &s[8])
+		checkerr(err)
+	}
+	res = append(res, s...)
+	//log.Printf("AxisLabels = %v\n", res)
+	return res
+
+}
 
 func addCatCat(w http.ResponseWriter, r *http.Request) {
 
@@ -69,6 +98,28 @@ func delCatCat(w http.ResponseWriter, r *http.Request) {
 	_, err := DBH.Exec(sqlx)
 	checkerr(err)
 	fmt.Fprintf(w, `{"ok":true,"msg":"%v"}`, cat)
+}
+
+func fetchSetCats(set int, alphabetic bool) []CatDefinition {
+
+	res := make([]CatDefinition, 0)
+	sqlx := "SELECT Cat,ifnull(BriefDesc,Cat) FROM categories WHERE Axis=" + strconv.Itoa(set)
+	if alphabetic {
+		sqlx += " ORDER BY BriefDesc"
+	} else {
+		sqlx += " ORDER BY Cat"
+	}
+	rows, err := DBH.Query(sqlx)
+	checkerr(err)
+	defer rows.Close()
+	for rows.Next() {
+		var cd CatDefinition
+		err = rows.Scan(&cd.Cat, &cd.CatName)
+		checkerr(err)
+		cd.Set = set
+		res = append(res, cd)
+	}
+	return res
 }
 
 func showCategoryCats(w http.ResponseWriter, r *http.Request) {
