@@ -258,7 +258,7 @@ func build_compoundRuleArray(CurrentLeg int) []CompoundRule {
 	var res []CompoundRule
 	sqlx := "SELECT rowid AS id,IfNull(Axis,1),IfNull(Cat,0),IfNull(NMethod,0),IfNull(ModBonus,0),IfNull(NMin,1),IfNull(PointsMults,0),IfNull(NPower,0),IfNull(Ruletype,0)"
 	sqlx += " FROM catcompound WHERE Leg=0 OR Leg=" + strconv.Itoa(CurrentLeg)
-	sqlx += " ORDER BY Axis,NMin DESC"
+	sqlx += " ORDER BY Axis,Cat,NMin DESC"
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
 	defer rows.Close()

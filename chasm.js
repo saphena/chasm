@@ -19,20 +19,34 @@ const ordered_list_icon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" he
 </svg>`;
 
 function chgRuleType(obj) {
-  let div = obj.parentElement.parentElement;
+  saveRule(obj)
+  showCurrentRule();
+}
 
-  console.log('RuleType is "' + obj.value + '"');
-  let fs = div.querySelectorAll("fieldset");
-  for (let i = 0; i < fs.length; i++) {
-    if (fs[i].classList.contains("rule" + obj.value)) {
-      fs[i].classList.remove("hide");
-    } else {
-      fs[i].classList.add("hide");
-    }
+async function deleteRule(obj) {
+  console.log("deleteRule called");
+  let ruleid = document.getElementById("ruleid");
+  if (!ruleid) return;
+  console.log("Still deleting rule");
+  let url = "/rule/" + ruleid.value;
+  await fetch(url, { method: "DELETE" });
+  window.location.href = "/rules";
+}
+
+function showCurrentRule() {
+  let art = document.getElementById("singlerule");
+  let typ = document.getElementById("RuleType");
+  if (!art || !typ) return;
+  let flds = art.querySelectorAll("fieldset");
+  let showclass = "rule" + typ.value;
+  for (let i = 0; i < flds.length; i++) {
+    if (flds[i].classList.contains(showclass)) flds[i].classList.remove("hide");
+    else flds[i].classList.add("hide");
   }
 }
 
 function chgAxis(obj) {
+  saveRule(obj)
   let div = obj.parentElement.parentElement;
 
   // This only works for singular axes
@@ -196,13 +210,19 @@ function showEvidence(obj) {
   ov.classList.add("hide");
 }
 
-function showRule(obj) {
-  window.location.href = "/rule?r=" + obj.getAttribute("data-rowid");
+function saveRule(obj) {
+  let ruleid = document.getElementById("ruleid");
+  if (!ruleid) return;
+  let url = "/saverule?ruleid=" + ruleid.value;
+  url += "&ff=" + obj.name;
+  url += "&" + obj.name + "=" + encodeURIComponent(obj.value);
+  stackTransaction(url, obj.id);
+  sendTransactions();
 }
 
-function setupForm() {
-  //chgRuleType(document.getElementById("RuleType"));
-  //chgAxis(document.getElementById("Axis"));
+function showRule(obj) {
+  window.location.href =
+    "/rule?r=" + obj.getAttribute("data-rowid") + "&back=/rules";
 }
 
 function showEBC(obj) {
@@ -450,9 +470,9 @@ function saveCombo(obj) {
   let url = "/x?f=saveco&c=" + b;
   let nm = obj.name;
   let ov = obj.value;
-  switch(obj.name) {
+  switch (obj.name) {
     case "Bonuses":
-      ov=ov.toUpperCase();
+      ov = ov.toUpperCase();
   }
   url += "&ff=" + nm + "&" + nm + "=" + encodeURIComponent(ov);
   console.log("saveCombo: " + url);
@@ -489,16 +509,16 @@ function showComboBonusList(bonuses) {
         let bonuses = document.getElementById("bonuses");
         if (!bonuses) return;
         bonuses.innerText = "";
-        console.log(data)
+        console.log(data);
         for (let i = 0; i < data.bonuses.length; i++) {
           let fs = document.createElement("fieldset");
           let spn = document.createElement("span");
           spn.innerText = data.bonuses[i].BonusID;
-          spn.classList.add("bid")
+          spn.classList.add("bid");
           fs.appendChild(spn);
-          let sp2 = document.createElement("span")
+          let sp2 = document.createElement("span");
           sp2.innerHTML = data.bonuses[i].BriefDesc;
-          sp2.classList.add("bname")
+          sp2.classList.add("bname");
           fs.appendChild(sp2);
           bonuses.appendChild(fs);
         }

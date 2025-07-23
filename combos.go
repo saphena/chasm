@@ -35,7 +35,7 @@ var tmpltSingleCombo = `
 <article class="combo">
 	<form>
 		<fieldset class="field">
-			<label for="ComboID">ComboID</label>
+			<label for="ComboID">Code</label>
 			<input id="ComboID" class="ComboID" {{if ne "" .Comboid}}readonly{{else}}autofocus{{end}} name="Combo code" value="{{.Comboid}}" onchange="addCombo(this)">
 		</fieldset>
 		<fieldset class="field">

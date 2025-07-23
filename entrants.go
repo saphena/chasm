@@ -165,7 +165,7 @@ func list_entrants(w http.ResponseWriter, r *http.Request) {
 		var e EntrantDBRecord
 		err = rows.Scan(&e.EntrantID, &e.RiderLast, &e.RiderFirst, &e.PillionLast, &e.PillionFirst, &e.Bike, &e.EntrantStatus, &e.FinishPosition, &e.TotalPoints, &e.CorrectedMiles)
 		checkerr(err)
-		fmt.Fprintf(w, `<div class="row" onclick="window.location.href='/entrant/%v'">`, e.EntrantID)
+		fmt.Fprintf(w, `<div class="row" onclick="window.location.href='/entrant/%v?back=/entrants'">`, e.EntrantID)
 
 		fmt.Fprintf(w, `<span class="col mid">%v</span>`, e.EntrantID)
 		fmt.Fprintf(w, `<span class="col"><strong>%v</strong>, %v</span>`, e.RiderLast, e.RiderFirst)
@@ -206,9 +206,9 @@ var tmplEntrantBasic = `
 <article class="entrant basic">
 	<fieldset>
 		<label for="EntrantID">Entrant</label>
-		<input id="EntrantID" name="EntrantID" {{if ne .EntrantID 0}}type="text" readonly{{else}}type="text" autofocus{{end}} class="EntrantID" value="{{.EntrantID}}" onblur="addEntrant(this)">
-		<input type="text" id="RiderLast" name="RiderLast" class="RiderLast" {{if ne .EntrantID 0}}autofocus{{end}} placeholder="last" value="{{.RiderLast}}" data-save="saveEntrant" oninput="oi(this)" onchange="saveEntrant(this)">
+		<input id="EntrantID" name="EntrantID" {{if ne .EntrantID 0}}type="text" readonly{{else}}type="text" autofocus{{end}} class="EntrantID" value="{{if ne .EntrantID 0}}{{.EntrantID}}{{end}}" onblur="addEntrant(this)" title="Flag">
 		<input type="text" id="RiderFirst" name="RiderFirst" class="RiderFirst" placeholder="first" value="{{.RiderFirst}}" data-save="saveEntrant" oninput="oi(this)" onchange="saveEntrant(this)">
+		<input type="text" id="RiderLast" name="RiderLast" class="RiderLast" {{if ne .EntrantID 0}}autofocus{{end}} placeholder="last" value="{{.RiderLast}}" data-save="saveEntrant" oninput="oi(this)" onchange="saveEntrant(this)">
 	</fieldset>
 	<fieldset>
 		<label for="RiderPhone">Phone</label>
@@ -219,9 +219,9 @@ var tmplEntrantBasic = `
 		<input type="text" id="RiderEmail" class="RiderEmail" name="Email" value="{{.RiderEmail}}" data-save="saveEntrant" oninput="oi(this)" onchange="saveEntrant(this)">
 	</fieldset>
 	<fieldset>
-		<label for="PillionLast">Pillion</label>
-		<input type="text" id="PillionLast" class="PillionLast" name="PillionLast" placeholder="last" value="{{.PillionLast}}" data-save="saveEntrant" oninput="oi(this)" onchange="saveEntrant(this)">
+		<label for="PillionFirst">Pillion</label>
 		<input type="text" id="PillionFirst" class="PillionFirst" name="PillionFirst" placeholder="first" value="{{.PillionFirst}}" data-save="saveEntrant" oninput="oi(this)" onchange="saveEntrant(this)">
+		<input type="text" id="PillionLast" class="PillionLast" name="PillionLast" placeholder="last" value="{{.PillionLast}}" data-save="saveEntrant" oninput="oi(this)" onchange="saveEntrant(this)">
 	</fieldset>
 	<fieldset>
 		<legend>Emergency contact</legend>

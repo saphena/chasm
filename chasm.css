@@ -88,6 +88,11 @@ td,
 tr {
   border: none;
 }
+
+.ruleset {
+  max-width: var(--default-max-width);
+  margin: auto;
+}
 .singlerule {
   max-width: var(--default-max-width);
   margin: auto;
@@ -100,6 +105,14 @@ tr {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
 }
+ .field.help {
+    grid-template-columns: 3fr;
+    p {
+      margin: 0 1em .5em 1em;
+      font-size: smaller;
+    }
+  }
+
 .field label {
   text-align: right;
   padding-right: 1em;
