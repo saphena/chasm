@@ -108,6 +108,26 @@ const maximg = 3
 
 //var EntrantSelector map[int]string
 
+func deleteClaim(w http.ResponseWriter, r *http.Request) {
+
+	claimid := r.PathValue("claimid")
+	if claimid == "" {
+		fmt.Fprint(w, `{"ok":false,"msg:"incomplete request}`)
+		return
+	}
+	sqlx := "SELECT EntrantID FROM claims WHERE rowid=" + claimid
+	entrant := getIntegerFromDB(sqlx, 0)
+	sqlx = "DELETE FROM claims WHERE rowid=" + claimid
+	_, err := DBH.Exec(sqlx)
+	checkerr(err)
+	fmt.Fprint(w, `{"ok":true,"claim deleted"}`)
+	if entrant > 0 {
+		recalc_scorecard(entrant)
+		rankEntrants(false)
+	}
+
+}
+
 func emitImage(img string, alt string, title string) string {
 
 	res := fmt.Sprintf(`<img alt="%v", title="%v" class="flagicon" src="data:image/png;base64,`, alt, title)
@@ -224,7 +244,7 @@ func list_claims(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Fprintf(w, `<div class="select"">%v `, filter_icon)
 	fmt.Fprintf(w, `<button autofocus title="Add new claim" class="plus" onclick="window.location.href='/claim?c=0';return false">%v</button> <span id="fcc"></span>`, addnew_icon)
-	fmt.Fprintf(w, ` <select name="esel" value="%v" onchange="reloadClaimslog()">`, esel)
+	fmt.Fprintf(w, ` <select name="esel" value="%v" title="Filter by entrant" onchange="reloadClaimslog()">`, esel)
 	fmt.Fprintf(w, `<option value="0" %v>all claims</option>`, sel)
 
 	keys := make([]int, 0, len(EntrantSelector))
@@ -251,7 +271,7 @@ func list_claims(w http.ResponseWriter, r *http.Request) {
 	if bsel == "" {
 		sel = "selected"
 	}
-	fmt.Fprintf(w, ` <select name="bsel" value="%v" onchange="reloadClaimslog()">`, bsel)
+	fmt.Fprintf(w, ` <select name="bsel" value="%v" title="Filter by Bonus" onchange="reloadClaimslog()">`, bsel)
 	fmt.Fprintf(w, `<option value="" %v>all claims</option>`, sel)
 	sqlx := "SELECT BonusID FROM bonuses ORDER BY BonusID"
 	rows, err := DBH.Query(sqlx)
@@ -275,7 +295,7 @@ func list_claims(w http.ResponseWriter, r *http.Request) {
 	if dsel == "" {
 		sel = "selected"
 	}
-	fmt.Fprintf(w, ` <select name="dsel" value="%v" onchange="reloadClaimslog()">`, dsel)
+	fmt.Fprintf(w, ` <select name="dsel" value="%v" title="Filter by Decision" onchange="reloadClaimslog()">`, dsel)
 	fmt.Fprintf(w, `<option value="" %v>all claims</option>`, sel)
 
 	sel = ""
@@ -508,6 +528,18 @@ func saveClaim(r *http.Request) {
 
 }
 
+const claimTopline = `
+	<div class="topline">
+		<fieldset>
+			<button title="Delete this Claim?" onclick="enableDelete(!document.getElementById('enableDelete').checked)">   ` + TrashcanIcon + `</button>
+			<input type="checkbox" style="display:none;" id="enableDelete" onchange="enableSave(this.checked)">
+		</fieldset>
+		<fieldset>
+			<button id="updatedb" class="hideuntil" title="Delete Claim" disabled onclick="deleteClaim(this)"></button>
+		</fieldset>
+	</div>
+`
+
 func showClaim(w http.ResponseWriter, r *http.Request) {
 
 	var cr ClaimRecord
@@ -520,16 +552,20 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
 
-	startHTMLBL(w, "Individual claim", "claims")
-
+	claimhdr := "Claims log"
 	claimid := intval(r.FormValue("c"))
+	if claimid < 1 {
+		claimhdr = "Making new claim"
+	}
+	startHTMLBL(w, claimhdr, "claims")
+
+	fmt.Fprint(w, claimTopline)
 
 	fmt.Fprint(w, `</header><div class="claim">`)
 	fmt.Fprint(w, `<form id="iclaim">`)
 
-	fmt.Fprintf(w, `<input type="hidden" name="claimid" value="%v">`, claimid)
+	fmt.Fprintf(w, `<input type="hidden" id="claimid" name="claimid" value="%v">`, claimid)
 	if claimid < 1 {
-		fmt.Fprint(w, `<h4>Filing new claim</h4>`)
 		fmt.Fprint(w, `<input type="text" autofocus tabindex="1" class="subject" placeholder="Paste email Subject line here" oninput="pasteNewClaim(this)">`)
 		cr.Decision = 0 // Good claim
 		claimdate = time.Now().Format("2006-01-02")
@@ -543,13 +579,12 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 		}
 		ed = fetchEntrantDetails(cr.EntrantID)
 		bd = fetchBonusVars(cr.BonusID)
-		fmt.Fprint(w, `<h4>Updating claim details</h4>`)
 	}
 	fmt.Fprint(w, `<fieldset class="claimfield">`)
 	fmt.Fprint(w, `<label for="EntrantID">Entrant</label>`)
 	fmt.Fprint(w, `<input type="number" tabindex="2" id="EntrantID" name="EntrantID" class="EntrantID" oninput="fetchEntrantDetails(this)"`)
 	if claimid > 0 {
-		fmt.Fprintf(w, ` value="%v"`, cr.EntrantID)
+		fmt.Fprintf(w, ` readonly value="%v"`, cr.EntrantID)
 	}
 	fmt.Fprint(w, `>`)
 	fmt.Fprint(w, `<span>`)
@@ -567,7 +602,11 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprint(w, `<fieldset class="claimfield">`)
 	fmt.Fprint(w, `<label for="BonusID">Bonus code</label>`)
-	fmt.Fprintf(w, `<input type="text" tabindex="3" id="BonusID" name="BonusID" class="BonusID" oninput="fetchBonusDetails(this)" value="%v">`, cr.BonusID)
+	af := ""
+	if claimid > 0 {
+		af = "autofocus"
+	}
+	fmt.Fprintf(w, `<input type="text" tabindex="3" %v id="BonusID" name="BonusID" class="BonusID" oninput="fetchBonusDetails(this)" value="%v">`, af, cr.BonusID)
 	fmt.Fprint(w, `<span>`)
 	fmt.Fprintf(w, ` <span id="bonusDetails">%v</span>`, bd.BriefDesc)
 
@@ -600,22 +639,6 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprint(w, `</span>`)
 	fmt.Fprint(w, `</fieldset>`)
-
-	ebcimg := strings.Split(cr.Photo, ",")
-	for i := 0; i < len(ebcimg); i++ {
-		if ebcimg[i] != "" {
-			ebcimg[i] = strings.ReplaceAll(filepath.Join(CS.ImgEbcFolder, filepath.Base(ebcimg[i])), "\\", "/")
-		}
-	}
-	hide = "hide"
-	if claimid > 0 {
-		hide = ""
-	}
-	fmt.Fprintf(w, `<fieldset class="claimphotos %v">`, hide)
-
-	showPhotoFrame(w, ebcimg, cr.BonusID)
-
-	fmt.Fprint(w, `</fieldset><!-- below photo frame -->`)
 
 	fmt.Fprint(w, `<fieldset class="claimfield">`)
 	fmt.Fprint(w, `<label for="OdoReading">Odo reading</label>`)
@@ -718,7 +741,24 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `<textarea tabindex="11" id="JudgesNotes" name="JudgesNotes" class="judgesnotes">%v</textarea>`, cr.JudgesNotes)
 	fmt.Fprint(w, `</fieldset>`)
 
-	fmt.Fprint(w, `<button class="closebutton" tabindex="12" onclick="saveUpdatedClaim(this);return false">Save updated claim</botton>`)
+	fmt.Fprint(w, `<button class="closebutton" tabindex="12" onclick="saveUpdatedClaim(this);return false">Save updated claim</button>`)
+
+	ebcimg := strings.Split(cr.Photo, ",")
+	for i := 0; i < len(ebcimg); i++ {
+		if ebcimg[i] != "" {
+			ebcimg[i] = strings.ReplaceAll(filepath.Join(CS.ImgEbcFolder, filepath.Base(ebcimg[i])), "\\", "/")
+		}
+	}
+	hide = "hide"
+	if claimid > 0 {
+		hide = ""
+	}
+	fmt.Fprintf(w, `<fieldset class="claimphotos %v">`, hide)
+
+	showPhotoFrame(w, ebcimg, cr.BonusID)
+
+	fmt.Fprint(w, `</fieldset><!-- below photo frame -->`)
+
 	fmt.Fprint(w, `</form>`)
 
 	fmt.Fprint(w, `</div>`)
@@ -1040,4 +1080,5 @@ func saveEBC(w http.ResponseWriter, r *http.Request) {
 		r.FormValue("Evidence"), qasked, r.FormValue("AnswerSupplied"), qanswered, r.FormValue("JudgesNotes"), percent)
 	checkerr(err)
 	recalc_scorecard(intval(r.FormValue("EntrantID")))
+	rankEntrants(false)
 }

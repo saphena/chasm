@@ -10,7 +10,7 @@ import (
 )
 
 const crintro = `<p>Complex rules and categories are used to enable scoring mechanisms beyond simple bonuses and combos.
-	Scores generated here can apply to individual bonuses or to collections or sequences of bonuses.
+	Scores generated here can apply to individual bonuses or to groups of bonuses.
 	</p>`
 
 var tmpltOption = `<option value="%s" %s>%s</option>`
@@ -27,6 +27,15 @@ var crtopline = `<div class="topline">
 	</div>`
 
 var tmpltSingleRule = `
+	<article id="individualbonushelp" popover>
+	<h1>Individual Bonuses</h1>
+		<p>Some definitions:- <strong>BV</strong> = points value of current bonus; <strong>RV</strong> = the "results in" value of current rule; <strong>N</strong> is the number of bonuses within the category, <strong>N1</strong> is <strong>N</strong>-1; <strong>SV</strong> is the resulting score.</p>
+		<p><strong>N</strong> is calculated as the number of bonuses per category, regardless of the setting of the "Calculate" flag. If the category is set to "any", "then </p>
+		<p>If <strong>RV</strong> is 0, <strong>SV</strong> = <strong>BV</strong> * <strong>N1</strong>  simple multiplication.</p>
+		<p>If <strong>RV</strong> is set to "multipliers", <strong>SV</strong> = <strong>BV</strong> * <strong>RV</strong> * <strong>N1</strong>  simple multiplication.</p>
+		<p>If <strong>RV</strong> is set to "points", <strong>SV</strong> = <strong>BV</strong> * <strong>RV</strong> ^ <strong>N1</strong> exponential score.</p>
+	</article>
+
 <div id="singlerule" class="singlerule">
   <form action="updtcrule" method="post">
   <fieldset class="field rule0 rule1 rule2 rule3 rule4">
@@ -35,13 +44,23 @@ var tmpltSingleRule = `
     %v
     </select>
   </fieldset>
+
+  													<!-- Help texts -->
+  <fieldset class="field help rule0">
+	<p>GROUP AWARDS: Multipliers are applied to the entrant's total score, not just the bonuses contributing to this rule.</p>
+	<p><input type="button" class="popover" popovertarget="individualbonushelp" value="INDIVIDUAL BONUSES: [click here for full explanation]"></p>
+  </fieldset>
+
   <fieldset class="field help rule3">
-  <p>Placeholders are used in some circumstances to improve analysis of a set of rules.</p> 
-  <p>For example: A rule of type "DNF unless triggered" will appear on score explanations with a tick if it is triggered but will not appear on score explanations at all if it's not triggered, even though that condition will result in DNF. Mostly it would be better to use a placeholder and a "DNF if triggered" pair as that will give more satisfying results on score explanations.</p>
+  	<p>Placeholders are used in some circumstances to improve analysis of a set of rules.</p> 
+  	<p>For example: A rule of type "DNF unless triggered" will appear on score explanations with a tick if it is triggered but will not appear on score explanations at all if it's not triggered, even though that condition will result in DNF. Mostly it would be better to use a placeholder and a "DNF if triggered" pair as that will give more satisfying results on score explanations.</p>
   </fieldset>
-  </fieldset class="field help rule4">
-  <p>The sequence refers to the order in which claims are submitted, not the sequence within the rally book or geographical location.</p>
+  
+  <fieldset class="field help rule4">
+  	<p>The sequence refers to the order in which claims are submitted, not the sequence within the rally book or geographical location. The result is either a fixed number of points or a multiple of the points scored by the bonuses forming the sequence.</p>
   </fieldset>
+												  <!-- End of help texts -->
+
   <fieldset class="field rule0">
     <label for="ModBonus">This rule affects the value of</label>
     <select id="ModBonus" name="ModBonus" onchange="saveRule(this)">
@@ -60,7 +79,7 @@ var tmpltSingleRule = `
   </fieldset>
   <fieldset class="field rule0 rule4">
     <label for="PointsMults">This rule results in</label>
-	<fieldset class="field rule0 rule4">
+	<fieldset class="field rule0 rule4" title="Result value">
 	<input id="NPower" name="NPower" type="number" value="%v" onchange="saveRule(this)">
     <select id="PointsMults" name="PointsMults" onchange="saveRule(this)">
     %v
@@ -85,6 +104,23 @@ var tmpltSingleRule = `
 <script>
 showCurrentRule()
 </script>`
+
+func createRule(w http.ResponseWriter, r *http.Request) {
+
+	sqlx := "INSERT INTO catcompound(Axis,Cat,NMethod,NMin,PointsMults,NPower,Ruletype,ModBonus) VALUES(1,0,0,0,0,0,0,0)"
+	res, err := DBH.Exec(sqlx)
+	checkerr(err)
+	n, err := res.RowsAffected()
+	checkerr(err)
+	if n != 1 {
+		fmt.Fprint(w, `{"ok":false,"msg":"insert failed"}`)
+		return
+	}
+	ruleid, err := res.LastInsertId()
+	checkerr(err)
+	fmt.Fprintf(w, `{"ok":true,"msg":"%v"}`, ruleid)
+
+}
 
 func deleteRule(w http.ResponseWriter, r *http.Request) {
 
@@ -208,7 +244,9 @@ func show_rules(w http.ResponseWriter, r *http.Request) {
 	axes := build_axisLabels()
 	startHTML(w, "Complex rules")
 	fmt.Fprintf(w, `<div class="intro">%v</div>`, crintro)
+
 	fmt.Fprint(w, `<div class="ruleset">`)
+	fmt.Fprint(w, `<button class="plus" autofocus title="Add new rule" onclick="addRule()">+</button>`)
 	fmt.Fprint(w, `<fieldset class="row hdr">`)
 	fmt.Fprint(w, `<span class="col">Set</span><span class="col">Category</span>`)
 	fmt.Fprint(w, `<span class="col">Type</span><span class="col">Threshold</span>`)
@@ -216,11 +254,27 @@ func show_rules(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `</fieldset>`)
 	fmt.Fprint(w, `</div><hr></header>`)
 	fmt.Fprint(w, `<div class="ruleset">`)
+	lastAxis := -1
+	lastCat := -1
+	maincolor := true
 	for _, cr := range rules {
-		fmt.Fprintf(w, `<fieldset class="row target" data-rowid="%d" title="%v" onclick="showRule(this);">`, cr.Ruleid, cr.Ruleid)
+		if cr.Axis != lastAxis || cr.Cat != lastCat {
+			maincolor = !maincolor
+			lastAxis = cr.Axis
+			lastCat = cr.Cat
+		}
+		rowcls := ""
+		if !maincolor {
+			rowcls = "altrow"
+		}
+		fmt.Fprintf(w, `<fieldset class="row target %v" data-rowid="%d" title="%v" onclick="showRule(this);">`, rowcls, cr.Ruleid, cr.Ruleid)
 		fmt.Fprintf(w, `<fieldset class="col">%s</fieldset>`, axes[cr.Axis-1])
-		sqlx := fmt.Sprintf("SELECT BriefDesc FROM categories WHERE Axis=%d AND Cat=%d", cr.Axis, cr.Cat)
-		fmt.Fprintf(w, `<fieldset class="col">%s</fieldset>`, getStringFromDB(sqlx, "any"))
+		cb := "any"
+		if cr.Method == 0 {
+			sqlx := fmt.Sprintf("SELECT BriefDesc FROM categories WHERE Axis=%d AND Cat=%d", cr.Axis, cr.Cat)
+			cb = getStringFromDB(sqlx, "any")
+		}
+		fmt.Fprintf(w, `<fieldset class="col">%s</fieldset>`, cb)
 		fmt.Fprintf(w, `<fieldset class="col">%s</fieldset>`, rt[cr.Ruletype])
 		fmt.Fprintf(w, `<fieldset class="col">&ge; %d</fieldset>`, cr.Min)
 		target := ""

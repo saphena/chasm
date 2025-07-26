@@ -19,8 +19,43 @@ const ordered_list_icon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" he
 </svg>`;
 
 function chgRuleType(obj) {
-  saveRule(obj)
+  saveRule(obj);
   showCurrentRule();
+}
+
+function addRule() {
+  let url = "/rule";
+  fetch(url, { method: "POST" })
+    .then((response) => {
+      if (!response.ok) {
+        // Handle HTTP errors
+        return;
+      }
+      return response.json();
+    })
+    .then((data) => {
+      if (data.err) {
+        // Handle JSON error field
+        console.error(`Error: ${data.msg}`);
+        return;
+      } else if (data.ok) {
+        // Process the data if no error
+        window.location.href = "/rule?r=" + data.msg + "&back=/rules";
+      }
+    })
+    .catch((error) => {
+      // Handle network or other errors
+      console.error("Fetch error:", error);
+      return;
+    });
+}
+
+async function deleteClaim() {
+  let claimid = document.getElementById("claimid");
+  if (!claimid) return;
+  let url = "/claim/" + claimid.value;
+  await fetch(url, { method: "DELETE" });
+  window.location.href = "/claims";
 }
 
 async function deleteRule(obj) {
@@ -34,11 +69,15 @@ async function deleteRule(obj) {
 }
 
 function showCurrentRule() {
+  console.log("showCurrentRule called");
   let art = document.getElementById("singlerule");
   let typ = document.getElementById("RuleType");
   if (!art || !typ) return;
   let flds = art.querySelectorAll("fieldset");
   let showclass = "rule" + typ.value;
+  console.log(
+    "showCurrentRule applying " + showclass + " to " + flds.length + " blocks"
+  );
   for (let i = 0; i < flds.length; i++) {
     if (flds[i].classList.contains(showclass)) flds[i].classList.remove("hide");
     else flds[i].classList.add("hide");
@@ -46,7 +85,7 @@ function showCurrentRule() {
 }
 
 function chgAxis(obj) {
-  saveRule(obj)
+  saveRule(obj);
   let div = obj.parentElement.parentElement;
 
   // This only works for singular axes
@@ -218,6 +257,7 @@ function saveRule(obj) {
   url += "&" + obj.name + "=" + encodeURIComponent(obj.value);
   stackTransaction(url, obj.id);
   sendTransactions();
+  showCurrentRule();
 }
 
 function showRule(obj) {

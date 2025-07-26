@@ -1,3 +1,6 @@
+// TODO
+//
+// Need to handle claims for non-existant bonuses
 package main
 
 /*
@@ -655,9 +658,15 @@ func checkApplySequences(BC ClaimedBonus, LastBonusClaimed ClaimedBonus) ScorexL
 			continue
 		}
 
-		Cat := ScorecardBonuses[BC.BonusScorecardIX].CatValue[CR.Axis-1]
+		var Cat int
+		if BC.BonusScorecardIX >= 0 {
+			Cat = ScorecardBonuses[BC.BonusScorecardIX].CatValue[CR.Axis-1]
+		}
 
-		LastCat := ScorecardBonuses[LastBonusClaimed.BonusScorecardIX].CatValue[CR.Axis-1]
+		var LastCat int
+		if LastBonusClaimed.BonusScorecardIX >= 0 {
+			LastCat = ScorecardBonuses[LastBonusClaimed.BonusScorecardIX].CatValue[CR.Axis-1]
+		}
 
 		//fmt.Printf("dbg: cas %v %v %v %v=%v\n", CR.Ruleid, BC.Bonusid, CR.Axis, CR.Cat, LastCat)
 
@@ -999,6 +1008,7 @@ func processCompoundCats() ([]ScorexLine, int) {
 
 		// Apply this rule
 		lastAxis = cr.Axis
+		lastCat = cr.Cat
 		CompoundRules[cix].Triggered = true
 
 		if cr.Ruletype == CAT_PlaceholderRule {
@@ -1033,9 +1043,11 @@ func processCompoundCats() ([]ScorexLine, int) {
 			catx := fetchCatDesc(cr.Axis, cr.Cat)
 			sx.Desc += fmt.Sprintf(" [%s]", catx)
 		}
-		if Points < 1 && lastMin > Points {
+
+		if false && lastMin > cr.Min {
 			sx.Desc += fmt.Sprintf(" &lt; %d", lastMin)
 		}
+
 		sx.Points = Points
 		sx.PointsDesc = Pointsdesc
 		res = append(res, sx)
@@ -1125,14 +1137,16 @@ func processCompoundNZ() ([]ScorexLine, int) {
 		sx.Code = compoundrule_symbol
 		sx.Desc = fmt.Sprintf("%s: <em>n</em>=%d", AxisLabels[cr.Axis-1], nzCount)
 
-		//		sx.Desc += fmt.Sprintf(" rz%v ", cr.Ruleid)
-		if cr.Cat > 0 {
+		//sx.Desc += fmt.Sprintf(" rz%v ", cr.Ruleid) // debug only
+		if cr.Cat > 0 && cr.Method != CAT_NumNZCatsPerAxisMethod {
 			catx := fetchCatDesc(cr.Axis, cr.Cat)
 			sx.Desc += fmt.Sprintf(" [%s]", catx)
 		}
-		if Points < 1 && lastMin > Points {
+
+		if false && lastMin > cr.Min {
 			sx.Desc += fmt.Sprintf(" &lt; %d", lastMin)
 		}
+
 		sx.Points = Points
 		sx.PointsDesc = Pointsdesc
 		res = append(res, sx)
@@ -1217,7 +1231,13 @@ func recalc_scorecard(entrant int) {
 		// Need to flag the bonus as having been scored
 		BC.BonusScorecardIX = slices.IndexFunc(ScorecardBonuses, func(c ScorecardBonusDetail) bool { return c.Bonusid == BC.Bonusid })
 
-		SB := ScorecardBonuses[BC.BonusScorecardIX] // Convenient shorthand
+		var SB ScorecardBonusDetail
+		if BC.BonusScorecardIX < 0 {
+			SB.Bonusid = BC.Bonusid
+			SB.BriefDesc = "** NO SUCH BONUS **"
+		} else {
+			SB = ScorecardBonuses[BC.BonusScorecardIX] // Convenient shorthand
+		}
 
 		// ClaimExcluded means ignore it, treat it as if it didn't exist
 		// This might need to be a switchable response
@@ -1234,7 +1254,9 @@ func recalc_scorecard(entrant int) {
 			EntrantStatus = EntrantOK
 		}
 
-		ScorecardBonuses[BC.BonusScorecardIX].Scored = BC.Decision == ClaimDecision_GoodClaim // Only good claims count against "must score" flag
+		if BC.BonusScorecardIX >= 0 {
+			ScorecardBonuses[BC.BonusScorecardIX].Scored = BC.Decision == ClaimDecision_GoodClaim // Only good claims count against "must score" flag
+		}
 
 		LastOdo = BC.OdoReading
 
@@ -1276,7 +1298,7 @@ func recalc_scorecard(entrant int) {
 		// Handle multipliers
 
 		if SB.MultiplyLast {
-			if ScorecardBonuses[LastBonusClaimed.BonusScorecardIX].MultiplyLast {
+			if LastBonusClaimed.BonusScorecardIX < 0 || ScorecardBonuses[LastBonusClaimed.BonusScorecardIX].MultiplyLast {
 				BC.Points = 0
 			} else {
 				PointsDesc = fmt.Sprintf("= %v &times;%v", LastBonusClaimed.Points, BC.Points)
@@ -1337,7 +1359,7 @@ func recalc_scorecard(entrant int) {
 				PointsDesc = fmt.Sprintf("%d x %d^%d", BasicPoints, cr.Power, catcount-1)
 				BasicPoints = BasicPoints * powInt(cr.Power, catcount-1)
 			}
-			PointsDesc += fmt.Sprintf("r%v", cr.Ruleid)
+			//PointsDesc += fmt.Sprintf(" r%v", cr.Ruleid) // debug only
 			break // Only apply the first matching rule
 		}
 

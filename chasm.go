@@ -79,6 +79,7 @@ func main() {
 	http.HandleFunc("/cards", showScorecards)
 	http.HandleFunc("/cats", showCategorySets)
 	http.HandleFunc("/certs", print_certs)
+	http.HandleFunc("DELETE /claim/{claimid}", deleteClaim)
 	http.HandleFunc("/claim", showClaim)
 	http.HandleFunc("/claims", list_claims)
 	http.HandleFunc("/combo", show_combo)
@@ -101,6 +102,7 @@ func main() {
 	http.HandleFunc("/recalc", recalc_handler)
 	http.HandleFunc("/reset", showResetOptions)
 	http.HandleFunc("DELETE /rule/{rule}", deleteRule)
+	http.HandleFunc("POST /rule", createRule)
 	http.HandleFunc("/rule", show_rule)
 	http.HandleFunc("/rules", show_rules)
 	http.HandleFunc("/savecert", save_certificate)
@@ -224,7 +226,7 @@ func json_requests(w http.ResponseWriter, r *http.Request) {
 
 func central_dispatch(w http.ResponseWriter, r *http.Request) {
 
-	startHTML(w, "")
+	startHTML(w, "Main menu")
 
 	showMenu(w, "main")
 }

@@ -6,6 +6,7 @@
 :root {
   --default-max-width: 50em;
   --regular-background: rgb(226, 223, 210);
+  --alternate-regular-back: lightblue;
   --regular-text: black;
   --hilite-background: yellow;
   --hilite-text: black;
@@ -110,6 +111,8 @@ tr {
     p {
       margin: 0 1em .5em 1em;
       font-size: smaller;
+      display: inherit;
+      font-style: italic;
     }
   }
 
@@ -133,9 +136,12 @@ tr {
 }
 .row {
   display: grid;
-  grid-template-columns: repeat(6, 8em);
+  grid-template-columns: repeat(6, 1fr);
   border: none;
-  padding: 0.5em 0 0.5em 0;
+  padding: 0.5em;
+}
+.row.altrow {
+  background: var(--alternate-regular-back);
 }
 .row.combo {
   grid-template-columns: 2fr 2fr 1fr 3fr 4fr;
@@ -635,9 +641,9 @@ header {
 div.claim {
   display: flex;
   flex-direction: column;
-  padding: 1em;
+  padding: 0;
   max-width: var(--default-max-width);
-  margin: auto;
+  margin: 0 auto;
 }
 
 .subject {
@@ -931,6 +937,27 @@ td.sxtotalpoints {
     overflow: hidden;
     margin: auto;
     font-size: 0.8em;
+  }
+}
+input.popover {
+  display: inline;
+  font: inherit;
+  background: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+#individualbonushelp {
+  width: 90%;
+  max-width: var(--default-max-width);
+  margin: auto;
+  padding: 10px;
+  height: 90%;
+  background: pink;
+  h1 {
+    text-align: center;
+  }
+  p {
+    margin: 0 0 1em 0;
   }
 }
 .hide {

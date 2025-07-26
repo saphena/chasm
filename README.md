@@ -17,3 +17,16 @@ Examples:-
 | 2 | 2 | 5 | 64
 
 If the result of the rule is multiplier rather than points, the formula is BP x Power x (number of hits -1)
+
+
+## Compound vs Combo
+There is a large amount of crossover in functionality between combos and compound scoring rules.
+
+| Feature | Compound | Combo
+| --- | --- | ---
+| Affect bonus score | Y | N
+| Affect group score | Y | Y
+| Affect sequence score | Y | N
+| DNF if triggered | Y | N
+| DNF unless triggered | Y | Y
+

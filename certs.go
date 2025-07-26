@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"text/template"
 )
 
@@ -141,7 +142,7 @@ func ordinal_ranklit(n int) string {
 }
 func print_certs(w http.ResponseWriter, r *http.Request) {
 
-	sqlx := "SELECT ifnull(Bike,''), RiderName,ifnull(PillionName,''),ifnull(CorrectedMiles,0),EntrantID"
+	sqlx := "SELECT ifnull(Bike,''), ifnull(RiderFirst,''),ifnull(RiderLast,''),ifnull(PillionFirst,''),ifnull(PillionLast,''),ifnull(CorrectedMiles,0),EntrantID"
 	sqlx += ",ifnull(FinishPosition,0),ifnull(TeamID,0),TotalPoints"
 	sqlx += " FROM entrants "
 	if r.FormValue("all") == "" {
@@ -177,8 +178,14 @@ func print_certs(w http.ResponseWriter, r *http.Request) {
 		var cf CertFields
 		var pillion string
 		var team int
-		err = rows.Scan(&cf.Bike, &cf.CrewName, &pillion, &cf.Distance, &cf.EntrantID, &cf.Place, &team, &cf.Points)
+		var rf string
+		var rl string
+		var pf string
+		var pl string
+		err = rows.Scan(&cf.Bike, &rf, &rl, &pf, &pl, &cf.Distance, &cf.EntrantID, &cf.Place, &team, &cf.Points)
 		checkerr(err)
+		cf.CrewName = strings.TrimSpace(rf + " " + rl)
+		pillion = strings.TrimSpace(pf + " " + pl)
 		cf.TeamName = teams[team]
 		if pillion != "" {
 			cf.CrewName += " &amp; " + pillion
