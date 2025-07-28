@@ -110,6 +110,7 @@ func main() {
 	http.HandleFunc("/saverule", saveRule)
 	http.HandleFunc("/score", showScorecard)
 	http.HandleFunc("/setup", show_setup)
+	http.HandleFunc("/teams", list_teams)
 	http.HandleFunc("/updtcrule", update_rule)
 	http.HandleFunc("/upload", uploadImportDatafile)
 	http.HandleFunc("/x", json_requests)
@@ -200,6 +201,9 @@ func json_requests(w http.ResponseWriter, r *http.Request) {
 	case "saveset":
 		updateSetName(w, r)
 		return
+	case "setteam":
+		setTeam(w, r)
+		return
 	case "fetche":
 		ajaxFetchEntrantDetails(w, r)
 		return
@@ -208,6 +212,10 @@ func json_requests(w http.ResponseWriter, r *http.Request) {
 		return
 	case "fetchcats":
 		showCategoryCats(w, r)
+		return
+
+	case "fetchmembers":
+		showTeamMembers(w, r)
 
 		return
 	case "putodo":

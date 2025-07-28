@@ -253,8 +253,9 @@ func show_combos(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `<button class="plus" autofocus title="Add new combo" onclick="window.location.href='/combo?back=combos'">+</button>`)
 	fmt.Fprint(w, ` <input type="text" onchange="showCombo(this.value)" onblur="showCombo(this.value)"  placeholder="Code to show">`)
 	fmt.Fprint(w, `</div>`)
-	fmt.Fprint(w, `<div class="bonuslist hdr">`)
-	fmt.Fprint(w, `<span>Code</span><span>Description</span><span>Points</span><span>Claims</span>`)
+	fmt.Fprint(w, `<div class="bonuslist row combo hdr">`)
+	fmt.Fprint(w, `<span>Code</span><span>Description</span><span></span><span>Scores</span><span>Bonuses</span>`)
+
 	fmt.Fprint(w, `</div><hr>`)
 	fmt.Fprint(w, `</header>`)
 
@@ -266,7 +267,7 @@ func show_combos(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `<fieldset class="col BriefDesc">%s</fieldset>`, cb.BriefDesc)
 		mp = ""
 		if cb.Compulsory {
-			mp = "<strong>!</strong>"
+			mp = `<strong title="Compulsory">!</strong>`
 		}
 		fmt.Fprintf(w, `<fieldset class="col">%v</fieldset>`, mp)
 		mp = ""

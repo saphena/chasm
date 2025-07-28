@@ -1432,3 +1432,92 @@ function addCatSet(obj) {
   fs.appendChild(btn);
   dad.appendChild(fs);
 }
+
+async function removeTeamMember(obj) {
+
+  let e = obj.getAttribute("data-entrant")
+  let url = "/x?f=setteam&e="+e+"&t=0"
+  console.log(url)
+  let res=await fetch(url)
+  console.log(res)
+  let fs = obj.parentElement
+  let art = fs.parentElement
+  art.removeChild(fs)
+}
+function showTeamMembers(obj) {
+  let art = document.getElementById("teamMembers");
+  let team = obj.getAttribute("data-team");
+  let url = "/x?f=fetchmembers&t=" + team;
+  fetch(url)
+    .then((response) => {
+      if (!response.ok) {
+        // Handle HTTP errors
+        bd.value = `HTTP error! Status: ${response.status}`;
+        return;
+      }
+      return response.json();
+    })
+    .then((data) => {
+      if (data.err) {
+        // Handle JSON error field
+        console.error(`Error: ${data.msg}`);
+        return;
+      } else if (data.ok) {
+        // Process the data if no error
+        art.innerText = "";
+        console.log(data);
+        let div = document.createElement("div");
+        div.innerHTML = `Members of team ${data.Team} <em>${data.TeamName}</em>`;
+        art.appendChild(div);
+        let btn = document.createElement("button");
+        btn.classList.add("plus");
+        btn.setAttribute("data-team", `${data.Team}`);
+        btn.onclick = function () {
+          addTeamMember(this);
+        };
+        btn.innerText = "+";
+        art.appendChild(btn);
+        if (data.Members) {
+          for (let i = 0; i < data.Members.length; i++) {
+            let fs = document.createElement("fieldset");
+            fs.classList.add("teamMember");
+            let lbl = document.createElement("label");
+            let newid = `${data.Members[i].EntrantID}`;
+            lbl.setAttribute("for", newid);
+            let Name = `${data.Members[i].RiderFirst} ${data.Members[i].RiderLast}`
+            if (data.Members[i].PillionLast != "")
+              Name += " &amp; "+`${data.Members[i].PillionFirst} ${data.Members[i].PillionLast}`
+            lbl.innerText = newid;
+            lbl.setAttribute("title","Flag")
+            fs.appendChild(lbl);
+            let inp = document.createElement("span");
+            inp.innerHTML = Name
+            inp.setAttribute("id", newid);
+            inp.classList.add("teamMember");
+            inp.setAttribute("data-team", `${data.Team}`);
+
+            fs.appendChild(inp);
+            btn = document.createElement("button");
+            btn.classList.add("minus");
+            btn.setAttribute("data-team", `${data.Team}`);
+            btn.setAttribute("data-entrant",newid)
+            btn.onclick = function () {
+              removeTeamMember(this);
+            };
+            btn.innerText = "-";
+            fs.appendChild(btn);
+
+            art.appendChild(fs);
+          }
+        }
+      } else {
+        console.log(`Error: ${data.msg}`);
+      }
+    })
+    .catch((error) => {
+      // Handle network or other errors
+      console.error("Fetch error:", error);
+      return;
+    });
+}
+

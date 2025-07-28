@@ -37,6 +37,11 @@
   margin: auto;
   border: var(--border-style, 2mm double);
   overflow: hidden;
+  background: white;
+  button {
+    background: inherit;
+    border: none;
+  }
 }
 
 p {

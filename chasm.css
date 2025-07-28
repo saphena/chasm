@@ -28,6 +28,7 @@
   --hover-color: black;
 
   --selected-flag-border: 16px solid green;
+  --widescreen-width: 1200px;
 }
 * {
   margin: 0;
@@ -106,15 +107,15 @@ tr {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
 }
- .field.help {
-    grid-template-columns: 3fr;
-    p {
-      margin: 0 1em .5em 1em;
-      font-size: smaller;
-      display: inherit;
-      font-style: italic;
-    }
+.field.help {
+  grid-template-columns: 3fr;
+  p {
+    margin: 0 1em 0.5em 1em;
+    font-size: smaller;
+    display: inherit;
+    font-style: italic;
   }
+}
 
 .field label {
   text-align: right;
@@ -124,15 +125,6 @@ tr {
   border: none;
   display: inline;
   margin: 0;
-}
-.combos {
-  display: flex;
-  flex-direction: column;
-  max-width: var(--default-max-width);
-  margin: auto;
-  .BriefDesc {
-    font-style: italic;
-  }
 }
 .row {
   display: grid;
@@ -144,7 +136,7 @@ tr {
   background: var(--alternate-regular-back);
 }
 .row.combo {
-  grid-template-columns: 2fr 2fr 1fr 3fr 4fr;
+  grid-template-columns: 1fr 2fr 2em 3fr 3fr; /* --widescreen-width */
 }
 .row.ebc {
   grid-template-columns: 4fr 2fr 2fr 1fr;
@@ -204,6 +196,7 @@ fieldset.inline {
 img.flagicon {
   width: 44px;
   padding: 3px;
+  cursor: pointer;
 }
 .bonusnotes {
   display: inline-block;
@@ -458,6 +451,7 @@ article.combo {
 img.icon {
   width: 36px;
   margin-right: 0.5em;
+  cursor: pointer;
 }
 img.thumbnail {
   width: 222px;
@@ -517,12 +511,14 @@ article.config {
 .ebclist,
 .claimslog,
 .rankhead,
-.rankings {
+.rankings,
+.teamnames {
   margin: auto;
   max-width: var(--default-max-width);
 }
 
-.intro {
+.intro,
+.intro p {
   margin: 1em;
 }
 .entrantlist .row {
@@ -538,9 +534,29 @@ article.config {
 .bonuslist {
   margin: 0.2em auto 0.2em auto;
   display: grid;
-  grid-template-columns: 1fr 2fr 1fr 1fr;
+  grid-template-columns: 1fr 4fr 1fr 1fr 4fr; /* --widescreen-width */
+  grid-template-columns: if(
+    media(width > 1200px): 1fr 4fr 1fr 1fr 4fr; else: 1fr 4fr 1fr 1fr
+  );
   max-width: var(--default-max-width);
+  .cats {
+    display: flex;
+    display: if(media(width > 1200px): flex; else: none;);
+  }
+  .cats span {
+    margin: 0 1em 0 0;
+  }
 }
+.combos {
+  display: flex;
+  flex-direction: column;
+  max-width: var(--default-max-width);
+  margin: auto;
+  .BriefDesc {
+    font-style: italic;
+  }
+}
+
 .error {
   margin: 1em;
   padding: 1em;
@@ -960,6 +976,33 @@ input.popover {
     margin: 0 0 1em 0;
   }
 }
+
+article.teamnames {
+  div {
+    display: flex;
+    flex: row wrap;
+    justify-content: flex-start;
+    label,
+    input,
+    button {
+      margin: 0.5em;
+    }
+  }
+}
+article.teamMembers {
+  width: 98%;
+  max-width: var(--default-max-width);
+  margin: auto;
+  fieldset {
+    border: none;
+    display: flex;
+    flex-flow: row wrap;
+  }
+  * {
+    margin: 0.5em;
+  }
+}
+
 .hide {
   display: none !important;
 }

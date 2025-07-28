@@ -289,6 +289,8 @@ func list_bonuses(w http.ResponseWriter, r *http.Request) {
 
 	startHTML(w, "Bonuses")
 
+	sets := build_axisLabels()
+
 	fmt.Fprint(w, `<p class="intro">Ordinary bonuses generally represent physical locations that entrants must visit and complete some task, typically take a photo.  Descriptions may include limited HTML to affect formatting on score explanations.</p>`)
 
 	fmt.Fprint(w, `<div class="intro bonuslist">`)
@@ -297,10 +299,23 @@ func list_bonuses(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `</div>`)
 	fmt.Fprint(w, `<div class="bonuslist hdr">`)
 	fmt.Fprint(w, `<span>Code</span><span>Description</span><span>Points</span><span>Claims</span>`)
+	fmt.Fprint(w, `<span class="cats">`)
+	for i := range sets {
+		if sets[i] == "" {
+			continue
+		}
+		fmt.Fprintf(w, `<span>%v</span>`, sets[i])
+	}
+	fmt.Fprint(w, `</span>`)
 	fmt.Fprint(w, `</div><hr>`)
 	fmt.Fprint(w, `</header>`)
 
-	sqlx := "SELECT BonusID,BriefDesc,Points FROM bonuses ORDER BY BonusID"
+	sqlx := "SELECT BonusID,BriefDesc,Points"
+	for i := 1; i <= NumCategoryAxes; i++ {
+		sqlx += ", Cat" + strconv.Itoa(i)
+	}
+
+	sqlx += " FROM bonuses ORDER BY BonusID"
 
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
@@ -310,7 +325,8 @@ func list_bonuses(w http.ResponseWriter, r *http.Request) {
 		var bonus string
 		var descr string
 		var points int
-		err := rows.Scan(&bonus, &descr, &points)
+		var cats [NumCategoryAxes]int
+		err := rows.Scan(&bonus, &descr, &points, &cats[0], &cats[1], &cats[2], &cats[3], &cats[4], &cats[5], &cats[6], &cats[7], &cats[8])
 		checkerr(err)
 		oex := "even"
 		if oe {
@@ -325,6 +341,18 @@ func list_bonuses(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, `<a href="/claims?bsel=%v"> %v </a>`, bonus, n)
 		}
 		fmt.Fprint(w, `</span>`)
+
+		fmt.Fprint(w, `<span class="cats">`)
+		for i := range sets {
+			if sets[i] == "" {
+				continue
+			}
+			sqlx = fmt.Sprintf("SELECT BriefDesc FROM categories WHERE Axis=%v AND Cat=%v", i+1, cats[i])
+			catx := getStringFromDB(sqlx, "")
+			fmt.Fprintf(w, `<span>%v</span>`, catx)
+		}
+		fmt.Fprint(w, `</span>`)
+
 		fmt.Fprint(w, `</div>`)
 	}
 }

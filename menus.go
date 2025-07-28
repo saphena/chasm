@@ -30,7 +30,7 @@ var setupmenu = menu{
 	{"Rally Parameters", "Configuration of this rally", "/config", ""},
 	{"Edit certificate content", "Maintain certificate templates", "/editcert", ""},
 	{"Entrants", "Maintain entrant details", "/menu?menu=entrants", ""},
-	{"Bonuses", "Ordinary and combo bonuses", "/menu?menu=bonuses", ""},
+	{"Bonuses / Combos", "Ordinary and combo bonuses", "/menu?menu=bonuses", ""},
 	{"Time penalties", "Time penalties", "/timep", ""},
 	{"Advanced setup", "Advanced configuration", "/menu?menu=asetup", ""},
 }
@@ -40,7 +40,6 @@ var entrantmenu = menu{
 	{"Odometer check-OUT", "Check-out at start of rally", "/odos?check=out", ""},
 	{"Odometer check-IN", "Check-in at end of rally", "/odos?check=in", ""},
 	{"Teams", "Maintain teams and membership", "/teams", ""},
-	{"Cohorts", "Split entrants into cohorts", "/cohorts", ""},
 	{"Import entrants", "Load entrants from spreadsheet", "/import?type=entrants", ""},
 }
 
