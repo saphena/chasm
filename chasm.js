@@ -1416,10 +1416,6 @@ function addCatSet(obj) {
 
   fs.appendChild(document.createTextNode(" "));
 
-  const ordered_list_icon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-list-ol" viewBox="0 0 16 16">
-  <path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5"/>
-  <path d="M1.713 11.865v-.474H2c.217 0 .363-.137.363-.317 0-.185-.158-.31-.361-.31-.223 0-.367.152-.373.31h-.59c.016-.467.373-.787.986-.787.588-.002.954.291.957.703a.595.595 0 0 1-.492.594v.033a.615.615 0 0 1 .569.631c.003.533-.502.8-1.051.8-.656 0-1-.37-1.008-.794h.582c.008.178.186.306.422.309.254 0 .424-.145.422-.35-.002-.195-.155-.348-.414-.348h-.3zm-.004-4.699h-.604v-.035c0-.408.295-.844.958-.844.583 0 .96.326.96.756 0 .389-.257.617-.476.848l-.537.572v.03h1.054V9H1.143v-.395l.957-.99c.138-.142.293-.304.293-.508 0-.18-.147-.32-.342-.32a.33.33 0 0 0-.342.338zM2.564 5h-.635V2.924h-.031l-.598.42v-.567l.629-.443h.635z"/>
-</svg>`;
 
   let btn = document.createElement("button");
   btn.setAttribute("data-set", lastIx);
@@ -1432,6 +1428,155 @@ function addCatSet(obj) {
   fs.appendChild(btn);
   dad.appendChild(fs);
 }
+
+
+
+
+// addNewTeam needs to add the record in order to get a new number
+function addNewTeam(obj) {
+  let url = "/x?f=addteam"
+  console.log(url);
+  fetch(url)
+    .then((response) => {
+      if (!response.ok) {
+        // Handle HTTP errors
+        return;
+      }
+      return response.json();
+    })
+    .then((data) => {
+      if (data.err) {
+        // Handle JSON error field
+        console.error(`Error: ${data.msg}`);
+        return;
+      } else if (data.ok) {
+        // Process the data if no error
+
+        let newteam = data.msg;
+        let art = document.getElementById("teamnames");
+        let fs = document.createElement("div");
+        let lbl = document.createElement("label");
+        let newid = newteam;
+        lbl.setAttribute("for", newid);
+        lbl.innerText = "Team "+newid+" is ";
+        fs.appendChild(lbl);
+        let inp = document.createElement("input");
+        inp.setAttribute("id", newid);
+        inp.classList.add("teamName");
+
+        inp.setAttribute("data-team", newid);
+        inp.onchange = function () {
+          saveTeam(this);
+        };
+        inp.value="Team "+newid;
+        fs.appendChild(inp);
+        let btn = document.createElement("button");
+        btn.classList.add("minus");
+        btn.setAttribute("data-team", newid);
+        btn.onclick = function () {
+          delTeam(this);
+        };
+        btn.innerHTML = ordered_list_icon;
+        fs.appendChild(btn);
+
+        art.appendChild(fs);
+      }
+    })
+
+    .catch((error) => {
+      // Handle network or other errors
+      console.error("Fetch error:", error);
+      return;
+    });
+}
+
+
+
+
+
+
+
+function addTeamMembers(obj) {
+  let team = obj.getAttribute("data-team")
+  if (team=="") return
+  let url = "/x?f=fetchmembers&t=0"
+  fetch(url)
+    .then((response) => {
+      if (!response.ok) {
+        // Handle HTTP errors
+        return;
+      }
+      return response.json();
+    })
+    .then((data) => {
+      if (data.err) {
+        // Handle JSON error field
+        console.error(`Error: ${data.msg}`);
+        return;
+      } else if (data.ok) {
+        // Process the data if no error
+        let members = document.getElementById("teamMembers");
+        if (!members) return;
+        let fs = document.createElement("fieldset")
+        let sel = document.createElement("select")
+        sel.multiple = true
+        sel.size = 10
+        sel.title="Select new team member(s)"
+        sel.setAttribute("data-team",team)
+        console.log(data);
+        for (let i = 0; i < data.Members.length; i++) {
+          let opt = document.createElement("option");
+          opt.value = `${data.Members[i].EntrantID}`
+          opt.innerText=`${data.Members[i].RiderLast}, ${data.Members[i].RiderFirst}`
+          sel.appendChild(opt);
+        }
+        fs.appendChild(sel)
+        let btn = document.createElement("button")
+        btn.innerText="add selection"
+        btn.onclick = function() {
+          addTeamMemberSelection(this)
+        }
+        fs.appendChild(btn)
+        members.appendChild(fs)
+      }
+    })
+    .catch((error) => {
+      // Handle network or other errors
+      console.error("Fetch error:", error);
+
+      return;
+    });
+}
+
+async function addTeamMemberSelection(obj) {
+
+  let fs = obj.parentElement
+  let sel = fs.querySelector("select")
+  if (!sel) return
+  let team = sel.getAttribute("data-team")
+  if (team=="") return
+  let entrants = []
+  for (let i = 0; i < sel.options.length;i++) {
+    if (sel.options[i].selected)
+      entrants.push(sel.options[i].value)
+  }
+  let members  = entrants.join(",")
+  if (members == "") return
+  let url = "/x?f=setteam&t="+team+"&e="+encodeURIComponent(members)
+  await fetch(url)
+  showTeamMembers(sel)
+
+
+}
+
+
+
+
+
+
+
+
+
 
 async function removeTeamMember(obj) {
 
@@ -1473,7 +1618,7 @@ function showTeamMembers(obj) {
         btn.classList.add("plus");
         btn.setAttribute("data-team", `${data.Team}`);
         btn.onclick = function () {
-          addTeamMember(this);
+          addTeamMembers(this);
         };
         btn.innerText = "+";
         art.appendChild(btn);

@@ -49,6 +49,7 @@ type EntrantDBRecord struct {
 	CertificateAvailable string
 	FinishPosition       int
 	TotalPoints          int
+	TeamID               int
 }
 
 func ajaxFetchEntrantDetails(w http.ResponseWriter, r *http.Request) {
@@ -263,6 +264,12 @@ var tmplEntrantBasic = `
 			<option value="3" {{if eq .EntrantStatus 3}}selected{{end}}>DNF</option>
 		</select>
 	</fieldset>
+	<fieldset>
+		<label for="Team">Team</label>
+		<select id="Team" name="TeamID" onchange="saveEntrant(this)">
+		##teams##
+		</select>
+	</fieldset>
 
 
 </article>
@@ -280,13 +287,13 @@ func fetchEntrantRecord(entrant int) EntrantDBRecord {
 		,ifnull(PillionFirst,''),ifnull(PillionLast,''),ifnull(PillionIBA,'')
 		,ifnull(OdoKms,'M'),ifnull(OdoRallyStart,0),ifnull(OdoRallyFinish,0),ifnull(CorrectedMiles,0)
 		,ifnull(FinishTime,''),ifnull(StartTime,''),EntrantStatus,ifnull(NokName,''),ifnull(NokPhone,''),ifnull(NokRelation,'')
-		,FinishPosition,TotalPoints		FROM entrants`
+		,FinishPosition,TotalPoints,TeamID		FROM entrants`
 	sqlx += fmt.Sprintf(" WHERE EntrantID=%v", entrant)
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
 	defer rows.Close()
 	if rows.Next() {
-		err = rows.Scan(&er.EntrantID, &er.Bike, &er.BikeReg, &er.RiderFirst, &er.RiderLast, &er.RiderCountry, &er.RiderIBA, &er.RiderPhone, &er.RiderEmail, &er.PillionFirst, &er.PillionLast, &er.PillionIBA, &er.OdoKms, &er.OdoStart, &er.OdoFinish, &er.CorrectedMiles, &er.FinishTime, &er.StartTime, &er.EntrantStatus, &er.NokName, &er.NokPhone, &er.NokRelation, &er.FinishPosition, &er.TotalPoints)
+		err = rows.Scan(&er.EntrantID, &er.Bike, &er.BikeReg, &er.RiderFirst, &er.RiderLast, &er.RiderCountry, &er.RiderIBA, &er.RiderPhone, &er.RiderEmail, &er.PillionFirst, &er.PillionLast, &er.PillionIBA, &er.OdoKms, &er.OdoStart, &er.OdoFinish, &er.CorrectedMiles, &er.FinishTime, &er.StartTime, &er.EntrantStatus, &er.NokName, &er.NokPhone, &er.NokRelation, &er.FinishPosition, &er.TotalPoints, &er.TeamID)
 		checkerr(err)
 	} else {
 		er.EntrantID = entrant
@@ -327,7 +334,16 @@ func showEntrant(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Fprint(w, `</header>`)
 
-	t, err := template.New("EntrantDetail").Parse(tmplEntrantBasic)
+	teamrecs := fetchTeams(true)
+	teamopts := ""
+	for i := 0; i < len(teamrecs); i++ {
+		sel := ""
+		if er.TeamID == teamrecs[i].TeamID {
+			sel = "selected"
+		}
+		teamopts += fmt.Sprintf(`<option value="%v" %v>%v</option>`, teamrecs[i].TeamID, sel, teamrecs[i].TeamName)
+	}
+	t, err := template.New("EntrantDetail").Parse(strings.ReplaceAll(tmplEntrantBasic, "##teams##", teamopts))
 	checkerr(err)
 	err = t.Execute(w, er)
 	checkerr(err)

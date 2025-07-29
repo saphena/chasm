@@ -165,6 +165,9 @@ func json_requests(w http.ResponseWriter, r *http.Request) {
 	case "adde":
 		createEntrant(w, r)
 		return
+	case "addteam":
+		addNewTeam(w, r)
+		return
 	case "delb":
 		deleteBonus(w, r)
 		return
