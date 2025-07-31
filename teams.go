@@ -8,12 +8,16 @@ import (
 )
 
 var tmplTeamHeaders = `
-	<div class="intro">
-	<p>Teams consist of two or more bikes planning and riding together as a team. One bike with a rider and a passenger is not a team, that's a crew.</p>
+	<article class="popover" id="teamshelp" popover>
+	<h1>TEAMS</h1>
+		<p>Teams consist of two or more bikes planning and riding together as a team. One bike with a rider and a passenger is not a team, that's a crew.</p>
 	<p>Team rules generally require that at least one team member is present in each bonus photo and bonus claims will normally be accepted from one team member (but can be accepted from any member) throughout the rally.</p>
 	<p>Team members all receive the same individual scores.  Usually this is matched claim by claim thoughout the rally but options are available to award the highest or lowest score instead. (See <a href="/config">Rally configuration</a>)</p>
 	<p>The team name can be shown on the certificate as well as the names of the team members.</p>
-	</div>
+
+	</article>
+	<div class="intro">
+	<p>Teams consist of two or more bikes planning and riding together as a team. One bike with a rider and a passenger is not a team, that's a crew. <input type="button" class="popover" popovertarget="teamshelp" value="[click here for more info]"></p>	</div>
 
 <article id="teamnames" class="teamnames">
 	<button id="addteam" class="plus" autofocus title="Add new team" onclick="addNewTeam(this)">+</button>
@@ -65,7 +69,7 @@ func fetchTeams(showzero bool) []teamrec {
 	if showzero {
 		wherex = ""
 	}
-	sqlx := "SELECT TeamID,ifnull(BriefDesc,'Team ' || TeamID) FROM teams " + wherex + "ORDER BY TeamID"
+	sqlx := "SELECT TeamID,ifnull(BriefDesc,'Team ' || TeamID) FROM teams " + wherex + " ORDER BY TeamID"
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
 	defer rows.Close()

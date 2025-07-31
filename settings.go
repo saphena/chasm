@@ -203,7 +203,7 @@ func ajaxUpdateSettings(w http.ResponseWriter, r *http.Request) {
 		CS.Basics.RallyTitle = r.FormValue("v")
 		ok = "true"
 		msg = "ok"
-
+		fmt.Printf("Setting rally title to [ %v ]\n", CS.Basics.RallyTitle)
 		stmt, err := DBH.Prepare("UPDATE rallyparams SET RallyTitle=?")
 		checkerr(err)
 		defer stmt.Close()

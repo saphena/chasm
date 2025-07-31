@@ -111,6 +111,9 @@ func main() {
 	http.HandleFunc("/score", showScorecard)
 	http.HandleFunc("/setup", show_setup)
 	http.HandleFunc("/teams", list_teams)
+	http.HandleFunc("DELETE /timep/{tpid}", deleteTimePenalty)
+	http.HandleFunc("/timep", show_timepenalties)
+	http.HandleFunc("/timep/{rec}", show_timepenalty)
 	http.HandleFunc("/updtcrule", update_rule)
 	http.HandleFunc("/upload", uploadImportDatafile)
 	http.HandleFunc("/x", json_requests)
@@ -207,6 +210,9 @@ func json_requests(w http.ResponseWriter, r *http.Request) {
 	case "setteam":
 		setTeam(w, r)
 		return
+	case "savetimep":
+		saveTimePenalty(w, r)
+		return
 	case "fetche":
 		ajaxFetchEntrantDetails(w, r)
 		return
@@ -237,7 +243,7 @@ func json_requests(w http.ResponseWriter, r *http.Request) {
 
 func central_dispatch(w http.ResponseWriter, r *http.Request) {
 
-	startHTML(w, "Main menu")
+	startHTML(w, "S c o r e M a s t e r")
 
 	showMenu(w, "main")
 }

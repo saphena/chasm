@@ -192,13 +192,20 @@ type EntrantTimes struct {
 	IsDNF       bool
 }
 type TimePenalty struct {
-	TimeSpec       int
-	PenaltyStartX  string
-	PenaltyFinishX string
-	PenaltyMethod  int
-	PenaltyFactor  int
-	PenaltyStart   time.Time
-	PenaltyFinish  time.Time
+	Tpid              int64
+	TimeSpec          int
+	PenaltyStartX     string
+	PenaltyFinishX    string
+	PenaltyMethod     int
+	PenaltyFactor     int
+	PenaltyStart      time.Time
+	PenaltyFinish     time.Time
+	PenaltyStartMins  int
+	PenaltyFinishMins int
+	PenaltyStartDate  string
+	PenaltyStartTime  string
+	PenaltyFinishDate string
+	PenaltyFinishTime string
 }
 
 type RankingRecord struct {
@@ -337,7 +344,7 @@ func build_timePenaltyArray() []TimePenalty {
 	rft, err := time.Parse(myTimestamp, rallyFinishtimex)
 	checkerr(err)
 
-	sqlx := "SELECT TimeSpec,PenaltyStart,PenaltyFinish,PenaltyMethod,PenaltyFactor FROM timepenalties"
+	sqlx := "SELECT rowid,TimeSpec,ifnull(PenaltyStart,''),ifnull(PenaltyFinish,''),PenaltyMethod,PenaltyFactor FROM timepenalties"
 	//sqlx += " WHERE Leg=0 OR Leg=" + currentLeg
 	sqlx += " ORDER BY PenaltyStart,PenaltyFinish"
 
@@ -347,20 +354,26 @@ func build_timePenaltyArray() []TimePenalty {
 	defer rows.Close()
 	for rows.Next() {
 		var tp TimePenalty
-		err = rows.Scan(&tp.TimeSpec, &tp.PenaltyStartX, &tp.PenaltyFinishX, &tp.PenaltyMethod, &tp.PenaltyFactor)
+		err = rows.Scan(&tp.Tpid, &tp.TimeSpec, &tp.PenaltyStartX, &tp.PenaltyFinishX, &tp.PenaltyMethod, &tp.PenaltyFactor)
 		checkerr(err)
 
 		switch tp.TimeSpec {
 
-		case TimeSpecRallyDNF:
+		case TimeSpecRallyDNF, TimeSpecEntrantDNF:
 			ps, _ := strconv.Atoi(tp.PenaltyStartX)
 			tp.PenaltyStart = rft.Add(time.Minute * time.Duration(0-ps))
 			pf, _ := strconv.Atoi(tp.PenaltyFinishX)
 			tp.PenaltyFinish = rft.Add(time.Minute * time.Duration(0-pf))
+			tp.PenaltyStartMins = ps
+			tp.PenaltyFinishMins = pf
 
 		case TimeSpecDatetime:
 			tp.PenaltyStart, _ = time.Parse(myTimestamp, tp.PenaltyStartX)
 			tp.PenaltyFinish, _ = time.Parse(myTimestamp, tp.PenaltyFinishX)
+			tp.PenaltyStartDate = tp.PenaltyStart.Format("2006-01-02")
+			tp.PenaltyStartTime = tp.PenaltyStart.Format("15:04")
+			tp.PenaltyFinishDate = tp.PenaltyFinish.Format("2006-01-02")
+			tp.PenaltyFinishTime = tp.PenaltyFinish.Format("15:04")
 		}
 
 		res = append(res, tp)

@@ -223,6 +223,17 @@ func showTopbarBL(w http.ResponseWriter, currentTask string, backLink string) {
 
 }
 
+// splitDatetime splits a timestamp as stored in the database
+// into separate date and time strings
+func splitDatetime(dt string) (string, string) {
+
+	if !strings.Contains(dt, "T") {
+		return dt, dt
+	}
+	res := strings.Split(dt, "T")
+	return res[0], res[1]
+
+}
 func startHTML(w http.ResponseWriter, currentTask string) {
 
 	startHTMLBL(w, currentTask, "")

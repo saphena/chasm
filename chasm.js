@@ -519,12 +519,11 @@ function saveCombo(obj) {
   stackTransaction(url, obj.id);
   sendTransactions();
   switch (nm) {
+    case "Bonuses":
+      showComboBonusList(ov);
     case "MinimumTicks":
       extractComboPointsArray();
       updateComboPointsList();
-      return;
-    case "Bonuses":
-      showComboBonusList(ov);
       return;
   }
 }
@@ -585,6 +584,18 @@ function saveEntrant(obj) {
   let url = "/x?f=savee&e=" + e;
   let nm = obj.name;
   let ov = obj.value;
+  switch (obj.name) {
+    case "StartTime":
+      let sd = document.getElementById("StartTimeDate");
+      let st = document.getElementById("StartTimeTime");
+      ov = sd.value + "T" + st.value;
+      break;
+    case "FinishTime":
+      let fd = document.getElementById("FinishTimeDate");
+      let ft = document.getElementById("FinishTimeTime");
+      ov = fd.value + "T" + ft.value;
+      break;
+  }
   url += "&ff=" + nm + "&" + nm + "=" + encodeURIComponent(ov);
   console.log("saveEntrant: " + url);
   stackTransaction(url, obj.id);
@@ -1416,7 +1427,6 @@ function addCatSet(obj) {
 
   fs.appendChild(document.createTextNode(" "));
 
-
   let btn = document.createElement("button");
   btn.setAttribute("data-set", lastIx);
   btn.classList.add("plus");
@@ -1429,12 +1439,9 @@ function addCatSet(obj) {
   dad.appendChild(fs);
 }
 
-
-
-
 // addNewTeam needs to add the record in order to get a new number
 function addNewTeam(obj) {
-  let url = "/x?f=addteam"
+  let url = "/x?f=addteam";
   console.log(url);
   fetch(url)
     .then((response) => {
@@ -1458,7 +1465,7 @@ function addNewTeam(obj) {
         let lbl = document.createElement("label");
         let newid = newteam;
         lbl.setAttribute("for", newid);
-        lbl.innerText = "Team "+newid+" is ";
+        lbl.innerText = "Team " + newid + " is ";
         fs.appendChild(lbl);
         let inp = document.createElement("input");
         inp.setAttribute("id", newid);
@@ -1468,7 +1475,7 @@ function addNewTeam(obj) {
         inp.onchange = function () {
           saveTeam(this);
         };
-        inp.value="Team "+newid;
+        inp.value = "Team " + newid;
         fs.appendChild(inp);
         let btn = document.createElement("button");
         btn.classList.add("minus");
@@ -1490,16 +1497,10 @@ function addNewTeam(obj) {
     });
 }
 
-
-
-
-
-
-
 function addTeamMembers(obj) {
-  let team = obj.getAttribute("data-team")
-  if (team=="") return
-  let url = "/x?f=fetchmembers&t=0"
+  let team = obj.getAttribute("data-team");
+  if (team == "") return;
+  let url = "/x?f=fetchmembers&t=0";
   fetch(url)
     .then((response) => {
       if (!response.ok) {
@@ -1517,27 +1518,27 @@ function addTeamMembers(obj) {
         // Process the data if no error
         let members = document.getElementById("teamMembers");
         if (!members) return;
-        let fs = document.createElement("fieldset")
-        let sel = document.createElement("select")
-        sel.multiple = true
-        sel.size = 10
-        sel.title="Select new team member(s)"
-        sel.setAttribute("data-team",team)
+        let fs = document.createElement("fieldset");
+        let sel = document.createElement("select");
+        sel.multiple = true;
+        sel.size = 10;
+        sel.title = "Select new team member(s)";
+        sel.setAttribute("data-team", team);
         console.log(data);
         for (let i = 0; i < data.Members.length; i++) {
           let opt = document.createElement("option");
-          opt.value = `${data.Members[i].EntrantID}`
-          opt.innerText=`${data.Members[i].RiderLast}, ${data.Members[i].RiderFirst}`
+          opt.value = `${data.Members[i].EntrantID}`;
+          opt.innerText = `${data.Members[i].RiderLast}, ${data.Members[i].RiderFirst}`;
           sel.appendChild(opt);
         }
-        fs.appendChild(sel)
-        let btn = document.createElement("button")
-        btn.innerText="add selection"
-        btn.onclick = function() {
-          addTeamMemberSelection(this)
-        }
-        fs.appendChild(btn)
-        members.appendChild(fs)
+        fs.appendChild(sel);
+        let btn = document.createElement("button");
+        btn.innerText = "add selection";
+        btn.onclick = function () {
+          addTeamMemberSelection(this);
+        };
+        fs.appendChild(btn);
+        members.appendChild(fs);
       }
     })
     .catch((error) => {
@@ -1549,45 +1550,31 @@ function addTeamMembers(obj) {
 }
 
 async function addTeamMemberSelection(obj) {
-
-  let fs = obj.parentElement
-  let sel = fs.querySelector("select")
-  if (!sel) return
-  let team = sel.getAttribute("data-team")
-  if (team=="") return
-  let entrants = []
-  for (let i = 0; i < sel.options.length;i++) {
-    if (sel.options[i].selected)
-      entrants.push(sel.options[i].value)
+  let fs = obj.parentElement;
+  let sel = fs.querySelector("select");
+  if (!sel) return;
+  let team = sel.getAttribute("data-team");
+  if (team == "") return;
+  let entrants = [];
+  for (let i = 0; i < sel.options.length; i++) {
+    if (sel.options[i].selected) entrants.push(sel.options[i].value);
   }
-  let members  = entrants.join(",")
-  if (members == "") return
-  let url = "/x?f=setteam&t="+team+"&e="+encodeURIComponent(members)
-  await fetch(url)
-  showTeamMembers(sel)
-
-
+  let members = entrants.join(",");
+  if (members == "") return;
+  let url = "/x?f=setteam&t=" + team + "&e=" + encodeURIComponent(members);
+  await fetch(url);
+  showTeamMembers(sel);
 }
 
-
-
-
-
-
-
-
-
-
 async function removeTeamMember(obj) {
-
-  let e = obj.getAttribute("data-entrant")
-  let url = "/x?f=setteam&e="+e+"&t=0"
-  console.log(url)
-  let res=await fetch(url)
-  console.log(res)
-  let fs = obj.parentElement
-  let art = fs.parentElement
-  art.removeChild(fs)
+  let e = obj.getAttribute("data-entrant");
+  let url = "/x?f=setteam&e=" + e + "&t=0";
+  console.log(url);
+  let res = await fetch(url);
+  console.log(res);
+  let fs = obj.parentElement;
+  let art = fs.parentElement;
+  art.removeChild(fs);
 }
 function showTeamMembers(obj) {
   let art = document.getElementById("teamMembers");
@@ -1629,14 +1616,16 @@ function showTeamMembers(obj) {
             let lbl = document.createElement("label");
             let newid = `${data.Members[i].EntrantID}`;
             lbl.setAttribute("for", newid);
-            let Name = `${data.Members[i].RiderFirst} ${data.Members[i].RiderLast}`
+            let Name = `${data.Members[i].RiderFirst} ${data.Members[i].RiderLast}`;
             if (data.Members[i].PillionLast != "")
-              Name += " &amp; "+`${data.Members[i].PillionFirst} ${data.Members[i].PillionLast}`
+              Name +=
+                " &amp; " +
+                `${data.Members[i].PillionFirst} ${data.Members[i].PillionLast}`;
             lbl.innerText = newid;
-            lbl.setAttribute("title","Flag")
+            lbl.setAttribute("title", "Flag");
             fs.appendChild(lbl);
             let inp = document.createElement("span");
-            inp.innerHTML = Name
+            inp.innerHTML = Name;
             inp.setAttribute("id", newid);
             inp.classList.add("teamMember");
             inp.setAttribute("data-team", `${data.Team}`);
@@ -1645,7 +1634,7 @@ function showTeamMembers(obj) {
             btn = document.createElement("button");
             btn.classList.add("minus");
             btn.setAttribute("data-team", `${data.Team}`);
-            btn.setAttribute("data-entrant",newid)
+            btn.setAttribute("data-entrant", newid);
             btn.onclick = function () {
               removeTeamMember(this);
             };
@@ -1666,3 +1655,42 @@ function showTeamMembers(obj) {
     });
 }
 
+async function deleteTimep(obj) {
+  let tpid = document.getElementById("tpid");
+  if (!tpid) return;
+  let url = "/timep/" + tpid.value;
+  await fetch(url, { method: "DELETE" });
+  window.location.href = "/timep";
+}
+function saveTimep(obj) {
+  let tpid = document.getElementById("tpid");
+  if (!tpid) return;
+  let url = "/x?f=savetimep&ff=" + obj.name + "&tpid=" + tpid.value;
+  url += "&" + obj.name + "=" + encodeURIComponent(obj.value);
+  switch (obj.name) {
+    case "TimeSpec":
+      let std = document.getElementById("PenaltyStartDate");
+      let stt = document.getElementById("PenaltyStartTime");
+      let stm = document.getElementById("PenaltyStartMins");
+      let ftd = document.getElementById("PenaltyFinishDate");
+      let ftt = document.getElementById("PenaltyFinishTime");
+      let ftm = document.getElementById("PenaltyFinishMins");
+      if (obj.value == 0) {
+        std.classList.remove("hide");
+        stt.classList.remove("hide");
+        ftd.classList.remove("hide");
+        ftt.classList.remove("hide");
+        stm.classList.add("hide");
+        ftm.classList.add("hide");
+      } else {
+        std.classList.add("hide");
+        stt.classList.add("hide");
+        ftd.classList.add("hide");
+        ftt.classList.add("hide");
+        stm.classList.remove("hide");
+        ftm.classList.remove("hide");
+      }
+  }
+  stackTransaction(url, obj.id);
+  sendTransactions();
+}

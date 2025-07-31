@@ -50,6 +50,10 @@ type EntrantDBRecord struct {
 	FinishPosition       int
 	TotalPoints          int
 	TeamID               int
+	StartTimeDate        string
+	StartTimeTime        string
+	FinishTimeDate       string
+	FinishTimeTime       string
 }
 
 func ajaxFetchEntrantDetails(w http.ResponseWriter, r *http.Request) {
@@ -248,6 +252,13 @@ var tmplEntrantBasic = `
 		<input type="number" id="OdoFinish" class="odo" name="OdoRallyFinish" title="finish" value="{{.OdoFinish}}" data-save="saveEntrant" oninput="oi(this)" onchange="saveEntrant(this)">
 	</fieldset>
 	<fieldset>
+		<label for="StartTimeDate">Start / Finish</label>
+		<input type="date" id="StartTimeDate" name="StartTime" data-save="saveEntrant" oninput="oi(this)" onchange="saveEntrant(this)" value="{{.StartTimeDate}}">
+		<input type="time" id="StartTimeTime" name="StartTime" data-save="saveEntrant" oninput="oi(this)" onchange="saveEntrant(this)" value="{{.StartTimeTime}}">
+		<input type="date" id="FinishTimeDate" name="FinishTime" data-save="saveEntrant" oninput="oi(this)" onchange="saveEntrant(this)" value="{{.FinishTimeDate}}">
+		<input type="time" id="FinishTimeTime" name="FinishTime" data-save="saveEntrant" oninput="oi(this)" onchange="saveEntrant(this)" value="{{.FinishTimeTime}}">
+	</fieldset>
+	<fieldset>
 		<label for="CorrectedMiles">Rally distance</label>
 		<input type="number" class="CorrectedMiles" id="CorrectedMiles" name="CorrectedMiles" value="{{.CorrectedMiles}}" data-save="saveEntrant" oninput="oi(this)" onchange="saveEntrant(this)">
 	</fieldset>
@@ -295,6 +306,8 @@ func fetchEntrantRecord(entrant int) EntrantDBRecord {
 	if rows.Next() {
 		err = rows.Scan(&er.EntrantID, &er.Bike, &er.BikeReg, &er.RiderFirst, &er.RiderLast, &er.RiderCountry, &er.RiderIBA, &er.RiderPhone, &er.RiderEmail, &er.PillionFirst, &er.PillionLast, &er.PillionIBA, &er.OdoKms, &er.OdoStart, &er.OdoFinish, &er.CorrectedMiles, &er.FinishTime, &er.StartTime, &er.EntrantStatus, &er.NokName, &er.NokPhone, &er.NokRelation, &er.FinishPosition, &er.TotalPoints, &er.TeamID)
 		checkerr(err)
+		er.StartTimeDate, er.StartTimeTime = splitDatetime(er.StartTime)
+		er.FinishTimeDate, er.FinishTimeTime = splitDateTime(er.FinishTime)
 	} else {
 		er.EntrantID = entrant
 	}

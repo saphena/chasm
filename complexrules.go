@@ -27,7 +27,7 @@ var crtopline = `<div class="topline">
 	</div>`
 
 var tmpltSingleRule = `
-	<article id="individualbonushelp" popover>
+	<article class="popover" id="individualbonushelp" popover>
 	<h1>Individual Bonuses</h1>
 		<p>Some definitions:- <strong>BV</strong> = points value of current bonus; <strong>RV</strong> = the "results in" value of current rule; <strong>N</strong> is the number of bonuses within the category, <strong>N1</strong> is <strong>N</strong>-1; <strong>SV</strong> is the resulting score.</p>
 		<p><strong>N</strong> is calculated as the number of bonuses per category, regardless of the setting of the "Calculate" flag. If the category is set to "any", "then </p>

@@ -29,6 +29,8 @@
 
   --selected-flag-border: 16px solid green;
   --widescreen-width: 1200px;
+  --popover-background: #f8eeec;
+  --popover-text: black;
 }
 * {
   margin: 0;
@@ -557,6 +559,26 @@ article.config {
   }
 }
 
+article.timepenalties {
+
+  width: 98%;
+  max-width: var(--default-max-width);
+  margin: auto;
+}
+
+article.timepenalty {
+  width: 98%;
+  max-width: var(--default-max-width);
+  margin: auto;
+  fieldset {
+    margin: 2em 0 0 0;
+    border: none;
+  }
+  input[type=number] {
+    width: 4em;
+  }
+}
+
 .error {
   margin: 1em;
   padding: 1em;
@@ -962,13 +984,14 @@ input.popover {
   text-align: inherit;
   cursor: pointer;
 }
-#individualbonushelp {
+ .popover {
   width: 90%;
   max-width: var(--default-max-width);
   margin: auto;
   padding: 10px;
   height: 90%;
-  background: pink;
+  background: var(--popover-background);
+  color: var(--popover-text);
   h1 {
     text-align: center;
   }
