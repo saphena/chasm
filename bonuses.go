@@ -121,7 +121,7 @@ var BonusDisplayScreen = `
 		<fieldset>
 			<label for="Image">Image</label>
 			<!--
-			<input type="text" id="Image"  data-b="{{.B.BonusID}}" data-save="saveBonus"oninput="oi(this)" onchange="saveBonus(this)" name="Image" class="Image" value="{{.B.Image}}">
+			<input type="text" id="Image"  data-b="{{.B.BonusID}}" data-save="saveBonus" oninput="oi(this)" onchange="saveBonus(this)" name="Image" class="Image" value="{{.B.Image}}">
 			-->
 			<select id="Image" data-b="{{.B.BonusID}}" name="Image" class="Image" onchange="saveBonus(this)">
 			%v
@@ -137,6 +137,19 @@ var BonusDisplayScreen = `
 			</select>
 		</fieldset>
 		</article>
+`
+
+var BonusQAFields = `
+<article class="bonus">
+<fieldset>
+	<label for="Question">Question</label>
+	<input type="text" id="Question" name="Question" data-b="{{.B.BonusID}}" data-save="saveBonus" oninput="oi(this)" onchange="saveBonus(this)" value="{{.B.Question}}">
+</fieldset>
+<fieldset>
+	<label for="Answer">Answer</label>
+	<input type="text" id="Answer" name="Answer" data-b="{{.B.BonusID}}" data-save="saveBonus" oninput="oi(this)" onchange="saveBonus(this)" value="{{.B.Answer}}">
+</fieldset>
+</article>
 `
 
 type bonuscat struct {
@@ -468,6 +481,12 @@ func show_bonus(w http.ResponseWriter, r *http.Request) {
 	checkerr(err)
 	err = t.Execute(w, br)
 	checkerr(err)
+	if CS.RallyUseQA {
+		t, err = template.New("BonusQA").Parse(BonusQAFields)
+		checkerr(err)
+		err = t.Execute(w, br)
+		checkerr(err)
+	}
 
 	sets := build_axisLabels()
 	for i := range sets {

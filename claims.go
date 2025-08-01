@@ -887,7 +887,7 @@ func showEBC(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `<div class="qa %v">`, hide)
 	fmt.Fprint(w, `<label for="AnswerSupplied">QQQ?</label> `)
 	fmt.Fprintf(w, `<input type="text" id="AnswerSupplied" name="AnswerSupplied" title="Answer supplied by entrant" class="AnswerSupplied" readonly value="%v">`, ebc.ExtraField)
-	answerok := strings.EqualFold(ebc.ExtraField, bcv.Answer) && bcv.Answer != ""
+	answerok := CS.RallyUseQA && strings.EqualFold(ebc.ExtraField, bcv.Answer) && bcv.Answer != ""
 	checked := ""
 	if answerok {
 		checked = "checked"
@@ -940,7 +940,7 @@ func showEBC(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `</span>`)
 
 	x = ""
-	fmt.Fprintf(w, `<input type="text" id="judgesnotes" name="JudgesNotes" oninput="killReload(this)" class="judgesnotes" placeholder="Notes"  value="%v">`, x)
+	fmt.Fprintf(w, `<input type="text" id="judgesnotes" name="JudgesNotes" class="judgesnotes" placeholder="Notes"  value="%v">`, x)
 	fmt.Fprint(w, `</div>`)
 	fmt.Fprint(w, `<div>`)
 
