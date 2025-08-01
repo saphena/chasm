@@ -998,6 +998,13 @@ input.popover {
   p {
     margin: 0 0 1em 0;
   }
+  ol,
+  ul {
+    margin: 1em;
+  }
+  li {
+    list-style-position: inside;
+  }
 }
 
 article.teamnames {

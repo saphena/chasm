@@ -9,8 +9,50 @@ import (
 	"strings"
 )
 
+const complexhelp = `
+<article id="complexhelp" class="popover" popover>
+<h1>Complex rules</h1>
+
+<p>Complex rules are grouped into <em>rulesets</em> each belonging to a single <em>Set</em>, <em>Category</em> and <em>Target</em> and ranked according to the value of the <em>Threshold</em>. The rule matching the highest value of threshold will be applied, others in the ruleset are ignored.</p>
+<p>Scores are built up as follows:-</p>
+<ol>
+	<li>Basic bonus score, maybe multiplier of last bonus</li>
+	<li>Uninterrupted sequence bonus</li>
+	<li>Complex rules affecting individual bonuses</li>
+	<li>Complex rules affecting groups of bonuses</li>
+</ol>
+<h2>How do I ?</h2>
+
+<p>The following gives examples of how to configure a ruleset to achieve certain specific scoring goals.</p>
+<h3>Award extra points for scoring N categories within an set</h3>
+<ul>
+    <li>One or more rules, each of type Categories Scored, Affects Group-based awards, Ordinary scoring rule.</li>
+    <li>Set Triggered when and Results in to the required values.</li>
+</ul>
+<h3>Deduct points for scoring less than N categories within an set</h3>
+<ul>
+    <li>Set a placeholder with a Triggered when value = N;</li>
+    <li>Set an Ordinary scoring rule with Triggered when = 0 and Results in to the negative value.</li>
+</ul>
+<h3>Award extra points for scoring N bonuses within a category</h3>
+<ul>
+    <li>One or more rules, each of type Bonuses per category, Affects Group-based awards, Ordinary scoring rule.</li>
+    <li>Set Triggered when and Results in to the required values.</li>
+</ul>
+<h3>Award DNF if not enough categories scored</h3>
+<ul>
+    <li>Set a placeholder with a Triggered when value = N;</li>
+    <li>Set a DNF if triggered rule with Triggered when = 0</li>
+</ul>
+<h3>Award DNF if too many categories scored</h3>
+<ul>
+    <li>Set a DNF is triggered rule with Triggered when set to the limit</li>
+</ul>
+</article>
+`
 const crintro = `<p>Complex rules and categories are used to enable scoring mechanisms beyond simple bonuses and combos.
 	Scores generated here can apply to individual bonuses or to groups of bonuses.
+	<input type="button" class="popover" popovertarget="complexhelp" value="[more details here]">
 	</p>`
 
 var tmpltOption = `<option value="%s" %s>%s</option>`
@@ -199,6 +241,7 @@ func showSingleRule(w http.ResponseWriter, r *http.Request, cr CompoundRule) {
 
 	//fmt.Printf("SSR = %v\n", r)
 	startHTMLBL(w, "Complex rules", r.FormValue("back"))
+	fmt.Fprint(w, complexhelp)
 	fmt.Fprint(w, crtopline)
 	fmt.Fprintf(w, `<div class="intro">%v</div>`, crintro)
 	fmt.Fprint(w, `</header>`)
@@ -243,6 +286,7 @@ func show_rules(w http.ResponseWriter, r *http.Request) {
 	rules := build_compoundRuleArray(leg)
 	axes := build_axisLabels()
 	startHTML(w, "Complex rules")
+	fmt.Fprint(w, complexhelp)
 	fmt.Fprintf(w, `<div class="intro">%v</div>`, crintro)
 
 	fmt.Fprint(w, `<div class="ruleset">`)
@@ -256,12 +300,14 @@ func show_rules(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `<div class="ruleset">`)
 	lastAxis := -1
 	lastCat := -1
+	LastTarget := -1
 	maincolor := true
 	for _, cr := range rules {
-		if cr.Axis != lastAxis || cr.Cat != lastCat {
+		if cr.Axis != lastAxis || cr.Cat != lastCat || cr.Target != LastTarget {
 			maincolor = !maincolor
 			lastAxis = cr.Axis
 			lastCat = cr.Cat
+			LastTarget = cr.Target
 		}
 		rowcls := ""
 		if !maincolor {
@@ -269,11 +315,9 @@ func show_rules(w http.ResponseWriter, r *http.Request) {
 		}
 		fmt.Fprintf(w, `<fieldset class="row target %v" data-rowid="%d" title="%v" onclick="showRule(this);">`, rowcls, cr.Ruleid, cr.Ruleid)
 		fmt.Fprintf(w, `<fieldset class="col">%s</fieldset>`, axes[cr.Axis-1])
-		cb := "any"
-		if cr.Method == 0 {
-			sqlx := fmt.Sprintf("SELECT BriefDesc FROM categories WHERE Axis=%d AND Cat=%d", cr.Axis, cr.Cat)
-			cb = getStringFromDB(sqlx, "any")
-		}
+
+		sqlx := fmt.Sprintf("SELECT BriefDesc FROM categories WHERE Axis=%d AND Cat=%d", cr.Axis, cr.Cat)
+		cb := getStringFromDB(sqlx, "any")
 		fmt.Fprintf(w, `<fieldset class="col">%s</fieldset>`, cb)
 		fmt.Fprintf(w, `<fieldset class="col">%s</fieldset>`, rt[cr.Ruletype])
 		fmt.Fprintf(w, `<fieldset class="col">&ge; %d</fieldset>`, cr.Min)

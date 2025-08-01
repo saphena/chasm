@@ -490,14 +490,14 @@ func calcEntrantTimes(entrant int) EntrantTimes {
 
 	rallyFinishtimex := getStringFromDB("SELECT FinishTime FROM rallyparams", "")
 
-	starttimex := getStringFromDB(fmt.Sprintf("SELECT StartTime FROM entrants WHERE EntrantID=%v", entrant), "")
+	starttimex := getStringFromDB(fmt.Sprintf("SELECT ifnull(StartTime,'') FROM entrants WHERE EntrantID=%v", entrant), "")
 	if starttimex == "" {
 		starttimex = getStringFromDB("SELECT StartTime FROM rallyparams", "")
 	}
 	if starttimex == "" {
 		return et
 	}
-	finishtimex := getStringFromDB(fmt.Sprintf("SELECT FinishTime FROM entrants WHERE EntrantID=%v", entrant), "")
+	finishtimex := getStringFromDB(fmt.Sprintf("SELECT ifnull(FinishTime,'') FROM entrants WHERE EntrantID=%v", entrant), "")
 	if finishtimex == "" {
 		finishtimex = rallyFinishtimex
 	}
@@ -1327,7 +1327,7 @@ func recalc_scorecard(entrant int) {
 
 		updateBonusCatCounts(SB) // Updating here gets the counts right but not points upgraded below
 
-		//		fmt.Printf("Feature Cat is %v %v\n", SB.CatValue[0], SB.CatValue)
+		//fmt.Printf("Feature Cat is %v %v\n", SB.CatValue[0], SB.CatValue)
 		LastBonusClaimed = BC
 
 		BasicPoints := BC.Points
@@ -1351,17 +1351,21 @@ func recalc_scorecard(entrant int) {
 			// Check how many hits
 			catcount := 0
 			if cr.Cat == 0 {
-				for _, cc := range AxisCounts[cr.Axis].CatCounts {
-					catcount += cc
+
+				for ix, cc := range AxisCounts[cr.Axis].CatCounts {
+					if ix > 0 { // avoid double-counting
+						catcount += cc
+					}
 				}
+
 			} else {
 				catcount += AxisCounts[cr.Axis].CatCounts[cr.Cat]
 			}
 			if catcount < cr.Min {
 				continue
 			}
-			//			dbg, _ := json.Marshal(cr)
-			//			fmt.Printf("%v [[ %v ]] %v\n", BC.Bonusid, string(dbg), catcount)
+			//dbg, _ := json.Marshal(cr)
+			//fmt.Printf("%v [[ %v ]] %v\n", BC.Bonusid, string(dbg), catcount)
 			if cr.Power == 0 {
 				PointsDesc = fmt.Sprintf("%d x %d", BasicPoints, catcount-1)
 				BasicPoints = BasicPoints * (catcount - 1)
@@ -1557,8 +1561,8 @@ func updateCatCounts(CatValue []int) {
 			}
 		}
 
-		//		dbg, _ := json.Marshal(AxisCounts[i])
-		//		fmt.Printf("Building %v\n", string(dbg))
+		//dbg, _ := json.Marshal(AxisCounts[i])
+		//fmt.Printf("Building %v\n", string(dbg))
 
 	}
 
