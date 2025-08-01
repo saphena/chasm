@@ -67,6 +67,7 @@ type BonusClaimVars struct {
 	Question       string
 	Answer         string
 	Leg            int
+	Exists         bool
 }
 
 type ClaimRecord struct {
@@ -145,18 +146,19 @@ func fetchBonusVars(b string) BonusClaimVars {
 	var ap int
 	var am int
 
-	sqlx := "SELECT ifnull(BriefDesc,BonusID),Points,ifnull(Notes,''),ifnull(Flags,''),AskPoints,RestMinutes,AskMinutes,ifnull(Image,''),ifnull(Question,''),ifnull(Answer,'')"
+	sqlx := "SELECT ifnull(BriefDesc,'" + CS.NoSuchBonus + "'),ifnull(Points,0),ifnull(Notes,''),ifnull(Flags,''),ifnull(AskPoints,0),ifnull(RestMinutes,0),ifnull(AskMinutes,0),ifnull(Image,''),ifnull(Question,''),ifnull(Answer,'')"
 	sqlx += " FROM bonuses WHERE BonusID='" + b + "'"
 
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
 	defer rows.Close()
 	if !rows.Next() {
-		res.BriefDesc = b
+		res.BriefDesc = CS.NoSuchBonus
 		return res
 	}
 	err = rows.Scan(&res.BriefDesc, &res.Points, &res.Notes, &res.Flags, &ap, &res.RestMins, &am, &res.Image, &res.Question, &res.Answer)
 	checkerr(err)
+	res.Exists = true
 	res.AskMins = am != 0
 	res.AskPoints = ap == 1
 	res.PointsAreMults = ap == 2
@@ -398,7 +400,7 @@ func list_EBC_claims(w http.ResponseWriter, r *http.Request) {
 
 	const sorry = "Sorry, no claims need judging at the moment &#128543;"
 
-	sqlx := `SELECT ebclaims.rowid,ebclaims.EntrantID,` + RiderNameSQL + `,ifnull(entrants.PillionName,''),ebclaims.BonusID,xbonus.BriefDesc,ebclaims.OdoReading,ebclaims.ClaimTime
+	sqlx := `SELECT ebclaims.rowid,ebclaims.EntrantID,` + RiderNameSQL + `,ifnull(entrants.PillionName,''),ebclaims.BonusID,ifnull(xbonus.BriefDesc,'` + CS.NoSuchBonus + `'),ebclaims.OdoReading,ebclaims.ClaimTime
 	 		FROM ebclaims LEFT JOIN entrants ON ebclaims.EntrantID=entrants.EntrantID
 			LEFT JOIN (SELECT BonusID,BriefDesc FROM bonuses) AS xbonus ON ebclaims.BonusID=xbonus.BonusID
 			 WHERE Processed=0 ORDER BY Decision DESC,FinalTime;`
@@ -431,6 +433,7 @@ func list_EBC_claims(w http.ResponseWriter, r *http.Request) {
 		var ebc ElectronicBonusClaim
 		err := rows.Scan(&ebc.Claimid, &ebc.EntrantID, &ebc.RiderName, &ebc.PillionName, &ebc.Bonusid, &ebc.BriefDesc, &ebc.OdoReading, &ebc.ClaimTime)
 		checkerr(err)
+		//fmt.Printf("%v == %v\n", ebc.Bonusid, ebc.BriefDesc)
 		n++
 		fmt.Fprintf(w, `<fieldset class="row ebc" data-claimid="%v" onclick="showEBC(this)">`, ebc.Claimid)
 		team := ebc.RiderName
@@ -681,7 +684,7 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 
 	hide = "hide"
 	//fmt.Printf("bd=%v\n", bd)
-	if bd.AskPoints {
+	if bd.AskPoints || true {
 		hide = ""
 	}
 	pm := "p"
@@ -812,7 +815,7 @@ func showEBC(w http.ResponseWriter, r *http.Request) {
 	//showReloadTicker(w, r.URL.String())
 	fmt.Fprint(w, `<h4>Judge this bonus claim or leave it undecided</h4>`)
 
-	fmt.Fprint(w, `<form id="ebcform" action="saveebc" method="post">`)
+	fmt.Fprint(w, `<form id="ebcform" action="saveebc" onsubmit="event.preventDefault()" method="post">`)
 	fmt.Fprint(w, `<div>`)
 	fmt.Fprintf(w, `<input type="hidden" name="EntrantID" value="%v">`, ebc.EntrantID)
 	fmt.Fprintf(w, `<input type="hidden" name="BonusID" value="%v">`, ebc.Bonusid)
@@ -824,7 +827,7 @@ func showEBC(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `<input type="hidden" name="NextURL" value="%v">`, r.URL.String())
 
 	fmt.Fprintf(w, `Entrant <span class="bold">%v %v</span>`, ebc.EntrantID, team)
-	x = getStringFromDB("SELECT BriefDesc FROM bonuses WHERE BonusID='"+ebc.Bonusid+"'", ebc.Bonusid)
+	x = bcv.BriefDesc
 	fmt.Fprintf(w, ` Bonus <span class="bold">%v %v</span>`, ebc.Bonusid, x)
 	fmt.Fprint(w, ` <span id="claimstats" class="link">Claimed @ `)
 	evidence := "Photo: " + ebc.AttachmentTime + "\n"
@@ -1038,8 +1041,8 @@ func intval(x string) int {
 func saveEBC(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
-	fmt.Println(r.Form)
-	fmt.Println(r.FormValue("Points"))
+	//	fmt.Println(r.Form)
+	//	fmt.Println(r.FormValue("Points"))
 
 	decision := intval(r.FormValue("Decision"))
 	processed := 0
@@ -1055,6 +1058,7 @@ func saveEBC(w http.ResponseWriter, r *http.Request) {
 	n, err := res.RowsAffected()
 	checkerr(err)
 	if n == 0 || decision < 0 {
+		fmt.Fprint(w, `{"ok":false,"msg":update failed}`)
 		return
 	}
 
@@ -1081,4 +1085,5 @@ func saveEBC(w http.ResponseWriter, r *http.Request) {
 	checkerr(err)
 	recalc_scorecard(intval(r.FormValue("EntrantID")))
 	rankEntrants(false)
+	fmt.Fprint(w, `{"ok":true,"msg":"ok"}`)
 }

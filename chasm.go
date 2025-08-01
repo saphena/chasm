@@ -199,7 +199,6 @@ func json_requests(w http.ResponseWriter, r *http.Request) {
 		return
 	case "saveebc":
 		saveEBC(w, r)
-		fmt.Fprint(w, `{"ok":true,"msg":"ok"}`)
 		return
 	case "savers":
 		updateReviewStatus(w, r)

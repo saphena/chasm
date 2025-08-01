@@ -78,6 +78,7 @@ type chasmSettings struct {
 	EBCImgSwapTitle     string
 	Email               emailSettings
 	UploadsFolder       string
+	NoSuchBonus         string
 }
 
 var CS chasmSettings
@@ -121,7 +122,8 @@ const defaultCS = `{
 	"EBCImgTitle":			"Entrant's image - click to resize",
 	"EBCImgSwapTitle":		"Click to view this image",
 	"Rally":				{"A1":"AAAAAAAAAAAAAA","A2":"22222222222222"},
-	"UploadsFolder":		"uploads"
+	"UploadsFolder":		"uploads",
+	"NoSuchBonus":			"** NO SUCH BONUS **"
 }`
 
 const debugDefaults = `{

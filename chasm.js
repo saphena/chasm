@@ -772,6 +772,10 @@ function closeEBC(obj) {
   dec.value = parseInt(obj.getAttribute("data-result"));
 
   console.log("Closing " + obj.name + " ==" + dec.value);
+  if (dec.value < 0) {
+    window.location.href="/ebclist"
+    return
+  }
   if (dec.value == 0) {
     applyCorrectAnswerBonus(true);
     if (obj.getAttribute("id") == "PercentPenalty") {
@@ -779,6 +783,7 @@ function closeEBC(obj) {
     }
   }
 
+  
   let url = "/x?f=saveebc";
   let inps = frm.getElementsByTagName("input");
   for (let i = 0; i < inps.length; i++) {
@@ -1026,6 +1031,7 @@ function applyPercentPenalty(apply) {
 
 function applyCorrectAnswerBonus(apply) {
   let qa = document.getElementById("QuestionAnswered");
+  if (!qa || !qa.checked) return;
   let qpts = parseInt(qa.getAttribute("data-pts"));
   let ptsinp = document.getElementById("Points");
   let pts = parseInt(ptsinp.value);

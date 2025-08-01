@@ -313,7 +313,7 @@ func build_scorecardBonusArray(CurrentLeg int) []ScorecardBonusDetail {
 	}
 
 	//	log.Println("Got here")
-	sqlx := "SELECT Bonusid, BriefDesc, Compulsory, Points, AskPoints, RestMinutes"
+	sqlx := "SELECT Bonusid, ifnull(BriefDesc,'** NO SUCH BONUS **'), Compulsory, Points, AskPoints, RestMinutes"
 	for i := 1; i <= NumCategoryAxes; i++ {
 		sqlx += ", Cat" + strconv.Itoa(i)
 	}
