@@ -80,13 +80,16 @@ func main() {
 	http.HandleFunc("/cats", showCategorySets)
 	http.HandleFunc("/certs", print_certs)
 	http.HandleFunc("DELETE /claim/{claimid}", deleteClaim)
-	http.HandleFunc("/claim", showClaim)
+	http.HandleFunc("/claim/{claim}", showClaim)
 	http.HandleFunc("/claims", list_claims)
+	http.HandleFunc("DELETE /class/{class}", deleteClass)
+	http.HandleFunc("/class/{class}", showClass)
+	http.HandleFunc("/classes", show_classes)
 	http.HandleFunc("/combo", show_combo)
 	http.HandleFunc("/combos", show_combos)
 	http.HandleFunc("/config", editConfigMain)
 	http.HandleFunc("/css", send_css)
-	http.HandleFunc("/ebc", showEBC)
+	http.HandleFunc("/ebc/{claim}", showEBC)
 	http.HandleFunc("/ebclist", list_EBC_claims)
 	http.HandleFunc("/editcert", edit_certificate)
 	http.HandleFunc("DELETE /entrant/{e}", deleteEntrant)
@@ -186,6 +189,9 @@ func json_requests(w http.ResponseWriter, r *http.Request) {
 		return
 	case "savecat":
 		updateCatName(w, r)
+		return
+	case "saveclass":
+		saveClass(w, r)
 		return
 	case "saveco":
 		saveCombo(w, r)

@@ -266,7 +266,7 @@ function showRule(obj) {
 }
 
 function showEBC(obj) {
-  window.location.href = "/ebc?c=" + obj.getAttribute("data-claimid");
+  window.location.href = "/ebc/" + obj.getAttribute("data-claimid");
 }
 
 function showFirstClaim() {
@@ -773,8 +773,8 @@ function closeEBC(obj) {
 
   console.log("Closing " + obj.name + " ==" + dec.value);
   if (dec.value < 0) {
-    window.location.href="/ebclist"
-    return
+    window.location.href = "/ebclist";
+    return;
   }
   if (dec.value == 0) {
     applyCorrectAnswerBonus(true);
@@ -783,7 +783,6 @@ function closeEBC(obj) {
     }
   }
 
-  
   let url = "/x?f=saveebc";
   let inps = frm.getElementsByTagName("input");
   for (let i = 0; i < inps.length; i++) {
@@ -1699,4 +1698,35 @@ function saveTimep(obj) {
   }
   stackTransaction(url, obj.id);
   sendTransactions();
+}
+
+function addNewClass() {
+  let url = "/class/0?back=/classes";
+  window.location.href = url;
+}
+async function deleteClass(obj) {
+  let clsid = document.getElementById("Class");
+  if (!clsid || clsid.value == "") return;
+  let url = "/class/" + clsid.value;
+  await fetch(url, { method: "DELETE" });
+  window.location.href = "/classes";
+}
+function saveClass(obj) {
+  let clsid = document.getElementById("Class");
+  if (!clsid) return;
+  let nm = obj.name;
+  let url = "/x?f=saveclass&c=" + clsid.value;
+  url += "&ff=" + nm;
+  let val = obj.value;
+  url += "&" + nm + "=" + encodeURIComponent(val);
+  console.log(url);
+  stackTransaction(url, obj.id);
+  sendTransactions();
+  switch (nm) {
+    case "AutoAssign":
+      let aa = document.getElementById("aafields");
+      if (!aa) return;
+      if (val == 0) aa.classList.add("hide");
+      else aa.classList.remove("hide");
+  }
 }

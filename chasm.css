@@ -560,7 +560,6 @@ article.config {
 }
 
 article.timepenalties {
-
   width: 98%;
   max-width: var(--default-max-width);
   margin: auto;
@@ -574,7 +573,7 @@ article.timepenalty {
     margin: 2em 0 0 0;
     border: none;
   }
-  input[type=number] {
+  input[type="number"] {
     width: 4em;
   }
 }
@@ -984,7 +983,7 @@ input.popover {
   text-align: inherit;
   cursor: pointer;
 }
- .popover {
+.popover {
   width: 90%;
   max-width: var(--default-max-width);
   margin: auto;
@@ -1032,6 +1031,41 @@ article.teamMembers {
     margin: 0.5em;
   }
 }
+
+article.classes {
+  width: 98%;
+  max-width: var(--default-max-width);
+  margin: auto;
+  div {
+    display: grid;
+    grid-template-columns: 1.5em 1fr 1fr 1fr 1fr 1fr;
+    grid-template-rows: auto;
+    span {
+      margin: 0 2px 0 0;
+    }
+  }
+}
+
+article.showclass {
+  width: 98%;
+  max-width: var(--default-max-width);
+  margin: auto;
+  input {
+    margin: 0 0 0 1em;
+  }
+  select {
+    margin: 0 0 0 1em;
+  }
+  fieldset {
+    border: none;
+    margin: 1em;
+  }
+}
+
+.small {
+  width: 4em;
+}
+
 
 .hide {
   display: none !important;

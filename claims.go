@@ -245,7 +245,7 @@ func list_claims(w http.ResponseWriter, r *http.Request) {
 		sel = "selected"
 	}
 	fmt.Fprintf(w, `<div class="select"">%v `, filter_icon)
-	fmt.Fprintf(w, `<button autofocus title="Add new claim" class="plus" onclick="window.location.href='/claim?c=0';return false">%v</button> <span id="fcc"></span>`, addnew_icon)
+	fmt.Fprintf(w, `<button autofocus title="Add new claim" class="plus" onclick="window.location.href='/claim/0';return false">%v</button> <span id="fcc"></span>`, addnew_icon)
 	fmt.Fprintf(w, ` <select name="esel" value="%v" title="Filter by entrant" onchange="reloadClaimslog()">`, esel)
 	fmt.Fprintf(w, `<option value="0" %v>all claims</option>`, sel)
 
@@ -376,7 +376,7 @@ func list_claims(w http.ResponseWriter, r *http.Request) {
 		if !ok {
 			rname = strconv.Itoa(cr.EntrantID)
 		}
-		fmt.Fprintf(w, `<fieldset class="row claims" onclick="window.location.href='/claim?c=%v'">`, claimid)
+		fmt.Fprintf(w, `<fieldset class="row claims" onclick="window.location.href='/claim/%v'">`, claimid)
 		fmt.Fprintf(w, `<fieldset class="col claims" title="%v">%v</fieldset>`, cr.EntrantID, rname)
 		fmt.Fprintf(w, `<fieldset class="col claims">%v</fieldset>`, cr.BonusID)
 		fmt.Fprintf(w, `<fieldset class="col claims">%v</fieldset>`, cr.OdoReading)
@@ -556,7 +556,7 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 
 	claimhdr := "Claims log"
-	claimid := intval(r.FormValue("c"))
+	claimid := intval(r.PathValue("claim"))
 	if claimid < 1 {
 		claimhdr = "Making new claim"
 	}
@@ -775,7 +775,7 @@ func showEBC(w http.ResponseWriter, r *http.Request) {
 	const answerBad = "&#10007;"
 	const answerTest = "&#8773;"
 
-	claimid := r.FormValue("c")
+	claimid := r.PathValue("claim")
 	if claimid == "" {
 		return
 	}
