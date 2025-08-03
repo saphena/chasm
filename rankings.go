@@ -11,6 +11,7 @@ type RanktabRecord struct {
 	CorrectedMiles int
 	PPM            float64
 	Rank           int
+	Class          int
 }
 
 type ByPoints []RanktabRecord
@@ -36,7 +37,7 @@ func loadRankTable(sqlx string) []RanktabRecord {
 	ranktab := make([]RanktabRecord, 0)
 	for rows.Next() {
 		var rt RanktabRecord
-		err = rows.Scan(&rt.EntrantID, &rt.TeamID, &rt.TotalPoints, &rt.CorrectedMiles, &rt.PPM, &rt.Rank)
+		err = rows.Scan(&rt.EntrantID, &rt.TeamID, &rt.TotalPoints, &rt.CorrectedMiles, &rt.PPM, &rt.Rank, &rt.Class)
 		checkerr(err)
 		ranktab = append(ranktab, rt)
 	}
@@ -48,7 +49,7 @@ func rankEntrants(intransaction bool) {
 	var sqlx string
 	var err error
 
-	sqlx = "SELECT EntrantID,TeamID,TotalPoints,CorrectedMiles,IfNull((TotalPoints*1.0)/CorrectedMiles,0) AS PPM,0 AS Rank FROM entrants WHERE EntrantStatus = "
+	sqlx = "SELECT EntrantID,TeamID,TotalPoints,CorrectedMiles,IfNull((TotalPoints*1.0)/CorrectedMiles,0) AS PPM,0 AS Rank,Class FROM entrants WHERE EntrantStatus = "
 	sqlx += strconv.Itoa(EntrantFinisher)
 	sqlx += " AND TeamID > 0"
 	sqlx += " ORDER BY TeamID"
@@ -86,7 +87,7 @@ func rankEntrants(intransaction bool) {
 	}
 	stmt.Close()
 
-	sqlx = "SELECT EntrantID,TeamID,TotalPoints,CorrectedMiles,IfNull((TotalPoints*1.0)/CorrectedMiles,0) AS PPM,0 AS Rank FROM entrants WHERE EntrantStatus = "
+	sqlx = "SELECT EntrantID,TeamID,TotalPoints,CorrectedMiles,IfNull((TotalPoints*1.0)/CorrectedMiles,0) AS PPM,0 AS Rank,Class FROM entrants WHERE EntrantStatus = "
 	sqlx += strconv.Itoa(EntrantFinisher)
 	sqlx += " ORDER BY TeamID"
 	if CS.RallyRankEfficiency {
@@ -115,7 +116,7 @@ func rankEntrants(intransaction bool) {
 	incN := 1
 	LastTeam = -1
 
-	sqlx = "UPDATE entrants SET FinishPosition=? WHERE EntrantID=?"
+	sqlx = "UPDATE entrants SET FinishPosition=?,Class=? WHERE EntrantID=?"
 
 	stmt, err = DBH.Prepare(sqlx)
 	checkerr(err)
@@ -156,8 +157,11 @@ func rankEntrants(intransaction bool) {
 		if rr.TeamID > 0 {
 			LastTeam = rr.TeamID
 		}
+		rr.Rank = finishPos
 
-		_, err = stmt.Exec(finishPos, rr.EntrantID)
+		cls := updateClass(rr)
+
+		_, err = stmt.Exec(finishPos, cls, rr.EntrantID)
 		checkerr(err)
 	}
 

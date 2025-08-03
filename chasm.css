@@ -1038,7 +1038,7 @@ article.classes {
   margin: auto;
   div {
     display: grid;
-    grid-template-columns: 1.5em 1fr 1fr 1fr 1fr 1fr;
+    grid-template-columns: 1.5em 1fr 1fr 1fr 1fr 1fr 1fr;
     grid-template-rows: auto;
     span {
       margin: 0 2px 0 0;
@@ -1061,7 +1061,12 @@ article.showclass {
     margin: 1em;
   }
 }
-
+.MinPPM {
+  width: 5em;
+}
+.MinPoints {
+  width: 5em;
+}
 .small {
   width: 4em;
 }

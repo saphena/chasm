@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"text/template"
 )
 
@@ -11,32 +12,49 @@ type classrec struct {
 	BriefDesc   string
 	AutoAssign  int
 	MinPoints   int
-	MinBonuses  int
-	BonusesReqd string
 	LowestRank  int
+	MinDistance int
+	MinPPMx     string
+	MinPPM      float64
 }
 
 func build_classlist() []classrec {
 
 	res := make([]classrec, 0)
-	sqlx := "SELECT Class,ifnull(BriefDesc,''),AutoAssign,MinPoints,MinBonuses,ifnull(BonusesReqd,''),LowestRank FROM classes ORDER BY Class"
+	sqlx := "SELECT Class,ifnull(BriefDesc,''),AutoAssign,MinPoints,LowestRank,MinDistance,ifnull(MinPPM,'0.0') FROM classes ORDER BY Class"
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
 	defer rows.Close()
 	for rows.Next() {
 		var cr classrec
-		err = rows.Scan(&cr.Class, &cr.BriefDesc, &cr.AutoAssign, &cr.MinPoints, &cr.MinBonuses, &cr.BonusesReqd, &cr.LowestRank)
+		err = rows.Scan(&cr.Class, &cr.BriefDesc, &cr.AutoAssign, &cr.MinPoints, &cr.LowestRank, &cr.MinDistance, &cr.MinPPMx)
 		checkerr(err)
+		cr.MinPPM, err = strconv.ParseFloat(cr.MinPPMx, 64)
+		if err != nil {
+			cr.MinPPM = 0.0
+		}
 		res = append(res, cr)
 	}
 	return res
 }
 
+const classpop = `
+<article id="classpop" class="popover" popover>
+<h1>CERTIFICATE CLASSES</h1>
+<p>Classes may be used to produce different certificates for different groups or 'classes' of entrant.</p>
+<p>Class can be assigned manually. This is used in the RBLR1000 to distinguish route for example but it could also be used to distinguish, say, novices from veterans or those riding ancient motorcycles.</p>
+<p>Class can also be assigned automatically using entrant dynamic scoring data. This could be used perhaps for producing different certificates for those on the podium or in the top 10.</p>
+<p>Class 0 is the default class for all entrants and may not have any filters applied. Other classes are examined in numeric order starting at 1 until the filter criteria are matched. If no matching class is found, 0 is applied.</p>
+<p>Elaborate schemes will need to be constructed carefully, the computer will not organise your thoughts for you. It will simply check class 1 - match?, if not check class2 - match?, ...</p>
+</article>
+
+`
+
 var classIntro = `
 <article class="intro">
-<p>Classes may be used to produce different certificates for different groups or 'classes' of entrant.</p>
-<p> Class can be assigned manually, as in the RBLR1000 to distinguish route for example, or can be assigned automatically using entrant scores, bonuses visited and/or rank.</p>
-<p>Class 0 is the default class for all entrants and may not have any filters applied. Other classes are examined in numeric order starting at 1 until the filter criteria are matched. If no matching class is found, 0 is applied.</p>
+<p>Classes may be used to produce different certificates for different groups or 'classes' of entrant. 
+<input type="button" class="popover" popovertarget="classpop" value="[click here for more details]">
+</p>
 </article>
 <p><br></p>
 `
@@ -47,7 +65,8 @@ var classlisthdr = `
 <article class="classes">
 <div class="row hdr">
 <span class="class">#</span><span>Class</span><span>Auto?</span><span class="minpoints">Points</span>
-<span class="minbonuses">Bonuses</span><span class="rank">Rank</span>
+<span class="minDistance">Distance</span><span class="MinPPM">P/D</span>
+<span class="rank">Rank</span>
 </div>
 </article>
 <hr>
@@ -60,6 +79,7 @@ func show_classes(w http.ResponseWriter, r *http.Request) {
 
 	startHTML(w, "Classes")
 
+	fmt.Fprint(w, classpop)
 	fmt.Fprint(w, classIntro)
 	fmt.Fprint(w, classlisthdr)
 
@@ -78,7 +98,8 @@ func show_classes(w http.ResponseWriter, r *http.Request) {
 		}
 		fmt.Fprintf(w, `<span>%v</span>`, ma)
 		fmt.Fprintf(w, `<span>%v</span>`, c.MinPoints)
-		fmt.Fprintf(w, `<span>%v</span>`, c.MinBonuses)
+		fmt.Fprintf(w, `<span>%v</span>`, c.MinDistance)
+		fmt.Fprintf(w, `<span>%v</span>`, c.MinPPM)
 		fmt.Fprintf(w, `<span>%v</span>`, c.LowestRank)
 		fmt.Fprint(w, `</div>`)
 	}
@@ -117,16 +138,19 @@ var tmpltShowClass = `
 <fieldset id="aafields" {{if eq .AutoAssign 0}}class="hide"{{end}}>
 	<fieldset>
 		<label for="MinPoints">Minimum points</label>
-		<input type="number" id="MinPoints" name="MinPoints" class="small" data-save="saveClass" oninput="oi(this)" onchange="saveClass(this)" value="{{.MinPoints}}">
+		<input type="number" id="MinPoints" name="MinPoints" class="MinPoints" data-save="saveClass" oninput="oi(this)" onchange="saveClass(this)" value="{{.MinPoints}}">
 	</fieldset>
-	<fieldset>
-		<label for="MinBonuses">Minimum bonuses</label>
-		<input type="number" id="MinBonuses" name="MinBonuses" class="small" data-save="saveClass" oninput="oi(this)" onchange="saveClass(this)" value="{{.MinBonuses}}">
+	
+	<fieldset title="Distance travelled in rally">
+		<label for="MinDistance">Minimum distance</label>
+		<input type="number" id="MinDistance" name="MinDistance" class="small" data-save="saveClass" oninput="oi(this)" onchange="saveClass(this)" value="{{.MinDistance}}">
 	</fieldset>
-	<fieldset>
-		<label for="BonusesReqd">Required bonuses</label>
-		<input type="text" id="BonusesReqd" name="BonusesReqd" data-save="saveClass" oninput="oi(this)" onchange="saveClass(this)" value="{{.BonusesReqd}}">
+	
+	<fieldset title="Points &div; distance">
+		<label for="MinPPM">Minimum efficiency</label>
+		<input type="number" id="MinPPM" name="MinPPM" class="MinPPM" data-save="saveClass" oninput="oi(this)" onchange="saveClass(this)" value="{{.MinPPM}}">
 	</fieldset>
+	
 	<fieldset>
 		<label for="LowestRank">Lowest rank</label>
 		<input type="number" id="LowestRank" name="LowestRank" class="small" data-save="saveClass" oninput="oi(this)" onchange="saveClass(this)" value="{{.LowestRank}}">
@@ -183,6 +207,7 @@ func showClass(w http.ResponseWriter, r *http.Request) {
 	classes := build_classlist()
 
 	startHTMLBL(w, "Class", r.FormValue("back"))
+	fmt.Fprint(w, classpop)
 
 	if class > 0 {
 		fmt.Fprint(w, classTopline)
@@ -198,4 +223,47 @@ func showClass(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
+}
+
+func updateClass(rt RanktabRecord) int {
+	//fmt.Printf("%v\n", rt)
+
+	cls := rt.Class
+
+	// If cls is an AutoAssigned class, it should be reset to 0 now
+	classes := build_classlist()
+	ok := false
+	for _, c := range classes {
+		if c.Class == cls {
+			if c.AutoAssign == 1 {
+				cls = 0
+			}
+			ok = true
+			break
+		}
+	}
+	if !ok {
+		cls = 0
+	}
+	for _, c := range classes {
+
+		if c.AutoAssign == 0 {
+			continue
+		}
+		//fmt.Printf("    %v\n", c)
+		if rt.TotalPoints < c.MinPoints {
+			continue
+		}
+		if rt.Rank > c.LowestRank {
+			continue
+		}
+		if rt.CorrectedMiles < c.MinDistance {
+			continue
+		}
+		if rt.PPM < c.MinPPM {
+			continue
+		}
+		cls = c.Class
+	}
+	return cls
 }

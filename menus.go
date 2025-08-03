@@ -37,9 +37,8 @@ var setupmenu = menu{
 
 var entrantmenu = menu{
 	{"Full entrant records", "All details of entrants", "/entrants", ""},
-	{"Odometer check-OUT", "Check-out at start of rally", "/odos?check=out", ""},
-	{"Odometer check-IN", "Check-in at end of rally", "/odos?check=in", ""},
 	{"Teams", "Maintain teams and membership", "/teams", ""},
+	{"Certificate Classes", "Classes", "/classes", ""},
 	{"Import entrants", "Load entrants from spreadsheet", "/import?type=entrants", ""},
 }
 
@@ -53,7 +52,6 @@ var bonusmenu = menu{
 var advancedmenu = menu{
 	{"Categories", "Categories for use with compound rules", "/cats", ""},
 	{"Complex calculation rules", "Scoring rules for use with categories", "/rules", ""},
-	{"Certificate Classes", "Classes", "/classes", ""},
 	{"Recalculate scorecards", "Recalculate scorecards", "/recalc", ""},
 }
 var menus = map[string]*menu{"main": &mainMenu, "setup": &setupmenu, "entrants": &entrantmenu, "bonuses": &bonusmenu, "asetup": &advancedmenu}
