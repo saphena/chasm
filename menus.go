@@ -20,9 +20,9 @@ var mainMenu = menu{
 	{"EBC claims judging", "Process incoming claims from email", "/ebclist", ""},
 	{"Review scorecards", "", "/cards", ""},
 	{"Current rankings", "Show state of play", "/qlist", ""},
-	{"Finisher certificates", "Print Finisher certificates", "/certs", "window.open(#url#,'certs')"},
 	{"Check-OUT", "Check-out at start of rally", "/odos?check=out", ""},
 	{"Check-IN", "Check-in at end of rally", "/odos?check=in", ""},
+	{"Reporting", "Certificates, analyses,exports", "/menu?menu=reports", ""},
 	{"Rally setup &amp; config", "Access all components", "/setup", ""},
 }
 
@@ -32,6 +32,7 @@ var setupmenu = menu{
 	{"Entrants", "Maintain entrant details", "/menu?menu=entrants", ""},
 	{"Bonuses / Combos", "Ordinary and combo bonuses", "/menu?menu=bonuses", ""},
 	{"Time penalties", "Time penalties", "/timep", ""},
+	{"Complex calculation rules", "Scoring rules for use with categories", "/rules", ""},
 	{"Advanced setup", "Advanced configuration", "/menu?menu=asetup", ""},
 }
 
@@ -44,6 +45,7 @@ var entrantmenu = menu{
 
 var bonusmenu = menu{
 	{"Ordinary bonuses", "Ordinary bonuses", "/bonuses", ""},
+	{"Bonus categories", "Categories for use with compound rules", "/cats", ""},
 	{"Combos", "Combination bonuses", "/combos", ""},
 	{"Import bonuses", "Load ordinary bonuses from spreadsheet", "/import?type=bonuses", ""},
 	{"Import combos", "Load combinations from spreadsheet", "/import?type=combos", ""},
@@ -54,7 +56,12 @@ var advancedmenu = menu{
 	{"Complex calculation rules", "Scoring rules for use with categories", "/rules", ""},
 	{"Recalculate scorecards", "Recalculate scorecards", "/recalc", ""},
 }
-var menus = map[string]*menu{"main": &mainMenu, "setup": &setupmenu, "entrants": &entrantmenu, "bonuses": &bonusmenu, "asetup": &advancedmenu}
+var reportsmenu = menu{
+	{"Finisher certificates", "Print Finisher certificates", "/certs", "window.open(#url#,'certs')"},
+	{"Current rankings", "Show state of play", "/qlist", ""},
+	{"Edit certificate content", "Maintain certificate templates", "/editcert", ""},
+}
+var menus = map[string]*menu{"main": &mainMenu, "setup": &setupmenu, "entrants": &entrantmenu, "bonuses": &bonusmenu, "asetup": &advancedmenu, "reports": &reportsmenu}
 
 func show_menu(w http.ResponseWriter, r *http.Request) {
 

@@ -202,7 +202,7 @@ func print_certs(w http.ResponseWriter, r *http.Request) {
 
 func save_certificate(w http.ResponseWriter, r *http.Request) {
 
-	//fmt.Fprintf(w, `<hr>%v</hr>`, r)
+	fmt.Printf(`%v`, r)
 
 	html := r.FormValue(("html"))
 	entrant := intval(r.FormValue("e"))
