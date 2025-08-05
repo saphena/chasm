@@ -73,6 +73,8 @@ func main() {
 	http.Handle("/images/", fileserver)
 	http.HandleFunc("/about", showAboutChasm)
 	http.HandleFunc("/report/ba", exportBonusesReport)
+	http.HandleFunc("/report/fincsv", exportFinisherCSV)
+	http.HandleFunc("/report/finjson", exportFinisherJSON)
 	http.HandleFunc("DELETE /bonus/{b}", deleteBonus)
 	http.HandleFunc("/bonus", show_bonus)
 	http.HandleFunc("POST /bonus/{b}", createBonus)

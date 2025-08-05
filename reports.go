@@ -6,11 +6,32 @@
 package main
 
 import (
+	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"reflect"
+	"strconv"
 	"strings"
+	"time"
 )
+
+type FinisherExport struct {
+	RiderFirst   string
+	RiderLast    string
+	RiderIBA     string
+	PillionFirst string
+	PillionLast  string
+	PillionIBA   string
+	Bike         string
+	BikeReg      string
+	Rank         int
+	Distance     int
+	Class        string
+	Phone        string
+	Email        string
+	Country      string
+}
 
 var bonus_anal_hdr = `
     <html>
@@ -185,4 +206,85 @@ func exportBonusesReport(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `</tbody></table>`)
 	fmt.Fprint(w, bonus_anal_script)
 	fmt.Fprint(w, `</article>`)
+}
+
+const exFinisherSQL = `
+SELECT ifnull(RiderFirst,''),ifnull(RiderLast,''),ifnull(RiderIBA,''),ifnull(PillionFirst,''),ifnull(PillionLast,''),ifnull(PillionIBA,'')
+,ifnull(Bike,''),ifnull(BikeReg,''),FinishPosition AS Rank,CorrectedMiles,ifnull(BriefDesc,''),ifnull(Phone,''),ifnull(Email,''),ifnull(Country,'UK')
+ FROM entrants LEFT JOIN classes ON entrants.Class=classes.Class WHERE Rank > 0 ORDER BY Rank
+`
+const exFinisherCols = `RiderFirst,RiderLast,RiderIBA,PillionFirst,PillionLast,PillionIBA,Bike,BikeReg,Rank,Distance,Class,Phone,Email,Country`
+
+func exportFinisherCSV(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "text/csv; charset=utf-8")
+	w.Header().Set("Content-Disposition", "attachment; filename=finishers.csv")
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	w.Header().Set("Pragma", "no-cache")
+	w.Header().Set("Expires", "0")
+
+	rows, err := DBH.Query(exFinisherSQL)
+	checkerr(err)
+	defer rows.Close()
+	fmt.Fprintln(w, exFinisherCols)
+	x := csv.NewWriter(w)
+	for rows.Next() {
+		var fx FinisherExport
+		err = rows.Scan(&fx.RiderFirst, &fx.RiderLast, &fx.RiderIBA, &fx.PillionFirst, &fx.PillionLast, &fx.PillionIBA, &fx.Bike, &fx.BikeReg, &fx.Rank, &fx.Distance, &fx.Class, &fx.Phone, &fx.Email, &fx.Country)
+		checkerr(err)
+		fxx := make([]string, 0)
+		fxx = append(fxx, fx.RiderFirst)
+		fxx = append(fxx, fx.RiderLast)
+		fxx = append(fxx, fx.RiderIBA)
+		fxx = append(fxx, fx.PillionFirst)
+		fxx = append(fxx, fx.PillionLast)
+		fxx = append(fxx, fx.PillionIBA)
+		fxx = append(fxx, fx.Bike)
+		fxx = append(fxx, fx.BikeReg)
+		fxx = append(fxx, strconv.Itoa(fx.Rank))
+		fxx = append(fxx, strconv.Itoa(fx.Distance))
+		fxx = append(fxx, fx.Class)
+		fxx = append(fxx, fx.Phone)
+		fxx = append(fxx, fx.Email)
+		fxx = append(fxx, fx.Country)
+		err = x.Write(fxx)
+		checkerr(err)
+	}
+	x.Flush()
+}
+
+func exportFinisherJSON(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("Content-Disposition", "attachment; filename=finishers.json")
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	w.Header().Set("Pragma", "no-cache")
+	w.Header().Set("Expires", "0")
+
+	mk := "M"
+	if CS.Basics.RallyUnitKms {
+		mk = "K"
+	}
+
+	fmt.Fprintf(w, `{"filetype":"ibachasm","fileversion": 1,"rally":"%v","mk":"%v","asat":"%v","finishers":[`, CS.Basics.RallyTitle, mk, time.Now().Format(timefmt))
+
+	rows, err := DBH.Query(exFinisherSQL)
+	checkerr(err)
+	defer rows.Close()
+	comma := false
+	for rows.Next() {
+		var fx FinisherExport
+		err = rows.Scan(&fx.RiderFirst, &fx.RiderLast, &fx.RiderIBA, &fx.PillionFirst, &fx.PillionLast, &fx.PillionIBA, &fx.Bike, &fx.BikeReg, &fx.Rank, &fx.Distance, &fx.Class, &fx.Phone, &fx.Email, &fx.Country)
+		checkerr(err)
+		b, err := json.Marshal(fx)
+		checkerr(err)
+		if comma {
+			fmt.Fprint(w, `,`)
+		}
+		fmt.Fprintln(w, string(b))
+		comma = true
+
+	}
+	fmt.Fprint(w, `]}`)
+
 }
