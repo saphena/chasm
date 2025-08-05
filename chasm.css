@@ -1071,6 +1071,14 @@ article.showclass {
   width: 4em;
 }
 
+article.reportba {
+  width:98%;
+  max-width: var(--default-max-width);
+  margin: auto;
+  table {
+    margin: 1em;
+  }
+}
 
 .hide {
   display: none !important;

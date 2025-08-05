@@ -60,6 +60,7 @@ var reportsmenu = menu{
 	{"Finisher certificates", "Print Finisher certificates", "/certs", "window.open(#url#,'certs')"},
 	{"Current rankings", "Show state of play", "/qlist", ""},
 	{"Edit certificate content", "Maintain certificate templates", "/editcert", ""},
+	{"Bonus analysis", "Exportable spreadsheet", "/report/ba", "window.open(#url#,'reports')"},
 }
 var menus = map[string]*menu{"main": &mainMenu, "setup": &setupmenu, "entrants": &entrantmenu, "bonuses": &bonusmenu, "asetup": &advancedmenu, "reports": &reportsmenu}
 

@@ -1,3 +1,8 @@
+// T O D O
+//
+// # Combo analysis
+//
+// v3 used CombosTicked stored in entrant record
 package main
 
 import (
@@ -9,14 +14,25 @@ import (
 
 var bonus_anal_hdr = `
     <html>
+	<head>
+	<title>Bonus analysis</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="/css?file=normalize">
+	<link rel="stylesheet" href="/css?file=maincss">
+	<script src="/js?file=mainscript"></script>
+
     <script src="https://bossanova.uk/jspreadsheet/v4/jexcel.js"></script>
     <script src="https://jsuites.net/v4/jsuites.js"></script>
     <link rel="stylesheet" href="https://bossanova.uk/jspreadsheet/v4/jexcel.css" type="text/css" />
     <link rel="stylesheet" href="https://jsuites.net/v4/jsuites.css" type="text/css" />
-    
-    <h1>%v</h1>
-    <h2>Bonus analysis</h2>
-    <p><button id="exportcsv">Save as CSV</button>  Flags: 
+    </head><body>
+	<header>
+`
+
+var bonus_anal_top = `
+<article class="reportba">
+    <p><button id="exportcsv">Save as CSV</button> <br> Flags: 
     <strong>A</strong>lert - <strong>B</strong>ike in photo - <strong>D</strong>aylight only - 
     <strong>F</strong>ace in photo - <strong>N</strong>ight only - <strong>R</strong>estricted - 
     <strong>T</strong>icket/receipt</p>
@@ -24,8 +40,19 @@ var bonus_anal_hdr = `
     <tr><th>Bonus</th><th>Name</th>
     <th>Claims</th><th>Points</th><th>Flags</th>%v<th>Combos</th>
     </tr></thead><tbody>
-	
-	`
+`
+
+/*
+var combo_anal_top = `
+<article class="reportcmb">
+<p><button id="exportcsv">Save as CSV</button></p>
+    <table id="bonusdump"><caption>%v</caption><thead>
+    <tr><th>Combo</th><th>Name</th>
+    <th>Points</th><th>Bonuses</th>Needed<th>Scored</th>
+    </tr></thead><tbody>
+`
+*/
+
 var bonus_anal_script = `
     <script>
         var table = jspreadsheet(document.getElementById('bonusdump'), {
@@ -100,7 +127,16 @@ func exportBonusesReport(w http.ResponseWriter, r *http.Request) {
 		cathdrs += `<th>` + sets[i] + `</th>`
 	}
 	buildCBA()
-	fmt.Fprintf(w, bonus_anal_hdr, CS.Basics.RallyTitle, CS.Basics.RallyTitle, cathdrs)
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	w.Header().Set("Pragma", "no-cache")
+	w.Header().Set("Expires", "0")
+
+	fmt.Fprint(w, bonus_anal_hdr)
+	showTopbar(w, "Bonus Analysis")
+	fmt.Fprint(w, `</header>`)
+	fmt.Fprintf(w, bonus_anal_top, CS.Basics.RallyTitle, cathdrs)
 	sqlx := EXPORT_BONUS_SELECT + cats + EXPORT_BONUS_FILES
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
@@ -148,4 +184,5 @@ func exportBonusesReport(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Fprint(w, `</tbody></table>`)
 	fmt.Fprint(w, bonus_anal_script)
+	fmt.Fprint(w, `</article>`)
 }
