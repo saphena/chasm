@@ -1080,6 +1080,11 @@ article.reportba {
   }
 }
 
+#closebutton.dirty {
+    background: var(--hover-background);
+  color: var(--hover-text);
+
+}
 .hide {
   display: none !important;
 }

@@ -99,7 +99,7 @@ function chgAxis(obj) {
 
   console.log(div);
   console.log(obj);
-  let url = "x?f=axiscats&a=" + obj.value + "&s=0";
+  let url = "/x?f=axiscats&a=" + obj.value + "&s=0";
   console.log(url);
   fetch(url)
     .then((response) => {
@@ -143,7 +143,7 @@ function fetchBonusDetails(obj) {
   const allflags = "ABDFNRT";
 
   let b = obj.value;
-  let url = "x?f=fetchb&b=" + b.toUpperCase();
+  let url = "/x?f=fetchb&b=" + b.toUpperCase();
   console.log(url);
   fetch(url)
     .then((response) => {
@@ -196,13 +196,14 @@ function fetchBonusDetails(obj) {
 
 function fetchEntrantDetails(obj) {
   let e = obj.value;
-  let url = "x?f=fetche&e=" + e;
+  let url = "/x?f=fetche&e=" + e;
   console.log(url);
   fetch(url)
     .then((response) => {
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
+      //console.log(response.text())
       return response.json();
     })
     .then((data) => {
@@ -211,7 +212,7 @@ function fetchEntrantDetails(obj) {
       } else {
         let ed = document.getElementById("entrantDetails");
         let edf = document.getElementById("edflag");
-        //console.log(data);
+        console.log(data);
         ed.innerHTML = data.name;
         if (data.team) {
           edf.classList.remove("hide");
@@ -965,6 +966,7 @@ function pasteNewClaim(obj) {
 
 function saveUpdatedClaim(obj) {
   let frm = document.getElementById("iclaim");
+  frm.setAttribute("data-unloadok",1);
   let url = "/x?f=saveclaim";
   let inps = frm.getElementsByTagName("input");
   for (let i = 0; i < inps.length; i++) {
@@ -1053,6 +1055,16 @@ function leaveUndecided() {
 function loadPage(pg) {
   console.log("loadPage called with '" + pg + "'");
   window.location.href = pg;
+}
+
+function setdirty(obj) {
+  let frm = obj.form
+  if (!frm) return true
+  let btn = document.getElementById("closebutton")
+  if (btn) btn.classList.add("dirty")
+  frm.setAttribute("data-unloadok",0)
+  console.log("setting dirty")
+  return true
 }
 
 // span includes img and input

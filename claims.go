@@ -376,7 +376,7 @@ func list_claims(w http.ResponseWriter, r *http.Request) {
 		if !ok {
 			rname = strconv.Itoa(cr.EntrantID)
 		}
-		fmt.Fprintf(w, `<fieldset class="row claims" onclick="window.location.href='/claim/%v'">`, claimid)
+		fmt.Fprintf(w, `<fieldset class="row claims" onclick="window.location.href='/claim/%v?back=/claims'">`, claimid)
 		fmt.Fprintf(w, `<fieldset class="col claims" title="%v">%v</fieldset>`, cr.EntrantID, rname)
 		fmt.Fprintf(w, `<fieldset class="col claims">%v</fieldset>`, cr.BonusID)
 		fmt.Fprintf(w, `<fieldset class="col claims">%v</fieldset>`, cr.OdoReading)
@@ -542,6 +542,19 @@ const claimTopline = `
 		</fieldset>
 	</div>
 `
+const unloadTrapper = `
+
+<script>
+window.addEventListener("beforeunload",function(e) {
+	let ifrm = document.getElementById('iclaim');
+	if (ifrm.getAttribute('data-unloadok')!='0') return true;
+	var confirmationMessage = 'OMG';
+	(e || window.event).returnValue = confirmationMessage;
+	return confirmationMessage;
+});
+</script>
+->
+`
 
 func showClaim(w http.ResponseWriter, r *http.Request) {
 
@@ -560,12 +573,12 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 	if claimid < 1 {
 		claimhdr = "Making new claim"
 	}
-	startHTMLBL(w, claimhdr, "claims")
+	startHTMLBL(w, claimhdr, "/claims")
 
 	fmt.Fprint(w, claimTopline)
 
 	fmt.Fprint(w, `</header><div class="claim">`)
-	fmt.Fprint(w, `<form id="iclaim">`)
+	fmt.Fprint(w, `<form id="iclaim" data-unloadok="1">`)
 
 	fmt.Fprintf(w, `<input type="hidden" id="claimid" name="claimid" value="%v">`, claimid)
 	if claimid < 1 {
@@ -585,7 +598,7 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Fprint(w, `<fieldset class="claimfield">`)
 	fmt.Fprint(w, `<label for="EntrantID">Entrant</label>`)
-	fmt.Fprint(w, `<input type="number" tabindex="2" id="EntrantID" name="EntrantID" class="EntrantID" oninput="fetchEntrantDetails(this)"`)
+	fmt.Fprint(w, `<input type="number" tabindex="2" id="EntrantID" name="EntrantID" class="EntrantID" oninput="setdirty(this);fetchEntrantDetails(this);"`)
 	if claimid > 0 {
 		fmt.Fprintf(w, ` readonly value="%v"`, cr.EntrantID)
 	}
@@ -609,7 +622,7 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 	if claimid > 0 {
 		af = "autofocus"
 	}
-	fmt.Fprintf(w, `<input type="text" tabindex="3" %v id="BonusID" name="BonusID" class="BonusID" oninput="fetchBonusDetails(this)" value="%v">`, af, cr.BonusID)
+	fmt.Fprintf(w, `<input type="text" tabindex="3" %v id="BonusID" name="BonusID" class="BonusID" oninput="setdirty(this);fetchBonusDetails(this)" value="%v">`, af, cr.BonusID)
 	fmt.Fprint(w, `<span>`)
 	fmt.Fprintf(w, ` <span id="bonusDetails">%v</span>`, bd.BriefDesc)
 
@@ -645,15 +658,15 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprint(w, `<fieldset class="claimfield">`)
 	fmt.Fprint(w, `<label for="OdoReading">Odo reading</label>`)
-	fmt.Fprintf(w, `<input type="number" tabindex="4" id="OdoReading" name="OdoReading" class="odo" value="%v">`, cr.OdoReading)
+	fmt.Fprintf(w, `<input type="number" tabindex="4" id="OdoReading" name="OdoReading" onchange="setdirty(this)" class="odo" value="%v">`, cr.OdoReading)
 	fmt.Fprint(w, `</fieldset>`)
 
 	fmt.Fprint(w, `<fieldset class="claimfield">`)
 	fmt.Fprint(w, `<label for="ClaimDate">Claim time</label>`)
 	fmt.Fprintf(w, `<input type="hidden" id="ClaimTimeISO" name="ClaimTime" value="%v">`, cr.ClaimTime)
 	fmt.Fprint(w, `<span>`)
-	fmt.Fprintf(w, `<input type="date" tabindex="13" id="ClaimDate" value="%v" onchange="fixClaimTimeISO()">`, claimdate)
-	fmt.Fprintf(w, ` <input type="time" tabindex="5" id="ClaimTime" value="%v" onchange="fixClaimTimeISO()">`, claimtime)
+	fmt.Fprintf(w, `<input type="date" tabindex="13" id="ClaimDate" value="%v" onchange="setdirty(this);fixClaimTimeISO()">`, claimdate)
+	fmt.Fprintf(w, ` <input type="time" tabindex="5" id="ClaimTime" value="%v" onchange="setdirty(this);fixClaimTimeISO()">`, claimtime)
 	fmt.Fprint(w, `</span>`)
 	fmt.Fprint(w, `</fieldset>`)
 
@@ -667,17 +680,17 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 	const BadResult = "&#9746;"
 
 	fmt.Fprint(w, `<label for="AnswerSupplied">Answer</label>`)
-	fmt.Fprintf(w, `<input id="AnswerSupplied" tabindex="6" name="AnswerSupplied" title="Answer supplied" class="AnswerSupplied" value="%v">`, cr.AnswerSupplied)
+	fmt.Fprintf(w, `<input id="AnswerSupplied" tabindex="6" name="AnswerSupplied"  title="Answer supplied" class="AnswerSupplied" value="%v">`, cr.AnswerSupplied)
 	checked := ""
 	if cr.QuestionAnswered {
 		checked = "checked"
 	}
-	fmt.Fprintf(w, ` <span>%v <input type="radio" tabindex="7" name="QuestionAnswered" data-pts="%v" onchange="applyCorrectAnswerBonus(this.checked)" id="QuestionAnswered" value="1" %v> `, GoodResult, CS.RallyQAPoints, checked)
+	fmt.Fprintf(w, ` <span>%v <input type="radio" tabindex="7" name="QuestionAnswered" data-pts="%v" onchange="setdirty(this);applyCorrectAnswerBonus(this.checked)" id="QuestionAnswered" value="1" %v> `, GoodResult, CS.RallyQAPoints, checked)
 	checked = ""
 	if !cr.QuestionAnswered {
 		checked = "checked"
 	}
-	fmt.Fprintf(w, ` %v <input class="" type="radio" tabindex="7" name="QuestionAnswered" onchange="applyCorrectAnswerBonus(!this.checked)" id="QuestionAnsweredN" value="0" %v> `, BadResult, checked)
+	fmt.Fprintf(w, ` %v <input class="" type="radio" tabindex="7" name="QuestionAnswered" onchange="setdirty(this);applyCorrectAnswerBonus(!this.checked)" id="QuestionAnsweredN" value="0" %v> `, BadResult, checked)
 
 	fmt.Fprintf(w, ` <span id="CorrectAnswer" title="Correct answer" class="correctanswer">%v</span></span>`, bd.Answer)
 	fmt.Fprint(w, `</fieldset>`)
@@ -693,7 +706,7 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Fprintf(w, `<fieldset id="askpoints" class="claimfield %v">`, hide)
 	fmt.Fprint(w, `<label for="Points">Points</label>`)
-	fmt.Fprintf(w, `<input type="number" tabindex="8" id="Points" name="Points" class="Points" data-pm="%v" value="%v">`, pm, cr.Points)
+	fmt.Fprintf(w, `<input type="number" tabindex="8" id="Points" name="Points" class="Points" onchange="setdirty(this)" data-pm="%v" value="%v">`, pm, cr.Points)
 	fmt.Fprint(w, `</fieldset>`)
 
 	hide = "hide"
@@ -702,13 +715,13 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Fprintf(w, `<fieldset class="claimfield %v">`, hide)
 	fmt.Fprint(w, `<label for="RestMinutes">Rest minutes</label>`)
-	fmt.Fprintf(w, `<input type="number" tabindex="9" id="RestMinutes" name="RestMinutes" class="RestMinutes" value="%v">`, cr.RestMinutes)
+	fmt.Fprintf(w, `<input type="number" tabindex="9" id="RestMinutes" name="RestMinutes" class="RestMinutes" onchange="setdirty(this)" value="%v">`, cr.RestMinutes)
 	fmt.Fprint(w, `</fieldset>`)
 
 	fmt.Fprint(w, `<fieldset class="claimfield">`)
 	fmt.Fprint(w, `<label for="DecisionSelect">Decision</label>`)
 	fmt.Fprintf(w, `<input type="hidden" id="chosenDecision" name="Decision" value="%v">`, cr.Decision)
-	fmt.Fprint(w, `<select id="DecisionSelect" tabindex="10" onchange="updateClaimDecision(this)">`)
+	fmt.Fprint(w, `<select id="DecisionSelect" tabindex="10" onchange="setdirty(this);updateClaimDecision(this)">`)
 	sel := ""
 	if cr.Decision < 0 {
 		sel = "selected"
@@ -735,16 +748,16 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 	if cr.PercentPenalty {
 		checked = "checked"
 	}
-	fmt.Fprintf(w, `<input type="checkbox" tabindex="14" id="PercentPenalty" onchange="applyPercentPenalty(this.checked)" data-unchecked="0" name="PercentPenalty" value="1" %v>`, checked)
+	fmt.Fprintf(w, `<input type="checkbox" tabindex="14" id="PercentPenalty" onchange="setdirty(this);applyPercentPenalty(this.checked)" data-unchecked="0" name="PercentPenalty" value="1" %v>`, checked)
 	fmt.Fprint(w, `</span>`)
 	fmt.Fprint(w, `</fieldset>`)
 
 	fmt.Fprint(w, `<fieldset class="claimfield">`)
 	fmt.Fprint(w, `<label for="JudgesNotes">Notes</label>`)
-	fmt.Fprintf(w, `<textarea tabindex="11" id="JudgesNotes" name="JudgesNotes" class="judgesnotes">%v</textarea>`, cr.JudgesNotes)
+	fmt.Fprintf(w, `<textarea tabindex="11" id="JudgesNotes" name="JudgesNotes" oninput="setdirty(this)" class="judgesnotes">%v</textarea>`, cr.JudgesNotes)
 	fmt.Fprint(w, `</fieldset>`)
 
-	fmt.Fprint(w, `<button class="closebutton" tabindex="12" onclick="saveUpdatedClaim(this);return false">Save updated claim</button>`)
+	fmt.Fprint(w, `<button class="closebutton" id="closebutton" tabindex="12" onclick="saveUpdatedClaim(this);return false">Save updated claim</button>`)
 
 	ebcimg := strings.Split(cr.Photo, ",")
 	for i := 0; i < len(ebcimg); i++ {
@@ -765,6 +778,7 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `</form>`)
 
 	fmt.Fprint(w, `</div>`)
+	fmt.Fprint(w, unloadTrapper)
 }
 
 func showEBC(w http.ResponseWriter, r *http.Request) {
