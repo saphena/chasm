@@ -83,7 +83,7 @@ var topbar = `
 </nav>
 `
 var reloadticker = `
-<div class="reloadticker">
+<div class="reloadticker noprint">
 	<progress id="reloadticker" data-active="1" max="30" value="30" title="refreshing soon"></progress>
 	<script>
 	setInterval(function() {

@@ -155,6 +155,7 @@ func update_odo(w http.ResponseWriter, r *http.Request) {
 	switch r.FormValue("ff") {
 	case "f":
 		sqlx = "OdoRallyFinish=" + r.FormValue("v")
+		sqlx += ",OdoCheckFinish=" + r.FormValue("v")
 
 		sqlx += ",CorrectedMiles=(" + r.FormValue("v") + " - IfNull(OdoRallyStart,0))"
 
@@ -170,6 +171,8 @@ func update_odo(w http.ResponseWriter, r *http.Request) {
 		sqlx += " AND EntrantStatus IN (" + strconv.Itoa(EntrantOK) + "," + strconv.Itoa(EntrantDNF) + ")"
 	case "s":
 		sqlx = "OdoRallyStart=" + r.FormValue("v")
+		sqlx += ",OdoCheckStart=" + r.FormValue("v")
+
 		sqlx += ",StartTime='" + dt + "'"
 		sqlx += ",EntrantStatus=" + strconv.Itoa(EntrantOK)
 		sqlx += " WHERE EntrantID=" + r.FormValue("e")

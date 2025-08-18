@@ -68,6 +68,58 @@ method      | integer   | Scoring method: 0 = any *minmatch* bonuses; 1 = first 
 bonuses     | text      | Comma separated list of bonus/special/combo IDs
 pointvalues | text      | Comma separated list of values
 
+## Table entrants
+
+This holds the main summary of each entrant.
+
+Field       | Datatype  | Notes
+---         | ---       | ---
+entrantid   | integer   | Unique identifier aka Flag
+bike        | text      | Make & model
+bikereg     | text      | Registration plate
+odokms      | text      | M=miles, K=kilometres
+ridername   | text      | Full name of rider (deprecated)
+riderfirst  | text      | Rider's first name
+riderlast   | text      | Rider's last name
+rideriba    | text      | Rider's IBA membership number
+pillionname | text      | Full name of pillion (deprecated)
+pillionfirst| text      | Pillion's first name
+pillionlast | text      | Pillion's last name
+pillioniba  | text      | Pillion's IBA membership number
+teamid      | integer   | 0 = not team member
+country     | text      | Country of origin
+odocheckstart | integer | Odo reading during Check-out
+odocheckfinish | integer| Odo reading during Check-in
+odochecktrip| float     | Deprecated
+odoscalefactor | float  | 1.0
+correctedmiles | integer| Distance ridden during rally 
+starttime   | timestamp | Rally start, check-out or first claim time
+finishtime  | timestamp | Check-in or final claim time
+bonusesvisited | text   | Deprecated
+combosticked   | text   | Deprecated
+rejectedclaims | text   | Deprecated
+totalpoints | integer   | Final points score
+finishposition | integer| Finisher rank
+scoringnow  | integer   | Deprecated
+scoredby    | text      | Deprecated
+extradata   | text      | Key=value pairs
+class       | integer   | Certificate class
+scorex      | text      | Detailed scorecard
+phone       | text      | Rider's phone
+email       | text      | Comma-separated list of authorised email addresses
+nokname     | text      | Name of emergency contact
+nokphone    | text      | Emergency contact's phone
+nokrelation | text      | How is NoK related to rider
+bcmethod    | integer   | 1 = emailed bonus claims
+restminutes | integer   | Number of minutes rest accrued
+confirmed   | integer   | 0 - unknown usage
+cohort      | integer   | 0 - future use
+lastreviewed| timestamp | Time of last rally team review
+reviewstatus| integer   | 0 = not reviewed; 1 = team happy; 2 = team NOT happy; 3 = entrant happy
+
+
+
+
 
 ## Datatypes
 

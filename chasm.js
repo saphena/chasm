@@ -603,13 +603,13 @@ function saveEntrant(obj) {
   sendTransactions();
 }
 
-function saveRS(obj) {
+async function saveRS(obj) {
   let e = obj.getAttribute("data-e");
   let url = "/x?f=savers&e=" + e;
   url += "&rs=" + obj.value;
   console.log("saveRS: " + url);
-  stackTransaction(url, obj.id);
-  sendTransactions();
+  await fetch(url);
+  window.location.href = "/cards";
 }
 function saveSetupConfig(obj) {
   console.log("saveSetupConfig called");
@@ -829,22 +829,45 @@ function reloadClaimslog() {
   let frm = document.getElementById("claimslogfrm");
 
   let url = "/claims?x=x";
-  let inps = frm.getElementsByTagName("select");
+  let inps = frm.querySelectorAll("select, input");
   for (let i = 0; i < inps.length; i++) {
     let nm = inps[i].getAttribute("name");
     if (nm && nm != "") {
-      url +=
-        "&" +
-        nm +
-        "=" +
-        encodeURIComponent(
+      url += "&" + nm + "=";
+      if (inps[i].type == "select")
+        url += encodeURIComponent(
           inps[i].options[inps[i].selectedIndex].getAttribute("value")
         );
+      else url += encodeURIComponent(inps[i].value);
     }
   }
 
   console.log(url);
   window.location.href = url;
+}
+
+function reseqClaimslog(nseq) {
+  let sseq = document.getElementById("sseq");
+  let dseq = document.getElementById("dseq");
+  if (!sseq || !dseq) return;
+  if (sseq.value == nseq) {
+    if (dseq.value == "desc") dseq.value = "";
+    else dseq.value = "desc";
+  } else {
+    sseq.value = nseq;
+    dseq.value = "";
+  }
+  reloadClaimslog();
+}
+function resetClaimslogFilter() {
+  let frm = document.getElementById("claimslogfrm");
+
+  let inps = frm.querySelectorAll("select, input");
+  for (let i = 0; i < inps.length; i++) {
+    if (inps[i].type == "select") inps[i].selectedIndex = 0;
+    else inps[i].value = "";
+  }
+  reloadClaimslog();
 }
 
 function showQHotChanged(obj) {
@@ -966,7 +989,7 @@ function pasteNewClaim(obj) {
 
 function saveUpdatedClaim(obj) {
   let frm = document.getElementById("iclaim");
-  frm.setAttribute("data-unloadok",1);
+  frm.setAttribute("data-unloadok", 1);
   let url = "/x?f=saveclaim";
   let inps = frm.getElementsByTagName("input");
   for (let i = 0; i < inps.length; i++) {
@@ -1058,13 +1081,13 @@ function loadPage(pg) {
 }
 
 function setdirty(obj) {
-  let frm = obj.form
-  if (!frm) return true
-  let btn = document.getElementById("closebutton")
-  if (btn) btn.classList.add("dirty")
-  frm.setAttribute("data-unloadok",0)
-  console.log("setting dirty")
-  return true
+  let frm = obj.form;
+  if (!frm) return true;
+  let btn = document.getElementById("closebutton");
+  if (btn) btn.classList.add("dirty");
+  frm.setAttribute("data-unloadok", 0);
+  console.log("setting dirty");
+  return true;
 }
 
 // span includes img and input

@@ -64,10 +64,20 @@ var resetDatabaseForm = `
     <option value="1">1 - Just clear out my testing claims, etc</option>
     <option value="2">2 - Clear all scoring and entrants</option>
     <option value="3">3 - Rebuild everything from scratch</option>
+    <option value="4">4 - Rally testing - reset demo database</option>
     </select> <button id="firstchoiceplease" onclick="doit(this)">Do it now!</button></fieldset>`
 
 func doTheReset(w http.ResponseWriter, r *http.Request) {
 
+	zl := intval(r.FormValue("zaplevel"))
+	switch zl {
+	case 4:
+		// Rally testing demo reset
+		// reset dateranges
+		// zap claims but unprocess ebclaims
+		// rebuild scorecards
+		// reset entrant status/odos
+	}
 }
 
 func showResetChoiceConfirmation(w http.ResponseWriter, lvl int, txt string) {
@@ -101,6 +111,7 @@ func showResetOptions(w http.ResponseWriter, r *http.Request) {
 	showResetChoiceConfirmation(w, 1, "clear out all bonus claims, clear the scorecards, reset start times and make the rally ready for a live start")
 	showResetChoiceConfirmation(w, 2, "clear out all bonus claims and DELETE THE ENTRANTS, leaving the rally ready to load the entrants")
 	showResetChoiceConfirmation(w, 3, "clear out EVERYTHING and build the rally from scratch")
+	showResetChoiceConfirmation(w, 4, "reset the testing database")
 	fmt.Fprint(w, `</article>`)
 
 	fmt.Fprint(w, `</body></html>`)

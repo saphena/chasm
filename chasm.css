@@ -44,6 +44,11 @@ body {
   background-color: var(--regular-background);
 }
 
+form {
+  display: inline;
+  padding: 0;
+  margin: 0;
+}
 fieldset {
   padding: 0;
 }
@@ -190,7 +195,11 @@ fieldset.inline {
   display: inline;
   border: none;
 }
-
+fieldset.filter  {
+  padding: 2px 2px 3px 3px;
+  border: 1px solid;
+  margin-bottom: 2px;
+}
 .bold {
   font-weight: bold;
 }
@@ -279,6 +288,9 @@ button.minus {
 
 .link {
   cursor: pointer;
+}
+.sort {
+  cursor: ns-resize;
 }
 
 #about_chasm {
@@ -592,7 +604,8 @@ article.timepenalty {
   padding: 5px;
 }
 
-h4 {
+h4,
+.h4 {
   margin: 0.5em 1em 0.5em 0;
   font-size: 1.5em;
 }

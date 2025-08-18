@@ -56,6 +56,25 @@ type EntrantDBRecord struct {
 	FinishTimeTime       string
 }
 
+type EntrantDetails struct {
+	EntrantID         int
+	RiderName         string
+	PillionName       string
+	TeamID            int
+	RiderFirst        string
+	RiderLast         string
+	PillionFirst      string
+	PillionLast       string
+	ReviewedByTeam    int
+	AcceptedByEntrant int
+	LastReviewed      string
+	ReviewStatus      int
+}
+
+// SQL for safely retrieving full names
+const RiderNameSQL = "ifnull(entrants.RiderName,ifnull(entrants.RiderFirst,'') || ' ' || ifnull(entrants.RiderLast,'')) AS RiderName"
+const PillionNameSQL = "ifnull(entrants.PillionName,ifnull(entrants.PillionFirst,'') || ' ' || ifnull(entrants.PillionLast,'')) AS PillionName"
+
 func ajaxFetchEntrantDetails(w http.ResponseWriter, r *http.Request) {
 
 	e := intval(r.FormValue("e"))

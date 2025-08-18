@@ -289,12 +289,16 @@ DROP TABLE IF EXISTS "entrants";
 CREATE TABLE IF NOT EXISTS "entrants" (
 	"EntrantID"	INTEGER,
 	"Bike"	TEXT,
+	"BikeMake"	TEXT,
+	"BikeModel"	TEXT,
 	"BikeReg"	TEXT,
 	"RiderName"	TEXT,
 	"RiderFirst"	TEXT,
+	"RiderLast" TEXT,
 	"RiderIBA"	INTEGER,
 	"PillionName"	TEXT,
 	"PillionFirst"	TEXT,
+	"PillionLast" TEXT,
 	"PillionIBA"	INTEGER,
 	"TeamID"	INTEGER NOT NULL DEFAULT 0,
 	"Country"	TEXT DEFAULT 'UK',
@@ -327,15 +331,9 @@ CREATE TABLE IF NOT EXISTS "entrants" (
 	"BCMethod"	INTEGER NOT NULL DEFAULT 1,
 	"RestMinutes"	INTEGER NOT NULL DEFAULT 0,
 	"Confirmed"	INTEGER NOT NULL DEFAULT 0,
-	"AvgSpeed"	TEXT,
 	"Cohort"	INTEGER NOT NULL DEFAULT 0,
-	"RiderLast" TEXT,
-	"PillionLast" TEXT,
-	"ReviewedByTeam"	INTEGER NOT NULL DEFAULT 0,
-	"AcceptedByEntrant"	INTEGER NOT NULL DEFAULT 0,
 	"LastReviewed"	TEXT,
-	"BikeMake"	TEXT,
-	"BikeModel"	TEXT,
+	"ReviewStatus" INTEGER NOT NULL DEFAULT 0,
 	PRIMARY KEY("EntrantID")
 );
 COMMIT;

@@ -4,18 +4,14 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 )
 
 const (
-	notreviewed   = 0
-	reviewedok    = 1
-	reviewedwrong = 2
-)
-const (
-	notaccepted = 0
-	acceptedok  = 1
+	rs_notreviewed  = 0
+	rs_teamhappy    = 1
+	rs_teamnothappy = 2
+	rs_entranthappy = 3
 )
 
 type ScorecardRec struct {
@@ -31,6 +27,7 @@ type ScorecardRec struct {
 	ReviewedByTeam    int
 	AcceptedByEntrant int
 	LastReviewed      string
+	ReviewStatus      int
 }
 
 func recalc_handler(w http.ResponseWriter, r *http.Request) {
@@ -72,11 +69,12 @@ func showScorecard(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	entrant := intval(r.FormValue("e"))
 	if entrant < 1 {
+		showScorecards(w, r)
 		return
 	}
 	sqlx := "SELECT " + RiderNameSQL
 	sqlx += ",ifnull(PillionName,''),FinishPosition,TeamID,ifnull(CorrectedMiles,0),EntrantStatus,ifnull(Scorex,''),TotalPoints"
-	sqlx += ",ReviewedByTeam,AcceptedByEntrant,ifnull(LastReviewed,'')"
+	sqlx += ",ReviewedByTeam,AcceptedByEntrant,ifnull(LastReviewed,''),ReviewStatus"
 	sqlx += " FROM entrants WHERE EntrantID=" + strconv.Itoa(entrant)
 
 	rows, err := DBH.Query(sqlx)
@@ -84,11 +82,12 @@ func showScorecard(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	if !rows.Next() {
+		showScorecards(w, r)
 		return
 	}
 
 	var sr ScorecardRec
-	err = rows.Scan(&sr.RiderName, &sr.PillionName, &sr.Rank, &sr.TeamID, &sr.Miles, &sr.Status, &sr.Scorex, &sr.Points, &sr.ReviewedByTeam, &sr.AcceptedByEntrant, &sr.LastReviewed)
+	err = rows.Scan(&sr.RiderName, &sr.PillionName, &sr.Rank, &sr.TeamID, &sr.Miles, &sr.Status, &sr.Scorex, &sr.Points, &sr.ReviewedByTeam, &sr.AcceptedByEntrant, &sr.LastReviewed, &sr.ReviewStatus)
 	checkerr(err)
 	team := sr.RiderName
 	if sr.PillionName != "" {
@@ -110,26 +109,26 @@ func showScorecard(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `<div class="topline noprint"><span>#%v %v</span><span>%v %v</span><span>%v points</span><span>%v</span>`, entrant, team, sr.Miles, mk, sr.Points, EntrantStatusLits[sr.Status])
 	fmt.Fprintf(w, `<select id="ReviewStatus" name="ReviewStatus" data-e="%v" onchange="saveRS(this);">`, entrant)
 	sel := ""
-	if sr.ReviewedByTeam == notreviewed && sr.AcceptedByEntrant == notaccepted {
-		sel = " selected"
+	if sr.ReviewStatus == rs_notreviewed {
+		sel = "selected"
 	}
-	fmt.Fprintf(w, `<option value="%v,%v" %v>not reviewed</option>`, notreviewed, notaccepted, sel)
+	fmt.Fprintf(w, `<option value="%v" %v>not reviewed</option>`, rs_notreviewed, sel)
 	sel = ""
-	if sr.ReviewedByTeam == reviewedok && sr.AcceptedByEntrant == notaccepted {
-		sel = " selected"
+	if sr.ReviewStatus == rs_teamhappy {
+		sel = "selected"
 	}
-	fmt.Fprintf(w, `<option value="%v,%v" %v>Team happy</option>`, reviewedok, notaccepted, sel)
+	fmt.Fprintf(w, `<option value="%v" %v>Team happy</option>`, rs_teamhappy, sel)
 
 	sel = ""
-	if sr.ReviewedByTeam == reviewedwrong && sr.AcceptedByEntrant == notaccepted {
-		sel = " selected"
+	if sr.ReviewStatus == rs_teamnothappy {
+		sel = "selected"
 	}
-	fmt.Fprintf(w, `<option value="%v,%v" %v>Team UNHAPPY</option>`, reviewedwrong, notaccepted, sel)
+	fmt.Fprintf(w, `<option value="%v" %v>Team UNHAPPY</option>`, rs_teamnothappy, sel)
 	sel = ""
-	if sr.AcceptedByEntrant == acceptedok {
+	if sr.ReviewStatus == rs_entranthappy {
 		sel = " selected"
 	}
-	fmt.Fprintf(w, `<option value="%v,%v" %v>Rider AGREES</option>`, reviewedok, acceptedok, sel)
+	fmt.Fprintf(w, `<option value="%v" %v>Rider AGREES</option>`, rs_entranthappy, sel)
 
 	fmt.Fprint(w, `</select>`)
 	fmt.Fprint(w, `</div>`) //topline
@@ -150,7 +149,7 @@ func showScorecards(w http.ResponseWriter, r *http.Request) {
 
 	startHTML(w, "Scorecards")
 
-	sqlx := "SELECT ifnull(RiderFirst,''),ifnull(RiderLast,''),ifnull(PillionName,''),EntrantID,ReviewedByTeam,AcceptedByEntrant,ifnull(LastReviewed,'') FROM entrants ORDER BY RiderLast,RiderFirst"
+	sqlx := "SELECT ifnull(RiderFirst,''),ifnull(RiderLast,''),ifnull(PillionName,''),EntrantID,ReviewedByTeam,AcceptedByEntrant,ifnull(LastReviewed,''),ReviewStatus FROM entrants ORDER BY RiderLast,RiderFirst"
 
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
@@ -159,6 +158,7 @@ func showScorecards(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `<article class="reviewhdr"><form action="/score" class="reviewhdr">`)
 	fmt.Fprint(w, `<label for="EntrantID">Entrant</label> `)
 	fmt.Fprint(w, `<input type="number" autofocus id="EntrantID" class="EntrantID" name="e"> `)
+	fmt.Fprint(w, `<input type="hidden" name="back" value="cards">`)
 	fmt.Fprint(w, `<button> show </button>`)
 	fmt.Fprint(w, `</form></article>`)
 
@@ -173,7 +173,7 @@ func showScorecards(w http.ResponseWriter, r *http.Request) {
 
 	for rows.Next() {
 		var e EntrantDetails
-		err = rows.Scan(&e.RiderFirst, &e.RiderLast, &e.PillionName, &e.EntrantID, &e.ReviewedByTeam, &e.AcceptedByEntrant, &e.LastReviewed)
+		err = rows.Scan(&e.RiderFirst, &e.RiderLast, &e.PillionName, &e.EntrantID, &e.ReviewedByTeam, &e.AcceptedByEntrant, &e.LastReviewed, &e.ReviewStatus)
 		checkerr(err)
 		fmt.Fprintf(w, `<div class="row link" onclick="window.location.href='/score?e=%v&back=cards';">`, e.EntrantID)
 		fmt.Fprintf(w, `<span class="col">%v</span>`, e.EntrantID)
@@ -189,13 +189,13 @@ func showScorecards(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `<span class="col nums" title="Bonus claims"><span class="numclaims">%v</span> <span class="rejects">%v</span></span>`, printNZ(nc), printNZ(nr))
 
 		fmt.Fprint(w, `<span class="col" title="Review status">`)
-		switch e.ReviewedByTeam {
-		case reviewedok:
+		switch e.ReviewStatus {
+		case rs_teamhappy:
 			fmt.Fprint(w, chk)
-		case reviewedwrong:
+		case rs_teamnothappy:
 			fmt.Fprint(w, xxx)
 		}
-		if e.AcceptedByEntrant > 0 {
+		if e.ReviewStatus == rs_entranthappy {
 			fmt.Fprintf(w, ` %v`, accepted)
 		}
 		fmt.Fprint(w, `</span>`)
@@ -211,15 +211,11 @@ func updateReviewStatus(w http.ResponseWriter, r *http.Request) {
 
 	const ReviewDateFmt = "2006-01-02T15:04"
 
-	rs := strings.Split(r.FormValue("rs"), ",")
-	if len(rs) < 2 {
-		fmt.Fprint(w, `{"ok":false,"msg":"need 2 values"}`)
-		return
-	}
+	rs := intval(r.FormValue("rs"))
 	e := intval(r.FormValue("e"))
 	lrdt := time.Now().Format(ReviewDateFmt)
-	sqlx := fmt.Sprintf("UPDATE entrants SET ReviewedByTeam=%v,AcceptedByEntrant=%v,LastReviewed='%v' WHERE EntrantID=%v", rs[0], rs[1], lrdt, e)
-	fmt.Println(sqlx)
+	sqlx := fmt.Sprintf("UPDATE entrants SET ReviewStatus=%v,LastReviewed='%v' WHERE EntrantID=%v", rs, lrdt, e)
+	//fmt.Println(sqlx)
 	_, err := DBH.Exec(sqlx)
 	checkerr(err)
 	fmt.Fprint(w, `{"ok":true,"msg":"ok"}`)

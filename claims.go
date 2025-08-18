@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -91,23 +90,20 @@ type ClaimRecord struct {
 	Leg              int
 }
 
-type EntrantDetails struct {
-	EntrantID         int
-	RiderName         string
-	PillionName       string
-	TeamID            int
-	RiderFirst        string
-	RiderLast         string
-	PillionFirst      string
-	PillionLast       string
-	ReviewedByTeam    int
-	AcceptedByEntrant int
-	LastReviewed      string
-}
-
 const maximg = 3
 
-//var EntrantSelector map[int]string
+const judginghelp = `
+<article id="judginghelp" class="popover" popover>
+<h1>CLAIM JUDGING</h1>
+<p>You are asked to assess the bonus claim by comparing it against the specific requirements. Is it a good photo? Is the face in the photo? etc</p>
+<p>Specific bonus requirements are shown including icons indicating "Alert", "Bike in photo", "Daylight only", "Face in photo", "Night only", "Restricted hours/access" and "Receipt/ticket required"</p>
+<p><strong>Accept good claim</strong> awards the points and other benefits of the claim</p>
+<p><strong>Leave undecided</strong> does not judge the claim but returns it to the end of the queue</p>
+<p>Other responses apart from "Exclude claim" reject the claim for the stated reason. The claim and reason for rejection will appear on the scorecard. This is the normal method of rejecting claims and should be used in preference to excluding the claim.</p>
+<p><strong>Exclude claim</strong> excludes the claim from scoring altogether. It should only rarely be used as nothing will appear on the scorecard. It is intended for use with claims which are not judgeable as opposed to those which can be accepted or rejected.</p>
+<p>Clicking the info line after '@' will make odo reading and claim time editable</p>
+</article>
+`
 
 func deleteClaim(w http.ResponseWriter, r *http.Request) {
 
@@ -224,73 +220,47 @@ func list_claims(w http.ResponseWriter, r *http.Request) {
 	const cross_icon = "&#10006;"
 	const undecided_icon = "?"
 
-	const filter_icon = "" //"&#65509;"
+	const filterclear = `-`
 
 	r.ParseForm()
 
 	EntrantSelector := loadEntrantsList()
 
+	sseq := r.FormValue("sseq")
+	dseq := r.FormValue("dseq")
+
+	if sseq == "" {
+		sseq = "ClaimTime"
+		dseq = "desc"
+	}
 	esel := intval(r.FormValue("esel"))
 
-	startHTML(w, "Claims log")
+	startHTML(w, "CLAIMS LOG")
 
 	fmt.Fprint(w, `<div class="claimslog">`)
 
 	showReloadTicker(w, r.URL.String())
-	fmt.Fprint(w, `<h4>Claims log</h4>`)
+
+	fmt.Fprintf(w, `<button autofocus title="Add new claim" class="plus" onclick="window.location.href='/claim/0';return false">%v</button> `, addnew_icon)
 
 	fmt.Fprint(w, `<form id="claimslogfrm">`)
-	sel := ""
-	if esel == 0 {
-		sel = "selected"
-	}
-	fmt.Fprintf(w, `<div class="select"">%v `, filter_icon)
-	fmt.Fprintf(w, `<button autofocus title="Add new claim" class="plus" onclick="window.location.href='/claim/0';return false">%v</button> <span id="fcc"></span>`, addnew_icon)
-	fmt.Fprintf(w, ` <select name="esel" value="%v" title="Filter by entrant" onchange="reloadClaimslog()">`, esel)
-	fmt.Fprintf(w, `<option value="0" %v>all claims</option>`, sel)
 
-	keys := make([]int, 0, len(EntrantSelector))
+	fmt.Fprintf(w, `<input type="hidden" id="sseq" name="sseq" value="%v">`, sseq)
+	fmt.Fprintf(w, `<input type="hidden" id="dseq" name="dseq" value="%v">`, dseq)
 
-	for key := range EntrantSelector {
-		keys = append(keys, key)
-	}
+	fmt.Fprint(w, `<fieldset class="inline filter"><legend>Filters</legend>`)
 
-	sort.SliceStable(keys, func(i, j int) bool {
-		return EntrantSelector[keys[i]] < EntrantSelector[keys[j]]
-	})
+	fmt.Fprintf(w, `<span class="button" title="Clear filters, show everything" onclick="resetClaimslogFilter();"> %v </span> &nbsp;`, filterclear)
 
-	for _, k := range keys {
-		sel = ""
-		if k == esel {
-			sel = "selected"
-		}
-		fmt.Fprintf(w, `<option value="%v" %v>%v</option>`, k, sel, EntrantSelector[k])
-	}
-	fmt.Fprint(w, `</select>`)
+	fmt.Fprintf(w, `<input name="esel" onchange="reloadClaimslog()" placeholder="flag" class="EntrantID" value="%v">`, r.FormValue("esel"))
 
 	bsel := r.FormValue("bsel")
-	sel = ""
+	fmt.Fprintf(w, `<input name="bsel" onchange="reloadClaimslog()" placeholder="bonus" class="BonusID" value="%v">`, bsel)
+
+	sel := ""
 	if bsel == "" {
 		sel = "selected"
 	}
-	fmt.Fprintf(w, ` <select name="bsel" value="%v" title="Filter by Bonus" onchange="reloadClaimslog()">`, bsel)
-	fmt.Fprintf(w, `<option value="" %v>all claims</option>`, sel)
-	sqlx := "SELECT BonusID FROM bonuses ORDER BY BonusID"
-	rows, err := DBH.Query(sqlx)
-	checkerr(err)
-	defer rows.Close()
-	for rows.Next() {
-		var b string
-		sel = ""
-		err = rows.Scan(&b)
-		checkerr(err)
-		if b == bsel {
-			sel = "selected"
-		}
-		fmt.Fprintf(w, `<option value="%v" %v>%v</option>`, b, sel, b)
-	}
-	rows.Close()
-	fmt.Fprint(w, `</select>`)
 
 	dsel := r.FormValue("dsel")
 	sel = ""
@@ -315,12 +285,24 @@ func list_claims(w http.ResponseWriter, r *http.Request) {
 		sel = "selected"
 	}
 	fmt.Fprintf(w, `<option value="u" %v>Undecided claims only</option>`, sel)
+
+	for ix, msg := range CS.CloseEBC {
+		if ix < 1 {
+			continue
+		}
+		sel = ""
+		if dsel == strconv.Itoa(ix) {
+			sel = "selected"
+		}
+		fmt.Fprintf(w, `<option value="%v" %v>%v</option>`, ix, sel, msg)
+	}
 	fmt.Fprint(w, `</select>`)
+
+	fmt.Fprint(w, `</fieldset>`)
 
 	fmt.Fprint(w, `</form>`)
 
-	fmt.Fprint(w, `</div>`)
-	sqlx = `SELECT claims.rowid,ifnull(LoggedAt,''),ClaimTime,claims.EntrantID,BonusID,OdoReading,Decision,ifnull(JudgesNotes,'') FROM claims`
+	sqlx := `SELECT claims.rowid,ifnull(LoggedAt,''),ClaimTime,claims.EntrantID,BonusID,OdoReading,Decision,ifnull(JudgesNotes,'') FROM claims`
 	sqlx += " LEFT JOIN entrants ON claims.EntrantID=entrants.EntrantID"
 	where := ""
 	if esel > 0 {
@@ -330,7 +312,7 @@ func list_claims(w http.ResponseWriter, r *http.Request) {
 		if where != "" {
 			where += " AND "
 		}
-		where += "BonusID='" + bsel + "'"
+		where += "BonusID='" + strings.ToUpper(bsel) + "'"
 	}
 	if dsel != "" {
 		if where != "" {
@@ -342,6 +324,8 @@ func list_claims(w http.ResponseWriter, r *http.Request) {
 			where += "< 0"
 		case "g":
 			where += "= 0"
+		case "1", "2", "3", "4", "5", "6", "7", "8", "9":
+			where += "= " + dsel
 		default:
 			where += "> 0"
 		}
@@ -349,17 +333,17 @@ func list_claims(w http.ResponseWriter, r *http.Request) {
 	if where != "" {
 		sqlx += " WHERE " + where
 	}
-	sqlx += " ORDER BY ClaimTime DESC"
+	sqlx += " ORDER BY " + sseq + " " + dseq
 
-	rows, err = DBH.Query(sqlx)
+	rows, err := DBH.Query(sqlx)
 	checkerr(err)
 	defer rows.Close()
 
 	fmt.Fprint(w, `<fieldset class="row claims hdr">`)
-	fmt.Fprint(w, `<fieldset class="col claims hdr">Entrant</fieldset>`)
-	fmt.Fprint(w, `<fieldset class="col claims hdr">Bonus</fieldset>`)
-	fmt.Fprint(w, `<fieldset class="col claims hdr">Odo</fieldset>`)
-	fmt.Fprint(w, `<fieldset class="col claims hdr">Time</fieldset>`)
+	fmt.Fprint(w, `<fieldset class="col claims hdr sort" onclick="reseqClaimslog('RiderLast')" >Entrant</fieldset>`)
+	fmt.Fprint(w, `<fieldset class="col claims hdr sort" onclick="reseqClaimslog('BonusID')" >Bonus</fieldset>`)
+	fmt.Fprint(w, `<fieldset class="col claims hdr sort" onclick="reseqClaimslog('OdoReading')" >Odo</fieldset>`)
+	fmt.Fprint(w, `<fieldset class="col claims hdr sort" onclick="reseqClaimslog('ClaimTime')" >Time</fieldset>`)
 	fmt.Fprint(w, `<fieldset class="col claims hdr mid">Good?</fieldset>`)
 	fmt.Fprint(w, `</fieldset>`)
 
@@ -377,7 +361,7 @@ func list_claims(w http.ResponseWriter, r *http.Request) {
 			rname = strconv.Itoa(cr.EntrantID)
 		}
 		fmt.Fprintf(w, `<fieldset class="row claims" onclick="window.location.href='/claim/%v?back=/claims'">`, claimid)
-		fmt.Fprintf(w, `<fieldset class="col claims" title="%v">%v</fieldset>`, cr.EntrantID, rname)
+		fmt.Fprintf(w, `<fieldset class="col claims" >%v #%v</fieldset>`, rname, cr.EntrantID)
 		fmt.Fprintf(w, `<fieldset class="col claims">%v</fieldset>`, cr.BonusID)
 		fmt.Fprintf(w, `<fieldset class="col claims">%v</fieldset>`, cr.OdoReading)
 		fmt.Fprintf(w, `<fieldset class="col claims">%v</fieldset>`, logtime(cr.ClaimTime))
@@ -401,14 +385,14 @@ func list_EBC_claims(w http.ResponseWriter, r *http.Request) {
 	const sorry = "Sorry, no claims need judging at the moment &#128543;"
 
 	sqlx := `SELECT ebclaims.rowid,ebclaims.EntrantID,` + RiderNameSQL + `,ifnull(entrants.PillionName,''),ebclaims.BonusID,ifnull(xbonus.BriefDesc,'` + CS.NoSuchBonus + `'),ebclaims.OdoReading,ebclaims.ClaimTime
-	 		FROM ebclaims LEFT JOIN entrants ON ebclaims.EntrantID=entrants.EntrantID
-			LEFT JOIN (SELECT BonusID,BriefDesc FROM bonuses) AS xbonus ON ebclaims.BonusID=xbonus.BonusID
-			 WHERE Processed=0 ORDER BY Decision DESC,FinalTime;`
+			 		FROM ebclaims LEFT JOIN entrants ON ebclaims.EntrantID=entrants.EntrantID
+					LEFT JOIN (SELECT BonusID,BriefDesc FROM bonuses) AS xbonus ON ebclaims.BonusID=xbonus.BonusID
+					 WHERE Processed=0 ORDER BY Decision DESC,FinalTime;`
 
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
 
-	startHTML(w, "Process EBC claims")
+	startHTML(w, "Outstanding claim submissions")
 
 	fmt.Fprint(w, `<div class="ebclist">`)
 
@@ -454,16 +438,19 @@ func list_EBC_claims(w http.ResponseWriter, r *http.Request) {
 func loadEntrantsList() map[int]string {
 
 	res := make(map[int]string)
-	sqlx := "SELECT EntrantID," + RiderNameSQL + ",ifnull(PillionName,'') FROM entrants"
+	sqlx := "SELECT EntrantID, ifnull(RiderFirst,''),ifnull(RiderLast,'')," + PillionNameSQL + " FROM entrants"
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
 	defer rows.Close()
 	for rows.Next() {
 		var e int
+		var rl string
+		var rf string
 		var rn string
 		var pn string
-		err = rows.Scan(&e, &rn, &pn)
+		err = rows.Scan(&e, &rf, &rl, &pn)
 		checkerr(err)
+		rn = "<strong>" + rl + "</strong>" + ", " + rf
 		if pn != "" {
 			rn += " &amp; " + pn
 		}
@@ -805,7 +792,7 @@ func showEBC(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	startHTML(w, "EBC claim judging")
+	startHTML(w, "Claim judging")
 
 	var ebc ElectronicBonusClaim
 	err = rows.Scan(&ebc.EntrantID, &ebc.Bonusid, &ebc.OdoReading, &ebc.ClaimTime, &ebc.Subject, &ebc.ExtraField, &ebc.AttachmentTime, &ebc.DateTime, &ebc.FirstTime, &ebc.FinalTime, &ebc.EmailID)
@@ -825,9 +812,11 @@ func showEBC(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprint(w, `</header>`)
 
+	fmt.Fprint(w, judginghelp)
+
 	fmt.Fprint(w, `<article class="showebc">`)
 	//showReloadTicker(w, r.URL.String())
-	fmt.Fprint(w, `<h4>Judge this bonus claim or leave it undecided</h4>`)
+	fmt.Fprint(w, `<p class="h4">Judge this bonus claim or leave it undecided <input type="button" class="popover" style="font-size: .8em;" popovertarget="judginghelp" value="[click for help]"></p>`)
 
 	fmt.Fprint(w, `<form id="ebcform" action="saveebc" onsubmit="event.preventDefault()" method="post">`)
 	fmt.Fprint(w, `<div>`)

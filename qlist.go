@@ -13,7 +13,6 @@ type RankRecord struct {
 	Distance int
 	Points   int
 	Eff      float64
-	Speed    string
 	Entrant  int
 }
 
@@ -65,21 +64,21 @@ func show_qlist(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `</form>`)
 
 	fmt.Fprint(w, `<fieldset class="row hdr rankings">`)
-	fmt.Fprint(w, `<fieldset class="col hdr mid link" onclick="reloadRankings('seq','FinishPosition')">Rank</fieldset>`)
-	fmt.Fprint(w, `<fieldset class="col hdr link" onclick="reloadRankings('seq','RiderName')">Name</fieldset>`)
+	fmt.Fprint(w, `<fieldset class="col hdr mid sort" onclick="reloadRankings('seq','FinishPosition')">Rank</fieldset>`)
+	fmt.Fprint(w, `<fieldset class="col hdr sort" onclick="reloadRankings('seq','RiderName')">Name</fieldset>`)
 
 	mk := CS.UnitMilesLit
 	if CS.Basics.RallyUnitKms {
 		mk = CS.UnitKmsLit
 
 	}
-	fmt.Fprintf(w, `<fieldset class="col hdr mid link" onclick="reloadRankings('seq','CorrectedMiles')">%v</fieldset>`, mk)
-	fmt.Fprint(w, `<fieldset class="col hdr right link" onclick="reloadRankings('seq','TotalPoints')">Points</fieldset>`)
-	fmt.Fprintf(w, `<fieldset class="col hdr right link" onclick="reloadRankings('seq','PPM')">P&divide;%v</fieldset>`, string(mk[0]))
+	fmt.Fprintf(w, `<fieldset class="col hdr mid sort" onclick="reloadRankings('seq','CorrectedMiles')">%v</fieldset>`, mk)
+	fmt.Fprint(w, `<fieldset class="col hdr right sort" onclick="reloadRankings('seq','TotalPoints')">Points</fieldset>`)
+	fmt.Fprintf(w, `<fieldset class="col hdr right sort" onclick="reloadRankings('seq','PPM')">P&divide;%v</fieldset>`, string(mk[0]))
 	fmt.Fprint(w, `</fieldset></div><!-- rankings --><hr></header>`)
 
 	sqlx := "SELECT ifnull(FinishPosition,0)," + RiderNameSQL + ",ifnull(PillionName,''),ifnull(CorrectedMiles,0),ifnull(TotalPoints,0),EntrantStatus"
-	sqlx += ",IfNull((TotalPoints*1.0) / CorrectedMiles,0) As PPM,ifnull(AvgSpeed,''),EntrantID"
+	sqlx += ",IfNull((TotalPoints*1.0) / CorrectedMiles,0) As PPM,EntrantID"
 	sqlx += " FROM entrants"
 	sqlx += " WHERE EntrantStatus IN ("
 	sqlx += strconv.Itoa(EntrantFinisher) + "," + strconv.Itoa(EntrantDNF)
@@ -101,7 +100,7 @@ func show_qlist(w http.ResponseWriter, r *http.Request) {
 		var rr RankRecord
 		var pn string
 
-		err = rows.Scan(&rr.Rank, &rr.Name, &pn, &rr.Distance, &rr.Points, &rr.Status, &rr.Eff, &rr.Speed, &rr.Entrant)
+		err = rows.Scan(&rr.Rank, &rr.Name, &pn, &rr.Distance, &rr.Points, &rr.Status, &rr.Eff, &rr.Entrant)
 		checkerr(err)
 		if pn != "" {
 			rr.Name += " &amp; " + pn

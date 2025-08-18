@@ -251,7 +251,7 @@ func json_requests(w http.ResponseWriter, r *http.Request) {
 
 func central_dispatch(w http.ResponseWriter, r *http.Request) {
 
-	startHTML(w, "S c o r e M a s t e r")
+	startHTML(w, "<span  onclick='showAboutChasm(this)'>S c o r e M a s t e r</span>")
 
 	showMenu(w, "main")
 }

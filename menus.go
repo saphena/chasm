@@ -16,24 +16,24 @@ type menuItem struct {
 type menu []menuItem
 
 var mainMenu = menu{
-	{"Claims log", "Full list of processed claims", "/claims", ""},
-	{"EBC claims judging", "Process incoming claims from email", "/ebclist", ""},
+	{"Judge new claims", "Process incoming claims from email", "/ebclist", ""},
 	{"Review scorecards", "", "/cards", ""},
-	{"Current rankings", "Show state of play", "/qlist", ""},
-	{"Check-OUT", "Check-out at start of rally", "/odos?check=out", ""},
-	{"Check-IN", "Check-in at end of rally", "/odos?check=in", ""},
-	{"Reporting", "Certificates, analyses,exports", "/menu?menu=reports", ""},
+	{"Show current rankings", "Show state of play", "/qlist", ""},
+	{"Show all claims", "Full list of processed claims", "/claims", ""},
+	{"Check-OUT @ start", "Take odo readings at start of rally", "/odos?check=out", ""},
+	{"Check-IN @ finish", "Take odo readings at end of rally", "/odos?check=in", ""},
+	{"Reporting", "Certificates, analyses,exports", "/menu?menu=Reports", ""},
 	{"Rally setup &amp; config", "Access all components", "/setup", ""},
 }
 
 var setupmenu = menu{
 	{"Rally Parameters", "Configuration of this rally", "/config", ""},
 	{"Edit certificate content", "Maintain certificate templates", "/editcert", ""},
-	{"Entrants", "Maintain entrant details", "/menu?menu=entrants", ""},
-	{"Bonuses / Combos", "Ordinary and combo bonuses", "/menu?menu=bonuses", ""},
+	{"Entrants", "Maintain entrant details", "/menu?menu=Entrants", ""},
+	{"Bonuses / Combos", "Ordinary and combo bonuses", "/menu?menu=Bonuses", ""},
 	{"Time penalties", "Time penalties", "/timep", ""},
 	{"Complex calculation rules", "Scoring rules for use with categories", "/rules", ""},
-	{"Advanced setup", "Advanced configuration", "/menu?menu=asetup", ""},
+	{"Here be dragons!", "Rally database utilities", "/menu?menu=Utilities", ""},
 }
 
 var entrantmenu = menu{
@@ -52,9 +52,8 @@ var bonusmenu = menu{
 }
 
 var advancedmenu = menu{
-	{"Categories", "Categories for use with compound rules", "/cats", ""},
-	{"Complex calculation rules", "Scoring rules for use with categories", "/rules", ""},
 	{"Recalculate scorecards", "Recalculate scorecards", "/recalc", ""},
+	{"Reset Rally", "Reset the rally database", "/reset", ""},
 }
 var reportsmenu = menu{
 	{"Finisher certificates", "Print Finisher certificates", "/certs", "window.open(#url#,'certs')"},
@@ -64,7 +63,7 @@ var reportsmenu = menu{
 	{"Export Finishers CSV", "Download CSV of Finishers", "/report/fincsv", ""},
 	{"Export Finishers JSON", "Download JSON of Finishers", "/report/finjson", ""},
 }
-var menus = map[string]*menu{"main": &mainMenu, "setup": &setupmenu, "entrants": &entrantmenu, "bonuses": &bonusmenu, "asetup": &advancedmenu, "reports": &reportsmenu}
+var menus = map[string]*menu{"main": &mainMenu, "Setup": &setupmenu, "Entrants": &entrantmenu, "Bonuses": &bonusmenu, "Utilities": &advancedmenu, "Reports": &reportsmenu}
 
 func show_menu(w http.ResponseWriter, r *http.Request) {
 
@@ -80,9 +79,9 @@ func show_menu(w http.ResponseWriter, r *http.Request) {
 
 func show_setup(w http.ResponseWriter, r *http.Request) {
 
-	startHTML(w, "setup")
+	startHTML(w, "Setup")
 
-	showMenu(w, "setup")
+	showMenu(w, "Setup")
 }
 
 func showMenu(w http.ResponseWriter, menu string) {

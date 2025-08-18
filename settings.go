@@ -115,7 +115,7 @@ const defaultCS = `{
 	"FlagRestrictedTitle": 	"Restricted access",
 	"FlagReceiptTitle":		"Need a receipt (ticket)",
 	"CloseEBCUndecided":	"Leave undecided",
-	"CloseEBC":				["Accept good claim","No photo","Wrong/unclear photo","Out of hours/disallowed","Face not in photo","Bike not in photo","Flag not in photo","Missing rider/pillion","Missing receipt","Claim excluded" ],
+	"CloseEBC":				["Accept good claim","No photo","Wrong/unclear photo","Out of hours/disallowed","Face not in photo","Bike not in photo","Flag not in photo","Missing rider/pillion","Missing receipt","** EXCLUDE CLAIM **" ],
 	"ImgBonusFolder":		"images/bonuses/",
 	"ImgEbcFolder":			"images/ebcimg/",
 	"RallyBookImgTitle":	"Rally book photo",
@@ -163,10 +163,6 @@ var tzlist = []string{
 	"Europe/Warsaw",
 	"Europe/Zurich",
 }
-
-// SQL for safely retrieving full names
-const RiderNameSQL = "ifnull(entrants.RiderName,ifnull(entrants.RiderFirst,'') || ' ' || ifnull(entrants.RiderLast,'')) AS RiderName"
-const PillionNameSQL = "ifnull(entrants.PillionName,ifnull(entrants.PillionFirst,'') || ' ' || ifnull(entrants.PillionLast,'')) AS PillionName"
 
 var configLiteralsTemplate = `
 
