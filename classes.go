@@ -189,8 +189,13 @@ func deleteClass(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sqlx := "DELETE FROM classes WHERE Class=" + clsid
+
 	_, err := DBH.Exec(sqlx)
 	checkerr(err)
+	sqlx = "UPDATE entrants SET Class=0 WHERE Class=" + clsid
+	_, err = DBH.Exec(sqlx)
+	checkerr(err)
+
 	fmt.Fprint(w, `{"ok":true,"msg":"ok"}`)
 }
 func saveClass(w http.ResponseWriter, r *http.Request) {
@@ -238,7 +243,7 @@ func showClass(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateClass(rt RanktabRecord) int {
-	//fmt.Printf("%v\n", rt)
+	//fmt.Printf("updateClass %v\n", rt)
 
 	cls := rt.Class
 
@@ -266,12 +271,13 @@ func updateClass(rt RanktabRecord) int {
 		if rt.TotalPoints < c.MinPoints {
 			continue
 		}
-		if rt.Rank > c.LowestRank {
+		if rt.Rank > c.LowestRank && c.LowestRank > 0 {
 			continue
 		}
 		if rt.CorrectedMiles < c.MinDistance {
 			continue
 		}
+		//fmt.Printf("rt=%v, c=%v\n", rt.PPM, c.MinPPM)
 		if rt.PPM < c.MinPPM {
 			continue
 		}

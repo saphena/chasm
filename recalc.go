@@ -26,6 +26,7 @@ import (
 
 const CAT_ModifyAxisScore = 0
 const CAT_ModifyBonusScore = 1
+const CAT_ResultCount = 2
 const CAT_ResultMults = 1
 const CAT_ResultPoints = 0
 const CAT_NumBonusesPerCatMethod = 0
@@ -35,6 +36,7 @@ const CAT_DNF_Unless_Triggered = 1
 const CAT_DNF_If_Triggered = 2
 const CAT_PlaceholderRule = 3
 const CAT_OrdinaryScoringSequence = 4
+const CAT_RatioRule = 5
 
 const checkmark_symbol = "&#x2713;"
 const sequential_bonus_symbol = "&#8752;"
@@ -480,6 +482,16 @@ func calcEntrantStatus(Miles int, et EntrantTimes, TotalPoints int) ([]ScorexLin
 		res = append(res, sx)
 	}
 
+	msg := checkCatRatios()
+	if msg != "" {
+		var sx ScorexLine
+		sx.IsValidLine = true
+		sx.Code = DNF_icon
+		sx.Desc = msg
+		res = append(res, sx)
+		es = EntrantDNF
+	}
+
 	return res, es
 }
 
@@ -730,6 +742,43 @@ func checkApplySequences(BC ClaimedBonus, LastBonusClaimed ClaimedBonus) ScorexL
 	return sx
 }
 
+func checkCatRatios() string {
+
+	for _, cr := range CompoundRules {
+		if cr.Ruletype != CAT_RatioRule {
+			continue
+		}
+		catcount1 := 0
+		cc, ok := AxisCounts[cr.Axis].CatCounts[cr.Cat]
+		if ok {
+			catcount1 = cc
+		}
+		catcount2 := 0
+		cc, ok = AxisCounts[cr.Axis].CatCounts[cr.Power]
+		if ok {
+			catcount2 = cc
+		}
+		if cr.Min == 1 {
+			cr.Triggered = catcount1 != catcount2
+		} else {
+			cr.Triggered = catcount1 < catcount2*cr.Min
+		}
+		if cr.Triggered {
+			sx := ""
+			x := getStringFromDB(fmt.Sprintf("SELECT BriefDesc FROM categories WHERE Axis=%v AND Cat=%v", cr.Axis, cr.Cat), "*")
+			y := getStringFromDB(fmt.Sprintf("SELECT BriefDesc FROM categories WHERE Axis=%v AND Cat=%v", cr.Axis, cr.Power), "*")
+			if cr.Min > 1 {
+				sx = fmt.Sprintf("<em>%v</em>[%v] &lt; %v x <em>%v</em>[%v]", catcount1, x, cr.Min, catcount2, y)
+			} else {
+				sx = fmt.Sprintf("<em>%v</em>[%v] &lt;&gt; <em>%v</em>[%v]", catcount1, x, catcount2, y)
+			}
+			return sx
+		}
+
+	}
+	return ""
+}
+
 func checkerr(err error) {
 	if err != nil {
 		if !ProductionBuild {
@@ -781,7 +830,7 @@ func fetchCatDesc(axis int, cat int) string {
 
 func htmlScorex(sx []ScorexLine, e int, es int, tp int) string {
 
-	const NoScoreIcon = "&#10007;"
+	const NoScoreIcon = "" //"&#10007;"
 
 	var sp ScorexParams
 
@@ -1001,6 +1050,9 @@ func processCompoundCats() ([]ScorexLine, int) {
 		if cr.Ruletype == CAT_OrdinaryScoringSequence {
 			continue
 		}
+		if cr.Ruletype == CAT_RatioRule {
+			continue
+		}
 		if cr.Method != CAT_NumBonusesPerCatMethod {
 			continue
 		}
@@ -1029,10 +1081,15 @@ func processCompoundCats() ([]ScorexLine, int) {
 		}
 		Points := 0
 		Pointsdesc := ""
-		if cr.Power > 0 {
-			Points = cr.Power
+		if cr.PointsMults == CAT_ResultCount {
+			// We're just counting, not scoring
+
 		} else {
-			Points = myCount
+			if cr.Power > 0 {
+				Points = cr.Power
+			} else {
+				Points = myCount
+			}
 		}
 		if cr.Ruletype == CAT_DNF_Unless_Triggered {
 			Pointsdesc = checkmark_symbol
@@ -1091,6 +1148,9 @@ func processCompoundNZ() ([]ScorexLine, int) {
 	lastMin := 0
 	for cix, cr := range CompoundRules {
 		if cr.Ruletype == CAT_OrdinaryScoringSequence {
+			continue
+		}
+		if cr.Ruletype == CAT_RatioRule {
 			continue
 		}
 		if cr.Method != CAT_NumNZCatsPerAxisMethod {

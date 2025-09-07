@@ -86,7 +86,7 @@ func edit_certificate(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprint(w, certeditHTMLheader)
 	fmt.Fprint(w, `<header>`)
-	showTopbar(w, "Edit certificate")
+	showTopbar(w, "Finisher certificate")
 
 	fmt.Fprint(w, `<form action="/savecert">`)
 	fmt.Fprintf(w, `<input type="hidden" name="class" value="%v">`, class)

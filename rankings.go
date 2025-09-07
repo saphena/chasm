@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strconv"
 )
 
@@ -37,8 +38,11 @@ func loadRankTable(sqlx string) []RanktabRecord {
 	ranktab := make([]RanktabRecord, 0)
 	for rows.Next() {
 		var rt RanktabRecord
+		//var ppm string
 		err = rows.Scan(&rt.EntrantID, &rt.TeamID, &rt.TotalPoints, &rt.CorrectedMiles, &rt.PPM, &rt.Rank, &rt.Class)
 		checkerr(err)
+		//rt.PPM, err = strconv.ParseFloat(ppm, 64)
+		//checkerr(err)
 		ranktab = append(ranktab, rt)
 	}
 	return ranktab
@@ -49,6 +53,7 @@ func rankEntrants(intransaction bool) {
 	var sqlx string
 	var err error
 
+	fmt.Println("Ranking entrants")
 	sqlx = "SELECT EntrantID,TeamID,TotalPoints,CorrectedMiles,IfNull((TotalPoints*1.0)/CorrectedMiles,0) AS PPM,0 AS Rank,Class FROM entrants WHERE EntrantStatus = "
 	sqlx += strconv.Itoa(EntrantFinisher)
 	sqlx += " AND TeamID > 0"

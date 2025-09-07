@@ -392,12 +392,11 @@ func list_EBC_claims(w http.ResponseWriter, r *http.Request) {
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
 
-	startHTML(w, "Outstanding claim submissions")
+	startHTML(w, "JUDGING NEW CLAIMS")
 
 	fmt.Fprint(w, `<div class="ebclist">`)
 
 	showReloadTicker(w, r.URL.String())
-	fmt.Fprint(w, `<h4>Emailed claims ready to be judged</h4>`)
 
 	fmt.Fprint(w, `<div id="judgefc">`)
 	fmt.Fprintf(w, `<button autofocus onclick="showFirstClaim()">Judge first claim</button> <span id="fcc"></span>`)
@@ -503,6 +502,7 @@ func saveClaim(r *http.Request) {
 	if claimid < 1 {
 		insertNewClaim(r)
 		recalc_scorecard(intval(r.FormValue("EntrantID")))
+		rankEntrants(false)
 		return
 	}
 	sqlx := "UPDATE claims SET ClaimTime=?,EntrantID=?,BonusID=?,OdoReading=?,AnswerSupplied=?,QuestionAnswered=?,Points=?,RestMinutes=?,Decision=?,JudgesNotes=?"
@@ -515,6 +515,7 @@ func saveClaim(r *http.Request) {
 	_, err = stmt.Exec(r.FormValue("ClaimTime"), r.FormValue("EntrantID"), strings.ToUpper(r.FormValue("BonusID")), intval(r.FormValue("OdoReading")), r.FormValue("AnswerSupplied"), r.FormValue("QuestionAnswered"), intval(r.FormValue("Points")), intval(r.FormValue(("RestMinutes"))), intval(r.FormValue("Decision")), r.FormValue("JudgesNotes"), intval(r.FormValue("PercentPenalty")), claimid)
 	checkerr(err)
 	recalc_scorecard(intval(r.FormValue("EntrantID")))
+	rankEntrants(false)
 
 }
 

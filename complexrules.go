@@ -80,7 +80,7 @@ var tmpltSingleRule = `
 
 <div id="singlerule" class="singlerule">
   <form action="updtcrule" method="post">
-  <fieldset class="field rule0 rule1 rule2 rule3 rule4">
+  <fieldset class="field rule0 rule1 rule2 rule3 rule4 rule5">
     <label for="RuleType">Rule type</label>
     <select id="RuleType" name="RuleType" onchange="chgRuleType(this);">
     %v
@@ -101,7 +101,28 @@ var tmpltSingleRule = `
   <fieldset class="field help rule4">
   	<p>The sequence refers to the order in which claims are submitted, not the sequence within the rally book or geographical location. The result is either a fixed number of points or a multiple of the points scored by the bonuses forming the sequence.</p>
   </fieldset>
+
+  <fieldset class="field help rule5">
+	<p>Cat ratio rules describe an optional final test on a scorecard involving comparing N, the number of successful claims in 'First category' with M, the number of successful claims in 'Second category'.</p>
+	<p>If R, the 'Ratio between cats' value is 1, N must equal M.
+	If R is &gt; 1, N must be at least R x M</p>
+  </fieldset>
 												  <!-- End of help texts -->
+
+  <fieldset class="field rule0 rule1 rule2 rule3 rule4 rule5">
+    <label for="Axis">Category set</label>
+	<select id="Axis" name="Axis" onchange="chgAxis(this);">
+	%v
+	</select>
+  </fieldset>
+  <fieldset class="field rule0 rule1 rule2 rule3 rule4 rule5">
+    <label class="rule0 rule1 rule2 rule3 rule4" for="Cat">Which %v</label>
+	<label class="rule5" for="Cat">First category</label>
+    <select id="Cat" name="Cat" onchange="saveRule(this)">
+    %v
+    </select>
+  </fieldset>
+
 
   <fieldset class="field rule0">
     <label for="ModBonus">This rule affects the value of</label>
@@ -115,31 +136,29 @@ var tmpltSingleRule = `
     %v
     </select>
   </fieldset>
-  <fieldset class="field rule0 rule1 rule2 rule3 rule4">
-    <label for="NMin">Triggered when <var>n</var> &ge; </label>
+  <fieldset class="field rule0 rule1 rule2 rule3 rule4 rule5">
+    <label class="rule0 rule1 rule2 rule3 rule4" for="NMin">Triggered when <var>n</var> &ge; </label>
+	<label class="rule5" for="NMin">Ratio between cats</label>
 	<input id="NMin" name="NMin" type="number" value="%v" onchange="saveRule(this)">
   </fieldset>
-  <fieldset class="field rule0 rule4">
+
+  <fieldset class="field rule0 rule4 ">
     <label for="PointsMults">This rule results in</label>
-	<fieldset class="field rule0 rule4" title="Result value">
-	<input id="NPower" name="NPower" type="number" value="%v" onchange="saveRule(this)">
-    <select id="PointsMults" name="PointsMults" onchange="saveRule(this)">
-    %v
-    </select>
+	<fieldset class="field rule0 rule4 " title="Result value">
+		<input id="NPower" name="NPower" type="number" value="%v" onchange="saveRule(this)">
+    	<select id="PointsMults" name="PointsMults" onchange="saveRule(this)">
+    		%v
+    	</select>
 	</fieldset>
   </fieldset>
-  <fieldset class="field rule0 rule1 rule2 rule3 rule4">
-    <label for="Axis">Category set</label>
-	<select id="Axis" name="Axis" onchange="chgAxis(this);">
-	%v
+
+  <fieldset class="field rule5">
+	<label for="NPowerSelect">Second category</label>
+	<select id="NPowerSelect" name="NPower" onchange="saveRule(this)">
+		%v
 	</select>
   </fieldset>
-  <fieldset class="field rule0 rule1 rule2 rule3 rule4">
-    <label for="Cat">%v</label>
-    <select id="Cat" name="Cat" onchange="saveRule(this)">
-    %v
-    </select>
-  </fieldset>
+
   <input type="hidden" id="ruleid" name="ruleid" value="%v">
   </form>
 </div>
@@ -261,19 +280,23 @@ func showSingleRule(w http.ResponseWriter, r *http.Request, cr CompoundRule) {
 		axisopts = append(axisopts, x)
 	}
 
-	rtvals := []int{CAT_OrdinaryScoringRule, CAT_DNF_Unless_Triggered, CAT_DNF_If_Triggered, CAT_PlaceholderRule, CAT_OrdinaryScoringSequence}
-	rtlabs := []string{"ordinary scoring rule", "DNF unless triggered", "DNF if triggered", "placeholder only", "uninterrupted sequence"}
+	rtvals := []int{CAT_OrdinaryScoringRule, CAT_DNF_Unless_Triggered, CAT_DNF_If_Triggered, CAT_PlaceholderRule, CAT_OrdinaryScoringSequence, CAT_RatioRule}
+	rtlabs := []string{"ordinary scoring rule", "DNF unless triggered", "DNF if triggered", "placeholder only", "uninterrupted sequence", "Cat ratio DNF"}
 
 	page := fmt.Sprintf(tmpltSingleRule,
 		selectOptionArray(rtvals, rtlabs, cr.Ruletype),
+		strings.Join(axisopts, ""),
+		AxisLabels[cr.Axis-1],
+		strings.Join(optsSingleAxisCats(cr.Axis, cr.Cat), ""),
+
 		selectOptionArray([]int{CAT_ModifyBonusScore, CAT_ModifyAxisScore}, []string{"individual bonuses", "group-based awards"}, cr.Target),
 		selectOptionArray([]int{CAT_NumBonusesPerCatMethod, CAT_NumNZCatsPerAxisMethod}, []string{"Bonuses per category", "Categories scored"}, cr.Method),
 		cr.Min,
 		cr.Power,
-		selectOptionArray([]int{CAT_ResultPoints, CAT_ResultMults}, []string{"points", "multipliers"}, cr.PointsMults),
-		strings.Join(axisopts, ""),
-		AxisLabels[cr.Axis-1],
-		strings.Join(optsSingleAxisCats(cr.Axis, cr.Cat), ""),
+		selectOptionArray([]int{CAT_ResultPoints, CAT_ResultMults, CAT_ResultCount}, []string{"points", "multipliers", "count"}, cr.PointsMults),
+
+		strings.Join(optsSingleAxisCats(cr.Axis, cr.Power), ""),
+
 		cr.Ruleid)
 
 	w.Write([]byte(page))
@@ -282,7 +305,7 @@ func showSingleRule(w http.ResponseWriter, r *http.Request, cr CompoundRule) {
 func show_rules(w http.ResponseWriter, r *http.Request) {
 
 	const leg = 0
-	var rt = map[int]string{0: "ordinary", 1: "DNF unless", 2: "DNF if", 3: "dummy", 4: "sequence"}
+	var rt = map[int]string{0: "ordinary", 1: "DNF unless", 2: "DNF if", 3: "dummy", 4: "sequence", 5: "cat ratio"}
 	rules := build_compoundRuleArray(leg)
 	axes := build_axisLabels()
 	startHTML(w, "Complex rules")
@@ -336,6 +359,11 @@ func show_rules(w http.ResponseWriter, r *http.Request) {
 			}
 		case CAT_OrdinaryScoringSequence:
 			target = "bonus"
+		case CAT_RatioRule:
+			sqlx = fmt.Sprintf("SELECT BriefDesc FROM categories WHERE Axis=%d AND Cat=%d", cr.Axis, cr.Power)
+			target = getStringFromDB(sqlx, "any")
+			pm = "DNF"
+			pts = ""
 		default:
 			pm = ""
 			pts = ""

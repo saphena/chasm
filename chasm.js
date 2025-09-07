@@ -9,6 +9,7 @@ const CAT_DNF_Unless_Triggered = 1;
 const CAT_DNF_If_Triggered = 2;
 const CAT_PlaceholderRule = 3;
 const CAT_OrdinaryScoringSequence = 4;
+const CAT_RatioRule = 5;
 
 // This is the maximum number of axes or sets of categories
 const NumCategoryAxes = 9;
@@ -73,12 +74,13 @@ function showCurrentRule() {
   let art = document.getElementById("singlerule");
   let typ = document.getElementById("RuleType");
   if (!art || !typ) return;
-  let flds = art.querySelectorAll("fieldset");
+  let flds = art.querySelectorAll("fieldset,label");
   let showclass = "rule" + typ.value;
   console.log(
     "showCurrentRule applying " + showclass + " to " + flds.length + " blocks"
   );
   for (let i = 0; i < flds.length; i++) {
+    if (flds[i].classList.length > 0)
     if (flds[i].classList.contains(showclass)) flds[i].classList.remove("hide");
     else flds[i].classList.add("hide");
   }
