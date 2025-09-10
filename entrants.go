@@ -73,7 +73,7 @@ type EntrantDetails struct {
 
 // SQL for safely retrieving full names
 const RiderNameSQL = "ifnull(entrants.RiderName,ifnull(entrants.RiderFirst,'') || ' ' || ifnull(entrants.RiderLast,'')) AS RiderName"
-const PillionNameSQL = "ifnull(entrants.PillionName,ifnull(entrants.PillionFirst,'') || ' ' || ifnull(entrants.PillionLast,'')) AS PillionName"
+const PillionNameSQL = "ifnull(entrants.PillionName,trim(ifnull(entrants.PillionFirst,'') || ' ' || ifnull(entrants.PillionLast,''))) AS PillionName"
 
 func ajaxFetchEntrantDetails(w http.ResponseWriter, r *http.Request) {
 

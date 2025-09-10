@@ -202,7 +202,7 @@ func print_certs(w http.ResponseWriter, r *http.Request) {
 
 func save_certificate(w http.ResponseWriter, r *http.Request) {
 
-	fmt.Printf(`%v`, r)
+	//fmt.Printf(`%v`, r)
 
 	html := r.FormValue(("html"))
 	entrant := intval(r.FormValue("e"))
@@ -215,5 +215,5 @@ func save_certificate(w http.ResponseWriter, r *http.Request) {
 	_, err = stmt.Exec(html, entrant, class)
 	checkerr(err)
 	startHTML(w, "certificate saved")
-	showMenu(w, "setup")
+	showMenu(w, "Setup")
 }

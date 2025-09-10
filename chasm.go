@@ -218,6 +218,9 @@ func json_requests(w http.ResponseWriter, r *http.Request) {
 	case "setteam":
 		setTeam(w, r)
 		return
+	case "setteamname":
+		setTeamName(w, r)
+		return
 	case "savetimep":
 		saveTimePenalty(w, r)
 		return

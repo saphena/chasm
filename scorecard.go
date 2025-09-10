@@ -73,7 +73,7 @@ func showScorecard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sqlx := "SELECT " + RiderNameSQL
-	sqlx += ",ifnull(PillionName,''),FinishPosition,TeamID,ifnull(CorrectedMiles,0),EntrantStatus,ifnull(Scorex,''),TotalPoints"
+	sqlx += "," + PillionNameSQL + ",FinishPosition,TeamID,ifnull(CorrectedMiles,0),EntrantStatus,ifnull(Scorex,''),TotalPoints"
 	sqlx += ",ReviewedByTeam,AcceptedByEntrant,ifnull(LastReviewed,''),ReviewStatus"
 	sqlx += " FROM entrants WHERE EntrantID=" + strconv.Itoa(entrant)
 
@@ -149,7 +149,7 @@ func showScorecards(w http.ResponseWriter, r *http.Request) {
 
 	startHTML(w, "Scorecards")
 
-	sqlx := "SELECT ifnull(RiderFirst,''),ifnull(RiderLast,''),ifnull(PillionName,''),EntrantID,ReviewedByTeam,AcceptedByEntrant,ifnull(LastReviewed,''),ReviewStatus FROM entrants ORDER BY RiderLast,RiderFirst"
+	sqlx := "SELECT ifnull(RiderFirst,''),ifnull(RiderLast,'')," + PillionNameSQL + ",EntrantID,ReviewedByTeam,AcceptedByEntrant,ifnull(LastReviewed,''),ReviewStatus FROM entrants ORDER BY RiderLast,RiderFirst"
 
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)

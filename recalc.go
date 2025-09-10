@@ -768,9 +768,9 @@ func checkCatRatios() string {
 			x := getStringFromDB(fmt.Sprintf("SELECT BriefDesc FROM categories WHERE Axis=%v AND Cat=%v", cr.Axis, cr.Cat), "*")
 			y := getStringFromDB(fmt.Sprintf("SELECT BriefDesc FROM categories WHERE Axis=%v AND Cat=%v", cr.Axis, cr.Power), "*")
 			if cr.Min > 1 {
-				sx = fmt.Sprintf("<em>%v</em>[%v] &lt; %v x <em>%v</em>[%v]", catcount1, x, cr.Min, catcount2, y)
+				sx = fmt.Sprintf("<em>%v</em> %v &lt; %vx<em>%v</em> %v", catcount1, x, cr.Min, catcount2, y)
 			} else {
-				sx = fmt.Sprintf("<em>%v</em>[%v] &lt;&gt; <em>%v</em>[%v]", catcount1, x, catcount2, y)
+				sx = fmt.Sprintf("<em>%v</em> %v &lt;&gt; <em>%v</em> %v", catcount1, x, catcount2, y)
 			}
 			return sx
 		}

@@ -225,6 +225,9 @@ button.minus {
   padding: 5px;
   margin: 1em 1em 0.5em 0;
 }
+.closebutton:focus {
+  border: solid 5px;
+}
 .closebutton:hover {
   background: var(--hover-background);
   color: var(--hover-text);
@@ -905,7 +908,7 @@ td.sxtotalpoints {
   margin: auto;
   .row {
     display: grid;
-    grid-template-columns: 3em 1fr 1fr 1fr;
+    grid-template-columns: 3em 2fr 1fr 1fr;
     margin-left: 1em;
   }
   .nums {

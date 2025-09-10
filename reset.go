@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 )
 
 const authcode = "UtterGobbledygook and then some more"
@@ -36,16 +38,16 @@ var resetDatabaseForm = `
             if (!lvl) return;
             lvl.value = choice;
             frm.submit();
-            return;
+            return false;
         }
         window.location.href = "/";
     }
 </script>
 
-    <form id="zapper" action="reset.php" method="post">
+    <form id="zapper" action="/reset" method="post">
     <input type="hidden" name="cmd" value="zap">
     <input type="hidden" name="zaplevel" id="zaplevel" value="1">
-    <input type="hidden" name="authcode" value="urlencode('` + authcode + `')">
+    <input type="hidden" name="authcode" value="` + authcode + `">
     </form>
 
     <article class="resetdb">
@@ -69,15 +71,51 @@ var resetDatabaseForm = `
 
 func doTheReset(w http.ResponseWriter, r *http.Request) {
 
+	startHTML(w, "Database reset")
+
+	fmt.Printf("doTheReset called with level %v\n", r.FormValue("zaplevel"))
+
+	//_, err := DBH.Exec("BEGIN TRANSACTION")
+	//checkerr(err)
+	//defer DBH.Exec("ROLLBACK")
+
 	zl := intval(r.FormValue("zaplevel"))
+
 	switch zl {
+	case 1:
+		zapAllClaims(true)
+		resetScorecardReviews()
+		recalc_all()
+	case 2:
+		zapAllClaims(true)
+		zapEntrants()
+	case 3:
+		zapAllClaims(true)
+		zapEntrants()
+		sqlx := "UPDATE config SET Settings='{}'"
+		_, err := DBH.Exec(sqlx)
+		checkerr(err)
+		zapRallyConfig()
+
 	case 4:
+		zapRallyConfig()
 		// Rally testing demo reset
 		// reset dateranges
 		// zap claims but unprocess ebclaims
 		// rebuild scorecards
 		// reset entrant status/odos
 	}
+	//_, err = DBH.Exec("COMMIT")
+	//checkerr(err)
+	fmt.Fprint(w, `</header><p class="thatsall">Reset complete</p>`)
+	fmt.Println("Reset complete")
+}
+
+func resetScorecardReviews() {
+
+	sqlx := fmt.Sprintf("UPDATE entrants SET ReviewStatus=%v", rs_notreviewed)
+	_, err := DBH.Exec(sqlx)
+	checkerr(err)
 }
 
 func showResetChoiceConfirmation(w http.ResponseWriter, lvl int, txt string) {
@@ -96,6 +134,8 @@ func showResetChoiceConfirmation(w http.ResponseWriter, lvl int, txt string) {
 func showResetOptions(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
+
+	fmt.Printf("showResetOptions ac='%v' == '%v'\n", authcode, r.FormValue("authcode"))
 
 	if r.FormValue("cmd") != "" && r.FormValue("zaplevel") != "" && r.FormValue("authcode") == authcode {
 		doTheReset(w, r)
@@ -116,4 +156,58 @@ func showResetOptions(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprint(w, `</body></html>`)
 
+}
+
+func zapAllClaims(zapEBC bool) {
+
+	sqlx := "DELETE FROM claims"
+	_, err := DBH.Exec(sqlx)
+	checkerr(err)
+	if zapEBC {
+		sqlx = "DELETE FROM ebclaims"
+		_, err = DBH.Exec(sqlx)
+		checkerr(err)
+		//zapEBPhotoImages()
+		sqlx = "DELETE FROM ebcphotos"
+		_, err = DBH.Exec(sqlx)
+		checkerr(err)
+
+	} else {
+		sqlx = "UPDATE ebclaims SET Decision=-1,Processed=0"
+		_, err = DBH.Exec(sqlx)
+		checkerr(err)
+	}
+
+}
+
+func zapRallyConfig() {
+
+	for _, x := range []string{"bonuses", "combos", "categories", "catcompound"} {
+		sqlx := "DELETE FROM " + x
+		_, err := DBH.Exec(sqlx)
+		checkerr(err)
+	}
+
+}
+func zapEBPhotoImages() {
+	sqlx := "SELECT Image FROM ebcphotos"
+	rows, err := DBH.Query(sqlx)
+	checkerr(err)
+	defer rows.Close()
+	//
+	for rows.Next() {
+		var img string
+		err = rows.Scan(&img)
+		checkerr(err)
+		imgfile := filepath.Join(CS.ImgEbcFolder, filepath.Base(img))
+		err = os.Remove(imgfile)
+		checkerr(err)
+	}
+}
+
+func zapEntrants() {
+
+	sqlx := "DELETE FROM entrants"
+	_, err := DBH.Exec(sqlx)
+	checkerr(err)
 }

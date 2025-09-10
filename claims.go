@@ -206,7 +206,7 @@ func fetchEntrantDetails(entrant int) EntrantDetails {
 	e := strconv.Itoa(entrant)
 
 	ed.RiderName = getStringFromDB("SELECT "+RiderNameSQL+" FROM entrants WHERE EntrantID="+e, e)
-	ed.PillionName = getStringFromDB("SELECT ifnull(PillionName,'') FROM entrants WHERE EntrantID="+e, "")
+	ed.PillionName = getStringFromDB("SELECT "+PillionNameSQL+" FROM entrants WHERE EntrantID="+e, "")
 	ed.TeamID = getIntegerFromDB("SELECT TeamID FROM entrants WHERE EntrantID="+e, 0)
 	return ed
 
@@ -384,7 +384,7 @@ func list_EBC_claims(w http.ResponseWriter, r *http.Request) {
 
 	const sorry = "Sorry, no claims need judging at the moment &#128543;"
 
-	sqlx := `SELECT ebclaims.rowid,ebclaims.EntrantID,` + RiderNameSQL + `,ifnull(entrants.PillionName,''),ebclaims.BonusID,ifnull(xbonus.BriefDesc,'` + CS.NoSuchBonus + `'),ebclaims.OdoReading,ebclaims.ClaimTime
+	sqlx := `SELECT ebclaims.rowid,ebclaims.EntrantID,` + RiderNameSQL + `,` + PillionNameSQL + `,ebclaims.BonusID,ifnull(xbonus.BriefDesc,'` + CS.NoSuchBonus + `'),ebclaims.OdoReading,ebclaims.ClaimTime
 			 		FROM ebclaims LEFT JOIN entrants ON ebclaims.EntrantID=entrants.EntrantID
 					LEFT JOIN (SELECT BonusID,BriefDesc FROM bonuses) AS xbonus ON ebclaims.BonusID=xbonus.BonusID
 					 WHERE Processed=0 ORDER BY Decision DESC,FinalTime;`
@@ -750,7 +750,7 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 	ebcimg := strings.Split(cr.Photo, ",")
 	for i := 0; i < len(ebcimg); i++ {
 		if ebcimg[i] != "" {
-			ebcimg[i] = strings.ReplaceAll(filepath.Join(CS.ImgEbcFolder, filepath.Base(ebcimg[i])), "\\", "/")
+			ebcimg[i] = "/" + strings.ReplaceAll(filepath.Join(CS.ImgEbcFolder, filepath.Base(ebcimg[i])), "\\", "/")
 		}
 	}
 	hide = "hide"
@@ -800,7 +800,7 @@ func showEBC(w http.ResponseWriter, r *http.Request) {
 	checkerr(err)
 
 	team := getStringFromDB("SELECT "+RiderNameSQL+" FROM entrants WHERE EntrantID="+strconv.Itoa(ebc.EntrantID), "***")
-	x := getStringFromDB("SELECT ifnull(PillionName,'') FROM entrants WHERE EntrantID="+strconv.Itoa(ebc.EntrantID), "")
+	x := getStringFromDB("SELECT "+PillionNameSQL+" FROM entrants WHERE EntrantID="+strconv.Itoa(ebc.EntrantID), "")
 	if x != "" {
 		team += " &amp; " + x
 	}
@@ -992,7 +992,7 @@ func showPhotosEBC(w http.ResponseWriter, emailid int, BonusID string) {
 		err := rows.Scan(&img)
 		checkerr(err)
 		if img != "" {
-			showimg[ix] = strings.ReplaceAll(filepath.Join(CS.ImgEbcFolder, filepath.Base(img)), `\`, `/`)
+			showimg[ix] = "/" + strings.ReplaceAll(filepath.Join(CS.ImgEbcFolder, filepath.Base(img)), `\`, `/`)
 			ix++
 		}
 		if ix >= maximg {
@@ -1027,7 +1027,7 @@ func showPhotoFrame(w http.ResponseWriter, photos []string, BonusID string) {
 	fmt.Fprint(w, `</div>`) // ebcimgdiv
 
 	fmt.Fprint(w, `<div class="bonusimgdiv" id="bonusimgdiv">`)
-	bimg := strings.ReplaceAll(filepath.Join(CS.ImgBonusFolder, filepath.Base(getStringFromDB("SELECT ifnull(Image,'') FROM bonuses WHERE BonusID='"+BonusID+"'", ""))), `\`, `/`)
+	bimg := "/" + strings.ReplaceAll(filepath.Join(CS.ImgBonusFolder, filepath.Base(getStringFromDB("SELECT ifnull(Image,'') FROM bonuses WHERE BonusID='"+BonusID+"'", ""))), `\`, `/`)
 	fmt.Fprintf(w, `<img src="%v" alt="*" title="%v">`, bimg, CS.RallyBookImgTitle)
 	fmt.Fprint(w, `</div>`)
 

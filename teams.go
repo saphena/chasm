@@ -114,6 +114,32 @@ func setTeam(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `{"ok":true,"msg":"ok"}`)
 
 }
+func deleteTeam(team int) {
+
+	sqlx := fmt.Sprintf("UPDATE entrants SET TeamID=0 WHERE TeamID=%v", team)
+	_, err := DBH.Exec(sqlx)
+	checkerr(err)
+	sqlx = fmt.Sprintf("DELETE FROM teams WHERE TeamID=%v", team)
+	_, err = DBH.Exec(sqlx)
+	checkerr(err)
+
+}
+func setTeamName(w http.ResponseWriter, r *http.Request) {
+
+	t := intval(r.FormValue("t"))
+	tn := r.FormValue("n")
+	if tn == "" {
+		deleteTeam(t)
+		fmt.Fprint(w, `{"ok":true,"msg":"deleted"}`)
+		return
+	}
+	stmt, err := DBH.Prepare("UPDATE teams SET BriefDesc=? WHERE TeamID=?")
+	checkerr(err)
+	defer stmt.Close()
+	_, err = stmt.Exec(tn, t)
+	checkerr(err)
+	fmt.Fprint(w, `{"ok":true,"msg":"ok"}`)
+}
 func showTeamMembers(w http.ResponseWriter, r *http.Request) {
 
 	type teamEntry struct {

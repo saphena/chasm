@@ -81,8 +81,9 @@ function showCurrentRule() {
   );
   for (let i = 0; i < flds.length; i++) {
     if (flds[i].classList.length > 0)
-    if (flds[i].classList.contains(showclass)) flds[i].classList.remove("hide");
-    else flds[i].classList.add("hide");
+      if (flds[i].classList.contains(showclass))
+        flds[i].classList.remove("hide");
+      else flds[i].classList.add("hide");
   }
 }
 
@@ -1617,6 +1618,44 @@ async function removeTeamMember(obj) {
   let fs = obj.parentElement;
   let art = fs.parentElement;
   art.removeChild(fs);
+}
+
+function saveTeamName(obj) {
+  let team = obj.getAttribute("data-team");
+  let teamName = obj.value;
+
+  let url = "/x?f=setteamname&t=" + team + "&n=" + encodeURIComponent(teamName);
+  console.log(url);
+  fetch(url)
+    .then((response) => {
+      if (!response.ok) {
+        // Handle HTTP errors
+        return;
+      }
+      return response.json();
+    })
+    .then((data) => {
+      if (data.err) {
+        // Handle JSON error field
+        console.error(`Error: ${data.msg}`);
+        return;
+      } else if (data.ok) {
+        // Process the data if no error
+        if (data.msg == "deleted") {
+          let teamdiv = obj.parentElement;
+          let teamlist = teamdiv.parentElement;
+          teamlist.removeChild(teamdiv);
+          let art = document.getElementById("teamMembers");
+          art.innerText = "";
+        }
+      }
+    })
+    .catch((error) => {
+      // Handle network or other errors
+      console.error("Fetch error:", error);
+
+      return;
+    });
 }
 function showTeamMembers(obj) {
   let art = document.getElementById("teamMembers");
