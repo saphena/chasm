@@ -341,7 +341,7 @@ func build_timePenaltyArray() []TimePenalty {
 
 	//	const currentLeg = "0"
 
-	rallyFinishtimex := getStringFromDB("SELECT FinishTime FROM rallyparams", "")
+	rallyFinishtimex := CS.Basics.RallyFinishtime //getStringFromDB("SELECT FinishTime FROM rallyparams", "")
 
 	rft, err := time.Parse(myTimestamp, rallyFinishtimex)
 	checkerr(err)
@@ -500,11 +500,11 @@ func calcEntrantTimes(entrant int) EntrantTimes {
 	var et EntrantTimes
 	var err error
 
-	rallyFinishtimex := getStringFromDB("SELECT FinishTime FROM rallyparams", "")
+	rallyFinishtimex := CS.Basics.RallyFinishtime //getStringFromDB("SELECT FinishTime FROM rallyparams", "")
 
 	starttimex := getStringFromDB(fmt.Sprintf("SELECT ifnull(StartTime,'') FROM entrants WHERE EntrantID=%v", entrant), "")
 	if starttimex == "" {
-		starttimex = getStringFromDB("SELECT StartTime FROM rallyparams", "")
+		starttimex = CS.Basics.RallyStarttime //getStringFromDB("SELECT StartTime FROM rallyparams", "")
 	}
 	if starttimex == "" {
 		return et
@@ -530,7 +530,8 @@ func calcEntrantTimes(entrant int) EntrantTimes {
 		return et
 	}
 
-	maxhrs, _ := strconv.Atoi(getStringFromDB("SELECT MaxHours FROM rallyparams", "999"))
+	//maxhrs, _ := strconv.Atoi(getStringFromDB("SELECT MaxHours FROM rallyparams", "999"))
+	maxhrs := CS.Basics.RallyMaxHours
 	et.DNFTime = et.StartTime.Add(time.Hour * time.Duration(maxhrs))
 	if et.DNFTime.Compare(et.RallyFinish) > 0 {
 		et.DNFTime = et.RallyFinish
@@ -550,12 +551,12 @@ func calcMileagePenalty(Miles int) ([]ScorexLine, int) {
 	res := make([]ScorexLine, 0)
 	var numx int
 
-	usingKms := getStringFromDB("SELECT MilesKms FROM rallyparams", "0") != "0"
+	usingKms := CS.Basics.RallyUnitKms //getStringFromDB("SELECT MilesKms FROM rallyparams", "0") != "0"
 	mklit := "miles"
 	if usingKms {
 		mklit = "km"
 	}
-	penaltyMaxMiles := getIntegerFromDB("SELECT PenaltyMaxMiles FROM rallyparams", 99999)
+	penaltyMaxMiles := CS.PenaltyMilesMax //getIntegerFromDB("SELECT PenaltyMaxMiles FROM rallyparams", 99999)
 	if penaltyMaxMiles < 1 {
 		return res, numx
 	}
@@ -563,8 +564,8 @@ func calcMileagePenalty(Miles int) ([]ScorexLine, int) {
 	if penaltyMiles < 1 {
 		return res, numx
 	}
-	penaltyMethod := getIntegerFromDB("SELECT MaxMilesMethod FROM rallyparams", MMM_FixedPoints)
-	penaltyPoints := getIntegerFromDB("SELECT MaxMilesPoints FROM rallyparams", 0)
+	penaltyMethod := CS.PenaltyMilesMethod //getIntegerFromDB("SELECT MaxMilesMethod FROM rallyparams", MMM_FixedPoints)
+	penaltyPoints := CS.PenaltyMilesPoints //getIntegerFromDB("SELECT MaxMilesPoints FROM rallyparams", 0)
 	if penaltyPoints < 1 {
 		return res, numx
 	}
@@ -834,7 +835,7 @@ func htmlScorex(sx []ScorexLine, e int, es int, tp int) string {
 
 	var sp ScorexParams
 
-	KmsRally := getStringFromDB("SELECT MilesKms FROM rallyparams", "0") == "1"
+	KmsRally := CS.Basics.RallyUnitKms //getStringFromDB("SELECT MilesKms FROM rallyparams", "0") == "1"
 	mk := "miles"
 	if KmsRally {
 		mk = "km"
@@ -952,7 +953,15 @@ func loadRejectReasons() RejectReasonsMap {
 
 	res := make(RejectReasonsMap, 0)
 
-	if useScoreMasterDB {
+	if true {
+		rr := CS.CloseEBC
+		for ix := 1; ix < len(rr); ix++ {
+			var r RejectReason
+			r.Code = ix
+			r.BriefDesc = rr[ix]
+			res[ix] = r
+		}
+	} else if useScoreMasterDB {
 		sqlx := "SELECT RejectReasons FROM rallyparams"
 		rr := strings.Split(strings.ReplaceAll(getStringFromDB(sqlx, ""), "\r", ""), "\n")
 		for _, rx := range rr {

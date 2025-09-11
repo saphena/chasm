@@ -50,6 +50,9 @@ type chasmSettings struct {
 	UnitMilesLit        string
 	UnitKmsLit          string
 	PenaltyMilesDNF     int
+	PenaltyMilesMax     int
+	PenaltyMilesMethod  int
+	PenaltyMilesPoints  int
 	RallyMinMiles       int
 	DebugRules          bool
 	AutoLateDNF         bool
@@ -93,6 +96,9 @@ const defaultCS = `{
 	"UnitMilesLit":			"miles",
 	"UnitKmsLit":			"km",
 	"PenaltyMilesDNF":		99999,
+	"PenaltyMilesMax":		99999,
+	"PenaltyMilesMethod":	0,
+	"PenaltyMilesPoints":	0,
 	"RallyTitle":			"Brit Butt Rally 2025",
 	"RallyMinMiles":		0,
 	"DebugRules":			false,
@@ -202,47 +208,47 @@ func ajaxUpdateSettings(w http.ResponseWriter, r *http.Request) {
 		ok = "true"
 		msg = "ok"
 		fmt.Printf("Setting rally title to [ %v ]\n", CS.Basics.RallyTitle)
-		stmt, err := DBH.Prepare("UPDATE rallyparams SET RallyTitle=?")
-		checkerr(err)
-		defer stmt.Close()
-		_, err = stmt.Exec(CS.Basics.RallyTitle)
-		checkerr(err)
+		//stmt, err := DBH.Prepare("UPDATE rallyparams SET RallyTitle=?")
+		//checkerr(err)
+		//defer stmt.Close()
+		//_, err = stmt.Exec(CS.Basics.RallyTitle)
+		//checkerr(err)
 	case "RallyStart":
 		CS.Basics.RallyStarttime = r.FormValue("v")
 		ok = "true"
 		msg = "ok"
-		stmt, err := DBH.Prepare("UPDATE rallyparams SET StartTime=?")
-		checkerr(err)
-		defer stmt.Close()
-		_, err = stmt.Exec(CS.Basics.RallyStarttime)
-		checkerr(err)
+		//stmt, err := DBH.Prepare("UPDATE rallyparams SET StartTime=?")
+		//checkerr(err)
+		//defer stmt.Close()
+		//_, err = stmt.Exec(CS.Basics.RallyStarttime)
+		//checkerr(err)
 	case "RallyFinish":
 		CS.Basics.RallyFinishtime = r.FormValue("v")
 		ok = "true"
 		msg = "ok"
-		stmt, err := DBH.Prepare("UPDATE rallyparams SET FinishTime=?")
-		checkerr(err)
-		defer stmt.Close()
-		_, err = stmt.Exec(CS.Basics.RallyFinishtime)
-		checkerr(err)
+		//stmt, err := DBH.Prepare("UPDATE rallyparams SET FinishTime=?")
+		//checkerr(err)
+		//defer stmt.Close()
+		//_, err = stmt.Exec(CS.Basics.RallyFinishtime)
+		//checkerr(err)
 	case "MaxHours":
 		CS.Basics.RallyMaxHours = intval(r.FormValue("v"))
 		ok = "true"
 		msg = "ok"
-		stmt, err := DBH.Prepare("UPDATE rallyparams SET MaxHours=?")
-		checkerr(err)
-		defer stmt.Close()
-		_, err = stmt.Exec(CS.Basics.RallyMaxHours)
-		checkerr(err)
+		//stmt, err := DBH.Prepare("UPDATE rallyparams SET MaxHours=?")
+		//checkerr(err)
+		//defer stmt.Close()
+		//_, err = stmt.Exec(CS.Basics.RallyMaxHours)
+		//checkerr(err)
 	case "StartOption":
 		rs := r.FormValue("v")
 		ok = "true"
 		msg = "ok"
-		stmt, err := DBH.Prepare("UPDATE rallyparams SET StartOption=?")
-		checkerr(err)
-		defer stmt.Close()
-		_, err = stmt.Exec(rs)
-		checkerr(err)
+		//stmt, err := DBH.Prepare("UPDATE rallyparams SET StartOption=?")
+		//checkerr(err)
+		//defer stmt.Close()
+		//_, err = stmt.Exec(rs)
+		//checkerr(err)
 		CS.StartOption = intval(rs)
 	case "FinishOption":
 		rs := r.FormValue("v")
@@ -258,12 +264,12 @@ func ajaxUpdateSettings(w http.ResponseWriter, r *http.Request) {
 		CS.Basics.RallyTimezone = r.FormValue("v")
 		ok = "true"
 		msg = "ok"
-		stmt, err := DBH.Prepare("UPDATE rallyparams SET LocalTZ=?")
-		checkerr(err)
-		defer stmt.Close()
-		_, err = stmt.Exec(CS.Basics.RallyTimezone)
-		checkerr(err)
-
+		//stmt, err := DBH.Prepare("UPDATE rallyparams SET LocalTZ=?")
+		//checkerr(err)
+		//defer stmt.Close()
+		//_, err = stmt.Exec(CS.Basics.RallyTimezone)
+		//checkerr(err)
+		var err error
 		RallyTimezone, err = time.LoadLocation(CS.Basics.RallyTimezone)
 		checkerr(err)
 	case "MilesKms":
@@ -271,11 +277,11 @@ func ajaxUpdateSettings(w http.ResponseWriter, r *http.Request) {
 		CS.Basics.RallyUnitKms = rs == "1"
 		ok = "true"
 		msg = "ok"
-		stmt, err := DBH.Prepare("UPDATE rallyparams SET MilesKms=?")
-		checkerr(err)
-		defer stmt.Close()
-		_, err = stmt.Exec(rs)
-		checkerr(err)
+		//stmt, err := DBH.Prepare("UPDATE rallyparams SET MilesKms=?")
+		//checkerr(err)
+		//defer stmt.Close()
+		//_, err = stmt.Exec(rs)
+		//checkerr(err)
 	default:
 		fn := r.FormValue("ff")
 		fv := r.FormValue("v")
@@ -451,7 +457,8 @@ func editConfigMain(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `<fieldset>`)
 	fmt.Fprint(w, `<label for="RallyStartDate">Rally starts</label>`)
 
-	dt, tm := splitDateTime(getStringFromDB("SELECT StartTime FROM rallyparams", "2000-01-01T08:00"))
+	//dt, tm := splitDateTime(getStringFromDB("SELECT StartTime FROM rallyparams", "2000-01-01T08:00"))
+	dt, tm := splitDateTime(CS.Basics.RallyStarttime)
 	fmt.Fprintf(w, `<input type="date" name="RallyStartDate" id="RallyStartDate" onchange="saveSetupStart(this)" value="%v">`, dt)
 	fmt.Fprintf(w, ` <input type="time" name="RallyStartTime" id="RallyStartTime" onchange="saveSetupStart(this)" value="%v">`, tm)
 	fmt.Fprint(w, `</fieldset>`)
@@ -459,14 +466,15 @@ func editConfigMain(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `<fieldset>`)
 	fmt.Fprint(w, `<label for="RallyFinishDate">Rally finishes</label>`)
 
-	dt, tm = splitDateTime(getStringFromDB("SELECT FinishTime FROM rallyparams", "2000-01-01T08:00"))
+	//dt, tm = splitDateTime(getStringFromDB("SELECT FinishTime FROM rallyparams", "2000-01-01T08:00"))
+	dt, tm = splitDateTime(CS.Basics.RallyFinishtime)
 	fmt.Fprintf(w, `<input type="date" name="RallyFinishDate" id="RallyFinishDate" onchange="saveSetupFinish(this)" value="%v">`, dt)
 	fmt.Fprintf(w, ` <input type="time" name="RallyFinishTime" id="RallyFinishTime" onchange="saveSetupFinish(this)" value="%v">`, tm)
 	fmt.Fprint(w, `</fieldset>`)
 
 	fmt.Fprint(w, `<fieldset>`)
 	fmt.Fprint(w, `<label for="MaxHours">Max Rideable hours</label>`)
-	mh := getIntegerFromDB("SELECT MaxHours FROM rallyparams", 99)
+	mh := CS.Basics.RallyMaxHours //getIntegerFromDB("SELECT MaxHours FROM rallyparams", 99)
 	fmt.Fprintf(w, ` <input type="number" id="MaxHours" name="MaxHours" class="MaxHours" oninput="oi(this)" data-save="saveSetupConfig" value="%v">`, mh)
 	fmt.Fprint(w, `</fieldset>`)
 
@@ -510,15 +518,15 @@ func editConfigMain(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprint(w, `<fieldset>`)
 	fmt.Fprint(w, `<label for="MilesKms">Unit of distance</label>`)
-	mk := getIntegerFromDB("SELECT MilesKms FROM rallyparams", 0)
+	mk := CS.Basics.RallyUnitKms //getIntegerFromDB("SELECT MilesKms FROM rallyparams", 0)
 	fmt.Fprint(w, ` <select id="MilesKms" name="MilesKms" onchange="saveSetupConfig(this)">`)
 	selected = ""
-	if mk != 1 {
+	if !mk {
 		selected = "selected"
 	}
 	fmt.Fprintf(w, `<option value="0" %v>%v</option>`, selected, CS.UnitMilesLit)
 	selected = ""
-	if mk == 1 {
+	if mk {
 		selected = "selected"
 	}
 	fmt.Fprintf(w, `<option value="1" %v>%v</option>`, selected, CS.UnitKmsLit)
@@ -527,7 +535,7 @@ func editConfigMain(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprint(w, `<fieldset>`)
 	fmt.Fprint(w, `<label for="LocalTZ">Rally Timezone</label>`)
-	rtz := getStringFromDB("SELECT LocalTZ FROM rallyparams", "Europe/London")
+	rtz := CS.Basics.RallyTimezone //getStringFromDB("SELECT LocalTZ FROM rallyparams", "Europe/London")
 	fmt.Fprint(w, ` <select id="LocalTZ" name="LocalTZ" onchange="saveSetupConfig(this)">`)
 	selected = ""
 	for _, itz := range tzlist {
@@ -572,12 +580,12 @@ func editConfigMain(w http.ResponseWriter, r *http.Request) {
 
 func loadRallyBasics(rb *RallyBasics) {
 
-	rb.RallyTitle = getStringFromDB("SELECT RallyTitle FROM rallyparams", "Some Rally")
-	rb.RallyStarttime = getStringFromDB("SELECT StartTime FROM rallyparams", "2000-01-01T08:00")
-	rb.RallyFinishtime = getStringFromDB("SELECT FinishTime FROM rallyparams", "2000-01-01T18:00")
-	rb.RallyTimezone = getStringFromDB("SELECT LocalTZ FROM rallyparams", "Europe/London")
-	rb.RallyMaxHours = getIntegerFromDB("SELECT MaxHours FROM rallyparams", 99)
-	rb.RallyUnitKms = getIntegerFromDB("SELECT MilesKms FROM rallyparams", 0) == 1
+	rb.RallyTitle = CS.Basics.RallyTitle           //getStringFromDB("SELECT RallyTitle FROM rallyparams", "Some Rally")
+	rb.RallyStarttime = CS.Basics.RallyStarttime   //getStringFromDB("SELECT StartTime FROM rallyparams", "2000-01-01T08:00")
+	rb.RallyFinishtime = CS.Basics.RallyFinishtime //getStringFromDB("SELECT FinishTime FROM rallyparams", "2000-01-01T18:00")
+	rb.RallyTimezone = CS.Basics.RallyTimezone     //getStringFromDB("SELECT LocalTZ FROM rallyparams", "Europe/London")
+	rb.RallyMaxHours = CS.Basics.RallyMaxHours     //getIntegerFromDB("SELECT MaxHours FROM rallyparams", 99)
+	rb.RallyUnitKms = CS.Basics.RallyUnitKms       //getIntegerFromDB("SELECT MilesKms FROM rallyparams", 0) == 1
 }
 
 func splitDateTime(iso string) (string, string) {

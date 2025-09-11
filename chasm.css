@@ -16,6 +16,7 @@
   --button-text: black;
   --button-disabled-back: gray;
   --button-disabled-text: black;
+  --button-focused-border: solid 5px orange;
   --input-background: rgb(249, 246, 238);
   --input-text: black;
   --topbar-background: lightblue;
@@ -85,8 +86,8 @@ button:disabled,
   color: var(--button-disabled-text);
 }
 
-button:not(disabled):not(.icon):hover,
-.button:not(disabled):hover {
+button:not([disabled]):not(.icon):hover,
+.button:not([disabled]):hover {
   background-color: var(--hover-background);
   color: var(--hover-text);
 }
@@ -226,7 +227,7 @@ button.minus {
   margin: 1em 1em 0.5em 0;
 }
 .closebutton:focus {
-  border: solid 5px;
+  border: var(--button-focused-border);
 }
 .closebutton:hover {
   background: var(--hover-background);
@@ -524,6 +525,7 @@ article.config {
   }
 }
 
+.rawoptions,
 .entrantlist,
 .ebclist,
 .claimslog,
@@ -532,6 +534,11 @@ article.config {
 .teamnames {
   margin: auto;
   max-width: var(--default-max-width);
+}
+
+#rawopts {
+  width: 100%;
+  height: 40em;
 }
 
 .intro,

@@ -1806,3 +1806,39 @@ function saveClass(obj) {
       else aa.classList.remove("hide");
   }
 }
+
+function testJsonEdit() {
+  const flatJson = `{"a":1,"b":2,"c":{"aa":"hello sailor","bb":"some old bollox"}}`;
+  const obj = JSON.parse(flatJson);
+  console.log(JSON.stringify(obj, null, 2));
+}
+
+function enableRawSave(obj) {
+  const myhilite = "#ffffe0";
+  let div = obj.parentElement;
+  let btn = div.querySelector("button");
+  btn.disabled = false;
+  obj.style.background = myhilite;
+}
+
+function saveRawOpts(obj) {
+  let txt = document.querySelector("#rawopts");
+  let x = txt.value
+  console.log(x)
+  try {
+    let js = JSON.parse(x)
+  } catch(err) {
+    alert(err.message)
+    return
+  }
+  let url = "/opts?v=" + encodeURIComponent(x);
+  fetch(url, { method: "POST" })
+      .then((response) => {
+      if (!response.ok) {
+        // Handle HTTP errors
+        return;
+      }
+      window.location.href="/menu?menu=Setup"
+    })
+
+}

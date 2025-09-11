@@ -35,7 +35,7 @@ func get_odolist_start_time(ischeckout bool) string {
 		return res
 	}
 	// Need to show next available start rather than real time
-	st := getStringFromDB("SELECT StartTime FROM rallyparams", "")
+	st := CS.Basics.RallyStarttime //getStringFromDB("SELECT StartTime FROM rallyparams", "")
 	if st == "" {
 		return res
 	}

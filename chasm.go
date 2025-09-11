@@ -104,6 +104,8 @@ func main() {
 	http.HandleFunc("/menu", show_menu)
 	http.HandleFunc("/niy", niy)
 	http.HandleFunc("/odos", show_odo_checks)
+	http.HandleFunc("POST /opts", saveRawOptions)
+	http.HandleFunc("/opts", editRawOptions)
 	http.HandleFunc("/qlist", show_qlist)
 	http.HandleFunc("/recalc", recalc_handler)
 	http.HandleFunc("/reset", showResetOptions)
