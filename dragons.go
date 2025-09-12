@@ -6,6 +6,55 @@ import (
 	"net/http"
 )
 
+var queryresult string
+
+func execRawSQL(sqlx string) string {
+
+	res, err := DBH.Exec(sqlx)
+	if err != nil {
+		return err.Error()
+	}
+	n, err := res.RowsAffected()
+	checkerr(err)
+	if n == 1 {
+		return "A single record was affected"
+	}
+	return fmt.Sprintf("%v records affected", n)
+}
+func runRawSQL(w http.ResponseWriter, r *http.Request) {
+
+	sqlx := r.FormValue("sql")
+	queryresult = ""
+	fmt.Printf("RawSQL=%s\n", sqlx)
+	if sqlx == "" {
+		showRawSQL(w, r)
+		return
+	}
+	res := execRawSQL(sqlx)
+	fmt.Printf("RawSqlResult=%s\n", res)
+	queryresult = res
+	showRawSQL(w, r)
+
+}
+
+func showRawSQL(w http.ResponseWriter, r *http.Request) {
+
+	startHTML(w, "Raw SQL!!!")
+	fmt.Fprint(w, `</header>`)
+	fmt.Fprint(w, `<div class="sqlquery">`)
+	fmt.Fprint(w, `<p>This allows execution of raw SQL against the database. This is not able to display query data.</p>`)
+	fmt.Fprint(w, `<form action="/sql" method="post">`)
+	fmt.Fprintf(w, `<input type="text" class="sqlquery" name="sql" value="%s">`, r.FormValue("sql"))
+	fmt.Fprint(w, `<button>Run SQL</button>`)
+	fmt.Fprint(w, `</form>`)
+	res := queryresult
+	if res != "" {
+		fmt.Fprintf(w, `<p>%s</p>`, res)
+	}
+	fmt.Fprint(w, `</div>`)
+
+}
+
 func editRawOptions(w http.ResponseWriter, r *http.Request) {
 
 	b, err := json.MarshalIndent(CS, "", "  ")

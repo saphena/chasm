@@ -1,11 +1,20 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 )
+
+//go:embed basicdemo.sql
+var basicdemosql string
+
+//go:embed basicdemo.json
+var basicdemojson string
 
 const authcode = "UtterGobbledygook and then some more"
 
@@ -19,6 +28,7 @@ var resetDatabaseForm = `
         if (obj.id == "choice1please") choice = document.getElementById('choice1');
         if (obj.id == "choice2please") choice = document.getElementById('choice2');
         if (obj.id == "choice3please") choice = document.getElementById('choice3');
+        if (obj.id == "choice4please") choice = document.getElementById('choice4');
         if (choice) 
             choice = choice.value;
         else
@@ -98,7 +108,9 @@ func doTheReset(w http.ResponseWriter, r *http.Request) {
 		zapRallyConfig()
 
 	case 4:
+		zapAllClaims(true)
 		zapRallyConfig()
+		reloadDemoRally()
 		// Rally testing demo reset
 		// reset dateranges
 		// zap claims but unprocess ebclaims
@@ -109,6 +121,27 @@ func doTheReset(w http.ResponseWriter, r *http.Request) {
 	//checkerr(err)
 	fmt.Fprint(w, `</header><p class="thatsall">Reset complete</p>`)
 	fmt.Println("Reset complete")
+}
+
+func reloadDemoRally() {
+
+	const OrigDate = "2025-06-21"
+
+	todaysDate := time.Now().Format(time.DateOnly)
+	fmt.Printf("Resetting demo from %v to %v\n", OrigDate, todaysDate)
+
+	sqlx := strings.ReplaceAll(basicdemosql, OrigDate, todaysDate)
+	_, err := DBH.Exec(sqlx)
+	checkerr(err)
+
+	cfg := strings.ReplaceAll(basicdemojson, OrigDate, todaysDate)
+	sqlx = "UPDATE config SET Settings=?"
+	stmt, err := DBH.Prepare(sqlx)
+	checkerr(err)
+	defer stmt.Close()
+	_, err = stmt.Exec(cfg)
+	checkerr(err)
+	loadJsonConfigs()
 }
 
 func resetScorecardReviews() {

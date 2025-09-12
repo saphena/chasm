@@ -55,6 +55,7 @@ var advancedmenu = menu{
 	{"Recalculate scorecards", "Recalculate scorecards", "/recalc", ""},
 	{"Reset Rally", "Reset the rally database", "/reset", ""},
 	{"Edit raw options", "Directly edit JSON configuration", "/opts", ""},
+	{"Run raw SQL", "Use SQL to update the database", "/sql", ""},
 }
 var reportsmenu = menu{
 	{"Finisher certificates", "Print Finisher certificates", "/certs", "window.open(#url#,'certs')"},

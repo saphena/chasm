@@ -525,6 +525,7 @@ article.config {
   }
 }
 
+.sqlquery,
 .rawoptions,
 .entrantlist,
 .ebclist,
@@ -535,7 +536,9 @@ article.config {
   margin: auto;
   max-width: var(--default-max-width);
 }
-
+input.sqlquery {
+  width:100%;
+}
 #rawopts {
   width: 100%;
   height: 40em;

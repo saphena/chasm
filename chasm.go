@@ -31,6 +31,16 @@ var DBH *sql.DB
 
 var RallyTimezone *time.Location
 
+func loadJsonConfigs() {
+
+	err := json.Unmarshal([]byte(defaultCS), &CS)
+	checkerr(err)
+	err = json.Unmarshal([]byte(debugDefaults), &CS)
+	checkerr(err)
+	err = json.Unmarshal([]byte(getStringFromDB("SELECT ifnull(Settings,'{}') FROM config", "{}")), &CS)
+	checkerr(err)
+
+}
 func main() {
 
 	fmt.Printf("Chasm v%v  Copyright (c) %v %v\n", ChasmVersion, CopyriteYear, CopyriteHolder)
@@ -52,12 +62,7 @@ func main() {
 		return
 	}
 
-	err = json.Unmarshal([]byte(defaultCS), &CS)
-	checkerr(err)
-	err = json.Unmarshal([]byte(debugDefaults), &CS)
-	checkerr(err)
-	err = json.Unmarshal([]byte(getStringFromDB("SELECT ifnull(Settings,'{}') FROM config", "{}")), &CS)
-	checkerr(err)
+	loadJsonConfigs()
 	loadRallyBasics(&CS.Basics)
 
 	RallyTimezone, err = time.LoadLocation(CS.Basics.RallyTimezone)
@@ -109,6 +114,8 @@ func main() {
 	http.HandleFunc("/qlist", show_qlist)
 	http.HandleFunc("/recalc", recalc_handler)
 	http.HandleFunc("/reset", showResetOptions)
+	http.HandleFunc("POST /sql", runRawSQL)
+	http.HandleFunc("/sql", showRawSQL)
 	http.HandleFunc("DELETE /rule/{rule}", deleteRule)
 	http.HandleFunc("POST /rule", createRule)
 	http.HandleFunc("/rule", show_rule)
