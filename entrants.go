@@ -50,6 +50,7 @@ type EntrantDBRecord struct {
 	FinishPosition       int
 	TotalPoints          int
 	TeamID               int
+	Class                int
 	StartTimeDate        string
 	StartTimeTime        string
 	FinishTimeDate       string
@@ -300,6 +301,12 @@ var tmplEntrantBasic = `
 		##teams##
 		</select>
 	</fieldset>
+	<fieldset>
+		<label for="Class">Class</label>
+		<select id="Class" name="Class" onchange="saveEntrant(this)">
+		##classes##
+		</select>
+	</fieldset>
 
 
 </article>
@@ -317,13 +324,13 @@ func fetchEntrantRecord(entrant int) EntrantDBRecord {
 		,ifnull(PillionFirst,''),ifnull(PillionLast,''),ifnull(PillionIBA,'')
 		,ifnull(OdoKms,'M'),ifnull(OdoRallyStart,0),ifnull(OdoRallyFinish,0),ifnull(CorrectedMiles,0)
 		,ifnull(FinishTime,''),ifnull(StartTime,''),EntrantStatus,ifnull(NokName,''),ifnull(NokPhone,''),ifnull(NokRelation,'')
-		,FinishPosition,TotalPoints,TeamID		FROM entrants`
+		,FinishPosition,TotalPoints,TeamID,Class		FROM entrants`
 	sqlx += fmt.Sprintf(" WHERE EntrantID=%v", entrant)
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
 	defer rows.Close()
 	if rows.Next() {
-		err = rows.Scan(&er.EntrantID, &er.Bike, &er.BikeReg, &er.RiderFirst, &er.RiderLast, &er.RiderCountry, &er.RiderIBA, &er.RiderPhone, &er.RiderEmail, &er.PillionFirst, &er.PillionLast, &er.PillionIBA, &er.OdoKms, &er.OdoStart, &er.OdoFinish, &er.CorrectedMiles, &er.FinishTime, &er.StartTime, &er.EntrantStatus, &er.NokName, &er.NokPhone, &er.NokRelation, &er.FinishPosition, &er.TotalPoints, &er.TeamID)
+		err = rows.Scan(&er.EntrantID, &er.Bike, &er.BikeReg, &er.RiderFirst, &er.RiderLast, &er.RiderCountry, &er.RiderIBA, &er.RiderPhone, &er.RiderEmail, &er.PillionFirst, &er.PillionLast, &er.PillionIBA, &er.OdoKms, &er.OdoStart, &er.OdoFinish, &er.CorrectedMiles, &er.FinishTime, &er.StartTime, &er.EntrantStatus, &er.NokName, &er.NokPhone, &er.NokRelation, &er.FinishPosition, &er.TotalPoints, &er.TeamID, &er.Class)
 		checkerr(err)
 		er.StartTimeDate, er.StartTimeTime = splitDatetime(er.StartTime)
 		er.FinishTimeDate, er.FinishTimeTime = splitDateTime(er.FinishTime)
@@ -375,7 +382,18 @@ func showEntrant(w http.ResponseWriter, r *http.Request) {
 		}
 		teamopts += fmt.Sprintf(`<option value="%v" %v>%v</option>`, teamrecs[i].TeamID, sel, teamrecs[i].TeamName)
 	}
-	t, err := template.New("EntrantDetail").Parse(strings.ReplaceAll(tmplEntrantBasic, "##teams##", teamopts))
+	classes := build_classlist()
+	classopts := ""
+	for i := range classes {
+		sel := ""
+		if classes[i].Class == er.Class {
+			sel = "selected"
+		}
+		classopts += fmt.Sprintf(`<option value="%v" %v>%v</options>`, classes[i].Class, sel, classes[i].BriefDesc)
+	}
+	tx := strings.ReplaceAll(tmplEntrantBasic, "##teams##", teamopts)
+	tx = strings.ReplaceAll(tx, "##classes##", classopts)
+	t, err := template.New("EntrantDetail").Parse(tx)
 	checkerr(err)
 	err = t.Execute(w, er)
 	checkerr(err)

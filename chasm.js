@@ -1438,7 +1438,7 @@ function addCatSet(obj) {
   let dad = obj.parentElement;
   let sets = dad.querySelectorAll("input");
   let lastIx = sets.length;
-  if (lastIx >= 0) {
+  if (lastIx > 0) {
     if (sets[lastIx - 1].value == "") return;
   }
   console.log(sets, lastIx);

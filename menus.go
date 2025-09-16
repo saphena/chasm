@@ -24,6 +24,7 @@ var mainMenu = menu{
 	{"Check-IN @ finish", "Take odo readings at end of rally", "/odos?check=in", ""},
 	{"Reporting", "Certificates, analyses,exports", "/menu?menu=Reports", ""},
 	{"Rally setup &amp; config", "Access all components", "/setup", ""},
+	{"READ THESE NOTES", "Bob's rough guide to ScoreMaster", "/guide", "window.open(#url#,'_guide')"},
 }
 
 var setupmenu = menu{

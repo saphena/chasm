@@ -308,6 +308,16 @@ func show_rules(w http.ResponseWriter, r *http.Request) {
 	var rt = map[int]string{0: "ordinary", 1: "DNF unless", 2: "DNF if", 3: "dummy", 4: "sequence", 5: "cat ratio"}
 	rules := build_compoundRuleArray(leg)
 	axes := build_axisLabels()
+	nsets := 0
+	for i := range axes {
+		if axes[i] != "" {
+			nsets++
+		}
+	}
+	if nsets < 1 {
+		showCategorySets(w, r)
+		return
+	}
 	startHTML(w, "Complex rules")
 	fmt.Fprint(w, complexhelp)
 	fmt.Fprintf(w, `<div class="intro">%v</div>`, crintro)

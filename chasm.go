@@ -103,6 +103,7 @@ func main() {
 	http.HandleFunc("DELETE /entrant/{e}", deleteEntrant)
 	http.HandleFunc("/entrant/{e}", showEntrant)
 	http.HandleFunc("/entrants", list_entrants)
+	http.HandleFunc("/guide", showGuides)
 	http.HandleFunc("/img", builtin_images)
 	http.HandleFunc("/import", showImport)
 	http.HandleFunc("/js", send_js)

@@ -187,7 +187,7 @@ var configLiteralsTemplate = `
 		{{end}}
 	</fieldset>
 	<fieldset class="hide">
-		<legend>Flag titles<legend>
+		<legend>Bonus flag titles<legend>
 			##FLAGS##
 	</fieldset>
 </fieldset>
