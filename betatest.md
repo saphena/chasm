@@ -2,7 +2,7 @@
 
 ## Demonstration &amp; Training Guide
 
-This is a brand new version of ScoreMaster, written from the ground up. It currently implements almost all of the v3 features including all those features actually in use in IBAUK rallies.
+This is a brand new version of ScoreMaster, written from the ground up. It currently implements almost all of the v3 features including all those features actually in use in IBAUK/Benelux rallies.
 
 The purpose of this release is to provide a demonstration of the software, to act as a training facility for rally team members tasked with administering rallies or basic claim judging and, last but by no means least, to expose the software to more widespread testing.
 
@@ -78,4 +78,35 @@ Normally, team members all receive the same score, cloned automatically by the s
 ## Entrant status
 
 Each entrant record includes a status, one of DNS, ok, Finisher and DNF. The initial status is DNS (Did Not Start). This changes, depending on the settings 'Rally Start option', during Check-out or at when the first bonus claim is submitted.
+
+## Rally time
+
+Regardless of the size of the territory, each rally is associated with a single timezone.
+
+The 'Rally starts' and 'Rally finishes' variables set the outer limits of rally time. These set the overall window within which everything must happen. The variable 'Max Rideable hours', normally simply the difference between those two variables, can be used for rallies which allow some flexibility in start times.
+
+## FEATURES NOT IMPLEMENTED YET
+
+Several features of v3 ScoreMaster are not implemented in this version. Such features might appear in future versions as and when they're needed. They're described here in anticipation of questions beginning "What happened to feature X?"
+
+### Multiple Legs
+
+It is possible to establish a rally with multiple distinct legs rather than the common arrangement of a single leg. A multi-leg rally has start and finish times for each leg, might be scored separately, and can have bonuses and/or combos restricted to a single leg.
+
+### Entrant emailing
+
+This feature is used to send customised emails to entrants, with or without small attachments, selected by entrant status and/or flag numbers. Typically used to distribute GPX files and/or Flag numbers at the rally start.
+
+### Starting cohorts
+
+Probably no longer needed. Was useful during Covid but starts now tend to be either a single mass start or with first claim starts.
+
+### Odo check facility
+
+No longer used cos, let's face it, a 20 mile check route really doesn't give anything like accuracy, even when the team remembers to include tenths in the trip reading.
+
+### AI
+
+A fully AI version of ScoreMaster may well appear by the 3rd quarter of 2026. This is an exciting prospect: ScoreMaster AI will be distinguished from regular ScoreMaster by the addition of "AI" after "ScoreMaster" on all screens and printouts. In all other respects, ScoreMaster AI will be exactly the same as ScoreMaster.
+
 

@@ -109,12 +109,28 @@ var tmpltSingleRule = `
   </fieldset>
 												  <!-- End of help texts -->
 
+  <fieldset class="field rule0">
+    <label for="ModBonus">This rule affects the value of</label>
+    <select id="ModBonus" name="ModBonus" onchange="saveRule(this)">
+    %v
+    </select>
+  </fieldset>
+
   <fieldset class="field rule0 rule1 rule2 rule3 rule4 rule5">
     <label for="Axis">Category set</label>
 	<select id="Axis" name="Axis" onchange="chgAxis(this);">
 	%v
 	</select>
   </fieldset>
+  
+  <fieldset class="field rule0 rule1 rule2 rule3">
+    <label for="NMethod">Calculate <var>n</var> using </label>
+    <select id="NMethod" name="NMethod" onchange="saveRule(this);">
+    %v
+    </select>
+  </fieldset>
+
+
   <fieldset class="field rule0 rule1 rule2 rule3 rule4 rule5">
     <label class="rule0 rule1 rule2 rule3 rule4" for="Cat">Which %v</label>
 	<label class="rule5" for="Cat">First category</label>
@@ -124,18 +140,6 @@ var tmpltSingleRule = `
   </fieldset>
 
 
-  <fieldset class="field rule0">
-    <label for="ModBonus">This rule affects the value of</label>
-    <select id="ModBonus" name="ModBonus" onchange="saveRule(this)">
-    %v
-    </select>
-  </fieldset>
-  <fieldset class="field rule0 rule1 rule2 rule3">
-    <label for="NMethod">Calculate <var>n</var> using </label>
-    <select id="NMethod" name="NMethod" onchange="saveRule(this)">
-    %v
-    </select>
-  </fieldset>
   <fieldset class="field rule0 rule1 rule2 rule3 rule4 rule5">
     <label class="rule0 rule1 rule2 rule3 rule4" for="NMin">Triggered when <var>n</var> &ge; </label>
 	<label class="rule5" for="NMin">Ratio between cats</label>
@@ -163,7 +167,7 @@ var tmpltSingleRule = `
   </form>
 </div>
 <script>
-showCurrentRule()
+showCurrentRule();
 </script>`
 
 func createRule(w http.ResponseWriter, r *http.Request) {
@@ -208,7 +212,7 @@ func optsSingleAxisCats(axis int, selcat int) []string {
 	if selcat == 0 {
 		sel = "selected"
 	}
-	res = append(res, fmt.Sprintf(tmpltOption, "0", sel, "any"))
+	//res = append(res, fmt.Sprintf(tmpltOption, "0", sel, "any"))
 	for rows.Next() {
 		var cat int
 		var desc string
@@ -285,12 +289,13 @@ func showSingleRule(w http.ResponseWriter, r *http.Request, cr CompoundRule) {
 
 	page := fmt.Sprintf(tmpltSingleRule,
 		selectOptionArray(rtvals, rtlabs, cr.Ruletype),
+		selectOptionArray([]int{CAT_ModifyBonusScore, CAT_ModifyAxisScore}, []string{"individual bonuses", "group-based awards"}, cr.Target),
+
 		strings.Join(axisopts, ""),
+		selectOptionArray([]int{CAT_NumBonusesPerCatMethod, CAT_NumNZCatsPerAxisMethod}, []string{"Bonuses per category", "Categories scored"}, cr.Method),
 		AxisLabels[cr.Axis-1],
 		strings.Join(optsSingleAxisCats(cr.Axis, cr.Cat), ""),
 
-		selectOptionArray([]int{CAT_ModifyBonusScore, CAT_ModifyAxisScore}, []string{"individual bonuses", "group-based awards"}, cr.Target),
-		selectOptionArray([]int{CAT_NumBonusesPerCatMethod, CAT_NumNZCatsPerAxisMethod}, []string{"Bonuses per category", "Categories scored"}, cr.Method),
 		cr.Min,
 		cr.Power,
 		selectOptionArray([]int{CAT_ResultPoints, CAT_ResultMults, CAT_ResultCount}, []string{"points", "multipliers", "count"}, cr.PointsMults),

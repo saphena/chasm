@@ -85,6 +85,7 @@ function showCurrentRule() {
         flds[i].classList.remove("hide");
       else flds[i].classList.add("hide");
   }
+  setRuleWhichCat(typ);
 }
 
 function chgAxis(obj) {
@@ -636,6 +637,7 @@ function saveSetupFinish(obj) {
   url += "&ff=RallyFinish&v=" + encodeURIComponent(dt.value + "T" + tm.value);
   stackTransaction(url, obj.id);
   sendTransactions();
+  checkMaxHours();
 }
 function saveSetupStart(obj) {
   if (obj.timer) clearTimeout(obj.timer);
@@ -645,6 +647,7 @@ function saveSetupStart(obj) {
   url += "&ff=RallyStart&v=" + encodeURIComponent(dt.value + "T" + tm.value);
   stackTransaction(url, obj.id);
   sendTransactions();
+  checkMaxHours();
 }
 function saveOdo(obj) {
   console.log("saveOdo called");
@@ -1823,22 +1826,75 @@ function enableRawSave(obj) {
 
 function saveRawOpts(obj) {
   let txt = document.querySelector("#rawopts");
-  let x = txt.value
-  console.log(x)
+  let x = txt.value;
+  console.log(x);
   try {
-    let js = JSON.parse(x)
-  } catch(err) {
-    alert(err.message)
-    return
+    let js = JSON.parse(x);
+  } catch (err) {
+    alert(err.message);
+    return;
   }
   let url = "/opts?v=" + encodeURIComponent(x);
-  fetch(url, { method: "POST" })
-      .then((response) => {
-      if (!response.ok) {
-        // Handle HTTP errors
-        return;
-      }
-      window.location.href="/menu?menu=Setup"
-    })
+  fetch(url, { method: "POST" }).then((response) => {
+    if (!response.ok) {
+      // Handle HTTP errors
+      return;
+    }
+    window.location.href = "/menu?menu=Setup";
+  });
+}
 
+function setRuleWhichCat(obj) {
+  const nmethNumBonuses = 0;
+  const nmethNumCats = 1;
+
+  let rt = document.getElementById("RuleType");
+  if (!rt) return;
+  let cat = document.getElementById("Cat");
+  if (!cat) return;
+  let nmeth = document.getElementById("NMethod");
+  if (!nmeth) return;
+  let catfs = cat.parentNode;
+  if (!catfs) return;
+  console.log(
+    "setRuleWhichCat " +
+      rt.value +
+      " - " +
+      nmeth.value +
+      " = " +
+      (rt.value == CAT_RatioRule)
+  );
+  if (rt.value == CAT_OrdinaryScoringSequence || rt.value == CAT_RatioRule) {
+    catfs.classList.remove("hide");
+    console.log("Showing by rule");
+  } else {
+    console.log("defaulting");
+    if (nmeth.value == nmethNumBonuses) {
+      catfs.classList.remove("hide");
+    } else {
+      catfs.classList.add("hide");
+      console.log("hiding cat");
+    }
+  }
+  console.log(catfs.tagName, catfs.classList.contains("hide"));
+}
+
+function checkMaxHours() {
+  let dt = document.getElementById("RallyStartDate");
+  let tm = document.getElementById("RallyStartTime");
+  let dtx = dt.value + " " + tm.value;
+  let dts = new Date(dtx);
+  dt = document.getElementById("RallyFinishDate");
+  tm = document.getElementById("RallyFinishTime");
+  dtx = dt.value + " " + tm.value;
+  let dtf = new Date(dtx);
+  let dd = dtf - dts;
+  let mh = Math.floor(dd / (1000 * 60 * 60));
+  let xx = document.getElementById("MaxHours");
+  xx.setAttribute("max", mh);
+  if (mh < xx.value) {
+    xx.value = mh;
+    saveSetupConfig(xx);
+  }
+  console.log("Max hours is " + mh);
 }

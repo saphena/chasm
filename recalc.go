@@ -499,11 +499,13 @@ func calcEntrantTimes(entrant int) EntrantTimes {
 
 	var et EntrantTimes
 	var err error
+	var times_complete bool = true
 
 	rallyFinishtimex := CS.Basics.RallyFinishtime //getStringFromDB("SELECT FinishTime FROM rallyparams", "")
 
 	starttimex := getStringFromDB(fmt.Sprintf("SELECT ifnull(StartTime,'') FROM entrants WHERE EntrantID=%v", entrant), "")
 	if starttimex == "" {
+		times_complete = false
 		starttimex = CS.Basics.RallyStarttime //getStringFromDB("SELECT StartTime FROM rallyparams", "")
 	}
 	if starttimex == "" {
@@ -511,6 +513,7 @@ func calcEntrantTimes(entrant int) EntrantTimes {
 	}
 	finishtimex := getStringFromDB(fmt.Sprintf("SELECT ifnull(FinishTime,'') FROM entrants WHERE EntrantID=%v", entrant), "")
 	if finishtimex == "" {
+		times_complete = false
 		finishtimex = rallyFinishtimex
 	}
 	if finishtimex == "" {
@@ -536,7 +539,7 @@ func calcEntrantTimes(entrant int) EntrantTimes {
 	if et.DNFTime.Compare(et.RallyFinish) > 0 {
 		et.DNFTime = et.RallyFinish
 	}
-	et.IsDNF = et.DNFTime.Before(et.FinishTime)
+	et.IsDNF = times_complete && et.DNFTime.Before(et.FinishTime)
 
 	//fmt.Printf("et == %v\n", et)
 	return et

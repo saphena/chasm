@@ -483,14 +483,23 @@ func insertNewClaim(r *http.Request) {
 
 	const Leg = 1
 
-	sqlx := "INSERT INTO claims (LoggedAt, ClaimTime, EntrantID, BonusID, OdoReading, Decision, Photo, Points, RestMinutes, Leg"
+	sqlx := "SELECT ifnull(OdoReading,0) FROM claims WHERE EntrantID=" + r.FormValue("EntrantID")
+	sqlx += " ORDER BY EntrantID,ClaimTime DESC"
+
+	lastOdo := getIntegerFromDB(sqlx, 0)
+	thisOdo := intval(r.FormValue("OdoReading"))
+	if thisOdo == 0 {
+		thisOdo = lastOdo + 1
+	}
+
+	sqlx = "INSERT INTO claims (LoggedAt, ClaimTime, EntrantID, BonusID, OdoReading, Decision, Photo, Points, RestMinutes, Leg"
 	sqlx += ", AnswerSupplied, QuestionAnswered, JudgesNotes, PercentPenalty) "
 	sqlx += "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
 	//r.FormValue("AnswerSupplied"), r.FormValue("QuestionAnswered"),
 	stmt, err := DBH.Prepare(sqlx)
 	checkerr(err)
 	defer stmt.Close()
-	_, err = stmt.Exec(time.Now().Format(time.RFC3339), r.FormValue("ClaimTime"), r.FormValue("EntrantID"), strings.ToUpper(r.FormValue("BonusID")), intval(r.FormValue("OdoReading")), intval(r.FormValue("Decision")), filepath.Base(r.FormValue("Photo")), intval(r.FormValue("Points")), intval(r.FormValue(("RestMinutes"))), Leg, r.FormValue("AnswerSupplied"), r.FormValue("QuestionAnswered"), r.FormValue("JudgesNotes"), intval(r.FormValue("PercentPenalty")))
+	_, err = stmt.Exec(time.Now().Format(time.RFC3339), r.FormValue("ClaimTime"), r.FormValue("EntrantID"), strings.ToUpper(r.FormValue("BonusID")), thisOdo, intval(r.FormValue("Decision")), filepath.Base(r.FormValue("Photo")), intval(r.FormValue("Points")), intval(r.FormValue(("RestMinutes"))), Leg, r.FormValue("AnswerSupplied"), r.FormValue("QuestionAnswered"), r.FormValue("JudgesNotes"), intval(r.FormValue("PercentPenalty")))
 	checkerr(err)
 
 }
@@ -1066,6 +1075,15 @@ func saveEBC(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	sqlx = "SELECT ifnull(OdoReading,0) FROM claims WHERE EntrantID=" + r.FormValue("EntrantID")
+	sqlx += " ORDER BY EntrantID,ClaimTime DESC"
+
+	lastOdo := getIntegerFromDB(sqlx, 0)
+	thisOdo := intval(r.FormValue("OdoReading"))
+	if thisOdo == 0 {
+		thisOdo = lastOdo + 1
+	}
+
 	sqlx = "INSERT INTO claims (LoggedAt, ClaimTime, EntrantID, BonusID, OdoReading, Decision, Photo, Points, RestMinutes, AskPoints, AskMinutes, Leg"
 	sqlx += ",Evidence,QuestionAsked, AnswerSupplied, QuestionAnswered, JudgesNotes, PercentPenalty) "
 	sqlx += "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
@@ -1084,7 +1102,7 @@ func saveEBC(w http.ResponseWriter, r *http.Request) {
 	qanswered := intval(r.FormValue("QuestionAnswered"))
 	percent := intval(r.FormValue("PercentPenalty"))
 	_, err = stmt.Exec(LoggedAt, r.FormValue("ClaimTime"), r.FormValue("EntrantID"), r.FormValue("BonusID"),
-		r.FormValue("OdoReading"), decision, ImgFromURL(r.FormValue("Photo")), points, restmins, askpoints, askmins, CS.CurrentLeg,
+		thisOdo, decision, ImgFromURL(r.FormValue("Photo")), points, restmins, askpoints, askmins, CS.CurrentLeg,
 		r.FormValue("Evidence"), qasked, r.FormValue("AnswerSupplied"), qanswered, r.FormValue("JudgesNotes"), percent)
 	checkerr(err)
 	recalc_scorecard(intval(r.FormValue("EntrantID")))

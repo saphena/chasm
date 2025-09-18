@@ -168,6 +168,13 @@ var tzlist = []string{
 	"Europe/Vilnius",
 	"Europe/Warsaw",
 	"Europe/Zurich",
+	"America/Chicago",
+	"America/Los_Angeles",
+	"America/New_York",
+	"America/Phoenix",
+	"Australia/Perth",
+	"Australia/Sydney",
+	"Australia/Adelaide",
 }
 
 var configLiteralsTemplate = `
@@ -334,7 +341,7 @@ func buildFlagTitles() string {
 	return x
 }
 
-func buildRallyVarsSettings() string {
+func buildDistanceLimits() string {
 
 	du := "mile"
 	dus := CS.UnitMilesLit
@@ -343,9 +350,21 @@ func buildRallyVarsSettings() string {
 		dus = CS.UnitKmsLit
 	}
 
-	x := `<article class="config RallyVars">`
+	x := `<article class="config DistanceLimits">`
 
-	x += `<fieldset><button onclick="swapconfig(this)">OPTIONS</button>`
+	x += `<fieldset><button onclick="swapconfig(this)">DISTANCE LIMITS</button>`
+
+	x += `<fieldset class="hide"><label for="PenaltyMilesMax">`
+	x += `Maximum ` + dus + ` &gt;</label>`
+	x += emitConfigNum("PenaltyMilesMax") + `</fieldset>`
+
+	x += `<fieldset class="hide"><label for="PenaltyMilesMethod">`
+	x += `Penalty method</label>`
+	x += emitConfigSelect("PenaltyMilesMethod", []string{"fixed points", "points per " + du, "multiplier"}, CS.PenaltyMilesPoints) + `</fieldset>`
+
+	x += `<fieldset class="hide"><label for="PenaltyMilesPoints">`
+	x += `Penalty value</label>`
+	x += emitConfigNum("PenaltyMilesPoints") + `</fieldset>`
 
 	x += `<fieldset class="hide"><label for="PenaltyMilesDNF">`
 	x += `DNF if ` + dus + ` &gt;</label>`
@@ -355,24 +374,56 @@ func buildRallyVarsSettings() string {
 	x += `DNF if ` + dus + ` &lt;</label>`
 	x += emitConfigNum("RallyMinMiles") + `</fieldset>`
 
+	x += `</fieldset></article>`
+	return x
+}
+
+func buildRallyVarsSettings() string {
+
+	du := "mile"
+	//dus := CS.UnitMilesLit
+	if CS.Basics.RallyUnitKms {
+		du = "km"
+		//dus = CS.UnitKmsLit
+	}
+
+	x := `<article class="config RallyVars">`
+
+	x += `<fieldset><button onclick="swapconfig(this)">OPTIONS</button>`
+
+	x += `<fieldset class="hide">`
+	x += `<label for="StartOption">Rally Start option</label>`
+
+	x += emitConfigSelect("StartOption", []string{"Fixed with check-out", "Start by first claim"}, CS.StartOption)
+	x += `</fieldset>`
+
+	x += `<fieldset class="hide">`
+	x += `<label for="FinishOption">Rally Finish option</label>`
+	af := 0
+	if CS.AutoFinisher {
+		af = 1
+	}
+	x += emitConfigSelect("FinishOption", []string{"Finish at check-in", "Autofinish with last claim"}, af)
+	x += `</fieldset>`
+
 	x += `<fieldset class="hide"><label for="RallyMinPoints">`
 	x += `DNF if points &lt;</label>`
 	x += emitConfigNum("RallyMinPoints") + `</fieldset>`
 
 	x += `<fieldset class="hide"><label for="RallyUseQA">`
 	x += `Use questions/answers</label>`
-	x += emitConfigBool("RallyUseQA", []string{"no", "yes"}, CS.RallyUseQA)
+	x += emitConfigBool("RallyUseQA", []string{"no", "yes"}, CS.RallyUseQA) + `</fieldset>`
 
-	x += `<label for="RallyQAPoints">`
+	x += `<fieldset class="hide"><label for="RallyQAPoints">`
 	x += `QA points value</label>`
 	x += emitConfigNum("RallyQAPoints") + `</fieldset>`
 
 	x += `<fieldset class="hide"><label for="RallyUsePctPen">`
 	x += `Offer minor points reduction</label>`
-	x += emitConfigBool("RallyUsePctPen", []string{"no", "yes"}, CS.RallyUsePctPen)
+	x += emitConfigBool("RallyUsePctPen", []string{"no", "yes"}, CS.RallyUsePctPen) + `</fieldset>`
 
-	x += `<label for="RallyPctPenVal">`
-	x += `Points reduction percentage</label>`
+	x += `<fieldset class="hide"<label for="RallyPctPenVal">`
+	x += `Minor points reduction %</label>`
 	x += emitConfigNum("RallyPctPenVal") + `</fieldset>`
 
 	x += `<fieldset class="hide"><label for="RallyRankEfficiency">`
@@ -450,10 +501,12 @@ func editConfigMain(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprint(w, `<article class="config basic">`)
 	fmt.Fprint(w, `<fieldset><button  onclick="swapconfig(this)">BASIC</button>`)
+
 	fmt.Fprint(w, `<fieldset>`)
 	fmt.Fprint(w, `<label for="RallyTitle">Rally title</label>`)
 	fmt.Fprintf(w, `<input type="text" autofocus class="RallyTitle" name="RallyTitle" id="RallyTitle" oninput="oi(this)" data-save="saveSetupConfig" value="%v">`, CS.Basics.RallyTitle)
 	fmt.Fprint(w, `</fieldset>`)
+
 	fmt.Fprint(w, `<fieldset>`)
 	fmt.Fprint(w, `<label for="RallyStartDate">Rally starts</label>`)
 
@@ -475,41 +528,7 @@ func editConfigMain(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `<fieldset>`)
 	fmt.Fprint(w, `<label for="MaxHours">Max Rideable hours</label>`)
 	mh := CS.Basics.RallyMaxHours //getIntegerFromDB("SELECT MaxHours FROM rallyparams", 99)
-	fmt.Fprintf(w, ` <input type="number" id="MaxHours" name="MaxHours" class="MaxHours" oninput="oi(this)" data-save="saveSetupConfig" value="%v">`, mh)
-	fmt.Fprint(w, `</fieldset>`)
-
-	fmt.Fprint(w, `<fieldset>`)
-	fmt.Fprint(w, `<label for="StartOption">Rally Start option</label>`)
-	so := CS.StartOption //getIntegerFromDB("SELECT StartOption FROM rallyparams", 0)
-	fmt.Fprint(w, ` <select id="StartOption" name="StartOption" onchange="saveSetupConfig(this)">`)
-	selected = ""
-	if so != 1 {
-		selected = "selected"
-	}
-	fmt.Fprintf(w, `<option value="0" %v>Fixed with check-out</option>`, selected)
-	selected = ""
-	if so == 1 {
-		selected = "selected"
-	}
-	fmt.Fprintf(w, `<option value="1" %v>Start by first claim</option>`, selected)
-	fmt.Fprint(w, `,</select>`)
-	fmt.Fprint(w, `</fieldset>`)
-
-	fmt.Fprint(w, `<fieldset>`)
-	fmt.Fprint(w, `<label for="FinishOption">Rally Finish option</label>`)
-	fmt.Fprint(w, `<select id="FinishOption" name="FinishOption" onchange="saveSetupConfig(this)">`)
-	selected = ""
-	if !CS.AutoFinisher {
-		selected = "selected"
-	}
-	fmt.Fprintf(w, `<option value="0" %v>Finish at check-in</option>`, selected)
-	selected = ""
-	if CS.AutoFinisher {
-		selected = "selected"
-	}
-	fmt.Fprintf(w, `<option value="1" %v>Autofinish with last claim</option>`, selected)
-
-	fmt.Fprint(w, `</select>`)
+	fmt.Fprintf(w, ` <input type="number" id="MaxHours" name="MaxHours" class="MaxHours" oninput="oi(this)" data-save="saveSetupConfig" onchange="checkMaxHours()" value="%v">`, mh)
 	fmt.Fprint(w, `</fieldset>`)
 
 	//fmt.Fprint(w, `</fieldset></article>`) // basic
@@ -567,6 +586,11 @@ func editConfigMain(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `</fieldset></article>`) // basic
 
 	t, err := template.New("rally vars").Parse(buildRallyVarsSettings())
+	checkerr(err)
+	err = t.Execute(w, CS)
+	checkerr(err)
+
+	t, err = template.New("distances").Parse(buildDistanceLimits())
 	checkerr(err)
 	err = t.Execute(w, CS)
 	checkerr(err)

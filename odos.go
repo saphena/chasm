@@ -183,7 +183,8 @@ func update_odo(w http.ResponseWriter, r *http.Request) {
 	checkerr(err)
 
 	fmt.Fprint(w, `{"err":false,"msg":"ok"}`)
-
+	recalc_scorecard(intval(r.FormValue("e")))
+	rankEntrants(false)
 }
 
 func show_odo_checks(w http.ResponseWriter, r *http.Request) {
