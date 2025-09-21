@@ -213,6 +213,9 @@ func print_certs(w http.ResponseWriter, r *http.Request) {
 		checkerr(err)
 		err = tmplt.Execute(w, cf)
 		checkerr(err)
+		if pf != "" { // Repeat for pillion
+			tmplt.Execute(w, cf)
+		}
 	}
 
 }

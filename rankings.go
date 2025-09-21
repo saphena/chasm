@@ -73,24 +73,28 @@ func rankEntrants(intransaction bool) {
 	LastTeam := -1
 	LastTeamPoints := 0
 	LastTeamMiles := 0
-	stmt, err := DBH.Prepare("UPDATE entrants SET CorrectedMiles=?,TotalPoints=? WHERE TeamID=?")
-	checkerr(err)
-	defer stmt.Close()
-	for _, rtr := range ranktab {
+	if CS.RallyTeamMethod != RankTeamsCloning {
 
-		if rtr.TeamID > 0 {
-			if LastTeam != rtr.TeamID {
-				LastTeam = rtr.TeamID
-				LastTeamPoints = rtr.TotalPoints
-				LastTeamMiles = rtr.CorrectedMiles
+		stmt, err := DBH.Prepare("UPDATE entrants SET CorrectedMiles=?,TotalPoints=? WHERE TeamID=?")
+		checkerr(err)
+		defer stmt.Close()
+		for _, rtr := range ranktab {
 
-				_, err = stmt.Exec(LastTeamMiles, LastTeamPoints, LastTeam)
-				checkerr(err)
+			if rtr.TeamID > 0 {
+				if LastTeam != rtr.TeamID {
+					LastTeam = rtr.TeamID
+					LastTeamPoints = rtr.TotalPoints
+					LastTeamMiles = rtr.CorrectedMiles
 
+					fmt.Printf("Team=%v, CM=%v, TP=%v\n", LastTeam, LastTeamMiles, LastTeamPoints)
+					_, err = stmt.Exec(LastTeamMiles, LastTeamPoints, LastTeam)
+					checkerr(err)
+
+				}
 			}
 		}
+		stmt.Close()
 	}
-	stmt.Close()
 
 	sqlx = "SELECT EntrantID,TeamID,TotalPoints,CorrectedMiles,IfNull((TotalPoints*1.0)/CorrectedMiles,0) AS PPM,0 AS Rank,Class FROM entrants WHERE EntrantStatus = "
 	sqlx += strconv.Itoa(EntrantFinisher)
@@ -123,7 +127,7 @@ func rankEntrants(intransaction bool) {
 
 	sqlx = "UPDATE entrants SET FinishPosition=?,Class=? WHERE EntrantID=?"
 
-	stmt, err = DBH.Prepare(sqlx)
+	stmt, err := DBH.Prepare(sqlx)
 	checkerr(err)
 	defer stmt.Close()
 

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"text/template"
 )
@@ -312,6 +313,52 @@ var tmplEntrantBasic = `
 </article>
 `
 
+func crewNames(entrant int, showNum bool) string {
+	entrantx := strconv.Itoa(entrant)
+
+	sqlx := "SELECT " + RiderNameSQL + "," + PillionNameSQL + " FROM entrants WHERE EntrantID=" + entrantx
+	rows, err := DBH.Query(sqlx)
+	checkerr(err)
+	defer rows.Close()
+	res := ""
+	if showNum {
+		res = "#" + entrantx + " "
+	}
+	rider := ""
+	pillion := ""
+	if rows.Next() {
+		err = rows.Scan(&rider, &pillion)
+		checkerr(err)
+		res += rider
+		if pillion != "" {
+			res += " &amp; " + pillion
+		}
+	}
+	return res
+}
+func teamNames(team int, showNum bool) string {
+
+	sqlx := "SELECT EntrantID FROM entrants WHERE TeamID=" + strconv.Itoa(team) + " ORDER BY EntrantID"
+	rows, err := DBH.Query(sqlx)
+	checkerr(err)
+	defer rows.Close()
+	res := ""
+	br := ""
+	nums := []int{}
+	for rows.Next() {
+		var e int
+		err = rows.Scan(&e)
+		checkerr(err)
+		nums = append(nums, e)
+	}
+	rows.Close()
+	for i := range nums {
+		res += br + crewNames(nums[i], showNum)
+		br = "<br>"
+	}
+	return res + "<br>"
+
+}
 func fetchEntrantRecord(entrant int) EntrantDBRecord {
 
 	var er EntrantDBRecord

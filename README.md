@@ -30,3 +30,12 @@ There is a large amount of crossover in functionality between combos and compoun
 | DNF if triggered | Y | N
 | DNF unless triggered | Y | Y
 
+## Odo readings
+
+There is an option UseCheckinForOdo which, if true, prevents individual claims from updating final odo readings. This is so that oodo readings can be simple serial numbers rather than actual odo readings. If distance is to be recorded in a rally at all, it comes either from individual claim readings or from the final check-in.
+
+In any event, a reading recorded during check-in is always recorded as the final reading.
+
+## Teams
+
+Claims can be submitted from any email address associated with a team member but MUST always use the same entrant number if score cloning is in force.
