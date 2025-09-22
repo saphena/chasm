@@ -24,12 +24,12 @@ const complexhelp = `
 <h2>How do I ?</h2>
 
 <p>The following gives examples of how to configure a ruleset to achieve certain specific scoring goals.</p>
-<h3>Award extra points for scoring N categories within an set</h3>
+<h3>Award extra points for scoring N categories within a set</h3>
 <ul>
     <li>One or more rules, each of type Categories Scored, Affects Group-based awards, Ordinary scoring rule.</li>
     <li>Set Triggered when and Results in to the required values.</li>
 </ul>
-<h3>Deduct points for scoring less than N categories within an set</h3>
+<h3>Deduct points for scoring less than N categories within a set</h3>
 <ul>
     <li>Set a placeholder with a Triggered when value = N;</li>
     <li>Set an Ordinary scoring rule with Triggered when = 0 and Results in to the negative value.</li>
@@ -47,6 +47,10 @@ const complexhelp = `
 <h3>Award DNF if too many categories scored</h3>
 <ul>
     <li>Set a DNF is triggered rule with Triggered when set to the limit</li>
+</ul>
+<h3>Award DNF if claims in category A has wrong ratio to claims in category B</h3>
+<ul>
+	<li>Establish one or more rules of type Cat ratio DNF</li>
 </ul>
 </article>
 `

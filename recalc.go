@@ -497,7 +497,7 @@ func calcEntrantStatus(Miles int, et EntrantTimes, TotalPoints int) ([]ScorexLin
 	return res, es
 }
 
-func calcEntrantTimes(entrant int, StartTime string, FinishTime string) EntrantTimes {
+func calcEntrantTimes(StartTime string, FinishTime string) EntrantTimes {
 
 	var et EntrantTimes
 	var err error
@@ -610,7 +610,7 @@ func calcRallyDistance(last int, this int, isKm bool) int {
 }
 
 // 2nd return is number of multipliers
-func calcTimePenalty(entrant int, StartTime string, FinishTime string) ([]ScorexLine, int, EntrantTimes) {
+func calcTimePenalty(StartTime string, FinishTime string) ([]ScorexLine, int, EntrantTimes) {
 
 	const TimePenaltyIcon = "&#x23F0;"
 	const FinishTimeIcon = "" // Blank for now
@@ -618,7 +618,7 @@ func calcTimePenalty(entrant int, StartTime string, FinishTime string) ([]Scorex
 	res := make([]ScorexLine, 0)
 	var numx int
 
-	et := calcEntrantTimes(entrant, StartTime, FinishTime)
+	et := calcEntrantTimes(StartTime, FinishTime)
 
 	//fmt.Printf("%v: %v << %v [%v]\n", entrant, starttimex, finishtimex, myDNF.Format(myTimestamp))
 
@@ -1546,7 +1546,7 @@ func recalc_scorecard(entrant int) {
 	Multipliers += nm
 	Scorex = append(Scorex, nc...)
 
-	ntp, nm, et := calcTimePenalty(entrant, StartTime, FinishTime)
+	ntp, nm, et := calcTimePenalty(StartTime, FinishTime)
 	if EntrantStatus != EntrantDNS {
 		for _, px := range ntp {
 			TotalPoints += px.Points

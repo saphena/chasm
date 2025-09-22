@@ -4,8 +4,6 @@ import (
 	_ "embed"
 	"fmt"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 )
@@ -64,11 +62,12 @@ var resetDatabaseForm = `
     <h1>RESET THE DATABASE</h1>
     <p>This procedure will <strong>RESET THE DATABASE</strong> back to an initial state depending on the settings below.</p>
     <p>Once triggered, this procedure cannot be stopped and it <strong>CANNOT BE REVERSED</strong>.</p>
-    <p>I offer three levels of reset:</p>
+    <p>I offer four levels of reset:</p>
     <ol>
     <li>Remove all scoring info including claims. Rally is ready for live running.</li>
     <li>Remove all claims and entrants. Rally is ready for entrant loading before rally.</li>
     <li>Remove claims, entrants, bonuses, combos and other config data. Need to full configure rally.</li>
+	<li>Reload the demo database and bring it up to date.</li>
     </ol>
     <fieldset><label for="firstchoice">What is your desire at this stage?</label>
     <select id="firstchoice">
@@ -120,7 +119,7 @@ func doTheReset(w http.ResponseWriter, r *http.Request) {
 	//_, err = DBH.Exec("COMMIT")
 	//checkerr(err)
 	fmt.Fprint(w, `</header><p class="thatsall">Reset complete</p>`)
-	fmt.Println("Reset complete")
+	//fmt.Println("Reset complete")
 }
 
 func reloadDemoRally() {
@@ -155,7 +154,7 @@ func showResetChoiceConfirmation(w http.ResponseWriter, lvl int, txt string) {
 
 	fmt.Fprintf(w, `<div id="firstchoice%v" class="hide">
     <hr><p>You have chosen to %v.</p>
-    <p class="yellow">There is no undo facility if you go ahead with this!</p>
+    <p class="yellow">THERE IS NO UNDO FACILITY IF YOU GO AHEAD WITH THIS!</p>
     <fieldset><label for="choice%v">Are you really sure you want to do this?</label>
     <select id="choice%v">
     <option value="0" selected>No! Get me back to safety please</option>
@@ -168,7 +167,7 @@ func showResetOptions(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
 
-	fmt.Printf("showResetOptions ac='%v' == '%v'\n", authcode, r.FormValue("authcode"))
+	//fmt.Printf("showResetOptions ac='%v' == '%v'\n", authcode, r.FormValue("authcode"))
 
 	if r.FormValue("cmd") != "" && r.FormValue("zaplevel") != "" && r.FormValue("authcode") == authcode {
 		doTheReset(w, r)
@@ -221,21 +220,6 @@ func zapRallyConfig() {
 		checkerr(err)
 	}
 
-}
-func zapEBPhotoImages() {
-	sqlx := "SELECT Image FROM ebcphotos"
-	rows, err := DBH.Query(sqlx)
-	checkerr(err)
-	defer rows.Close()
-	//
-	for rows.Next() {
-		var img string
-		err = rows.Scan(&img)
-		checkerr(err)
-		imgfile := filepath.Join(CS.ImgEbcFolder, filepath.Base(img))
-		err = os.Remove(imgfile)
-		checkerr(err)
-	}
 }
 
 func zapEntrants() {

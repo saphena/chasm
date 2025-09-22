@@ -12,7 +12,7 @@ const tphelp = `
 <p>Rally time runs from the rally start time to the rally finish time.</p>
 <p>Individual entrants may have less time available. This can happen where variable start times are available (popular during the pandemic or where riders might start anywhere over a large area). The rally time window is set wide enough to cater for the variable starts and each entrant's time window is limited by the <em>max rideable hours</em> setting.</p>
 <p>Penalties other than DNF can be specified for particular periods within the overall or individual entrant's rally time. Periods are specified either as date/time ranges or as minutes before DNF ranges.</p>
-<p>Time penalties are triggered by entrant check-in time.</p>
+<p>Time penalties are triggered by entrant check-in (or last claim) time.</p>
 <p>The start time specified identifies the first minute when a penalty is applied. So for a rally ending at 17:00 and a penalty start of 30 minutes before DNF, the penalty is incurred by anyone checking-in on or after 16:30.</p>
 </div>
 `

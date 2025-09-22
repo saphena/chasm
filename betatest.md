@@ -85,27 +85,35 @@ Regardless of the size of the territory, each rally is associated with a single 
 
 The 'Rally starts' and 'Rally finishes' variables set the outer limits of rally time. These set the overall window within which everything must happen. The variable 'Max Rideable hours', normally simply the difference between those two variables, can be used for rallies which allow some flexibility in start times.
 
+## Resetting the demo rally
+
+An option under "Here be dragons" lets you  restore the demo database back to its initial state. Part of that process involves updating all the dates to the current date so that you have a realistic idea of how the system behaves with respect to timing.
+
+
 ## FEATURES NOT IMPLEMENTED YET
+***
 
 Several features of v3 ScoreMaster are not implemented in this version. Such features might appear in future versions as and when they're needed. They're described here in anticipation of questions beginning "What happened to feature X?"
 
-### Multiple Legs
+#### Multiple Legs
 
 It is possible to establish a rally with multiple distinct legs rather than the common arrangement of a single leg. A multi-leg rally has start and finish times for each leg, might be scored separately, and can have bonuses and/or combos restricted to a single leg.
 
-### Entrant emailing
+It is obviously possible to run a multi-leg rally by establish multiple databases and swapping between legs.
+
+#### Entrant emailing
 
 This feature is used to send customised emails to entrants, with or without small attachments, selected by entrant status and/or flag numbers. Typically used to distribute GPX files and/or Flag numbers at the rally start.
 
-### Starting cohorts
+#### Starting cohorts
 
 Probably no longer needed. Was useful during Covid but starts now tend to be either a single mass start or with first claim starts.
 
-### Odo check facility
+#### Odo check facility
 
 No longer used cos, let's face it, a 20 mile check route really doesn't give anything like accuracy, even when the team remembers to include tenths in the trip reading.
 
-### AI
+#### ScoreMaster AI
 
 A fully AI version of ScoreMaster may well appear by the 3rd quarter of 2026. This is an exciting prospect: ScoreMaster AI will be distinguished from regular ScoreMaster by the addition of "AI" after "ScoreMaster" on all screens and printouts. In all other respects, ScoreMaster AI will be exactly the same as ScoreMaster.
 

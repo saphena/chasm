@@ -172,6 +172,7 @@ var tzlist = []string{
 	"America/Los_Angeles",
 	"America/New_York",
 	"America/Phoenix",
+	"America/Sao_Paulo",
 	"Australia/Perth",
 	"Australia/Sydney",
 	"Australia/Adelaide",
@@ -525,7 +526,7 @@ func editConfigMain(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, ` <input type="time" name="RallyFinishTime" id="RallyFinishTime" onchange="saveSetupFinish(this)" value="%v">`, tm)
 	fmt.Fprint(w, `</fieldset>`)
 
-	fmt.Fprint(w, `<fieldset>`)
+	fmt.Fprint(w, `<fieldset title="When variable starts are possible, it might be necessary to set this value lower than the max possible">`)
 	fmt.Fprint(w, `<label for="MaxHours">Max Rideable hours</label>`)
 	mh := CS.Basics.RallyMaxHours //getIntegerFromDB("SELECT MaxHours FROM rallyparams", 99)
 	fmt.Fprintf(w, ` <input type="number" id="MaxHours" name="MaxHours" class="MaxHours" oninput="oi(this)" data-save="saveSetupConfig" onchange="checkMaxHours()" value="%v">`, mh)

@@ -35,6 +35,7 @@ func recalc_handler(w http.ResponseWriter, r *http.Request) {
 	const recalcfrm = `
 	<article class="recalc">
 	<p>This procedure will recalculate all scorecards. This involves rebuilding them from scratch by reprocessing the claims log. This should only take a few moments but it will need exclusive access to the database.</p>
+	<p>You might need to run this if any aspect of the rally configuration: bonuses, settings, etc, has been changed during the rally.</p>
 	<p>It's quite safe to do this during a live rally.</p>
 	<form action="/recalc">
 		<input type="hidden" name="ok" value="ok">

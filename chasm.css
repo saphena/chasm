@@ -633,6 +633,14 @@ header {
   background: inherit;
 }
 
+.sqlquery {
+  p {
+    margin: 0 0 .5em 0;
+  }
+  button {
+    margin: .5em 0 .5em 0;
+  }
+}
 .thatsall {
   display: inline-block;
   background-color: var(--hilite-background);

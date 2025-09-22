@@ -308,7 +308,7 @@ func showSingleCombo(w http.ResponseWriter, c ComboBonus, bl string) {
 		set.ComboID = c.Comboid
 		set.CatNow = c.Cat[i]
 		set.Cats = fetchSetCats(set.Set, true)
-		fmt.Printf("%v\n", set)
+		//fmt.Printf("%v\n", set)
 		t, err := template.New("ComboCat").Parse(ComboCatSelector)
 		checkerr(err)
 		err = t.Execute(w, set)

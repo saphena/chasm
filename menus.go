@@ -16,7 +16,7 @@ type menuItem struct {
 type menu []menuItem
 
 var mainMenu = menu{
-	{"Judge new claims", "Process incoming claims from email", "/ebclist", ""},
+	{"Judge incoming claims", "Process incoming claims from email", "/ebclist", ""},
 	{"Review scorecards", "", "/cards", ""},
 	{"Show current rankings", "Show state of play", "/qlist", ""},
 	{"Show all claims", "Full list of processed claims", "/claims", ""},
@@ -97,6 +97,14 @@ func showMenu(w http.ResponseWriter, menu string) {
 	fmt.Fprint(w, `</header>`)
 	fmt.Fprint(w, `<nav class="menu">`)
 	for _, v := range *m {
+		if menu == "main" {
+			if strings.Contains(v.Url, "/odos?check=out") && CS.StartOption != CheckoutStart {
+				continue
+			}
+			if strings.Contains(v.Url, "/odos?check=in") && CS.AutoFinisher {
+				continue
+			}
+		}
 		onclick := ""
 		if v.Click == "" {
 			onclick = "window.location.href='" + v.Url + "'"

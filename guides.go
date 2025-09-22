@@ -33,11 +33,15 @@ padding: 0 0 2em 0;
 }
 p {
 text-align: justify;
-margin: .5em 0 0 0;
+margin: .3em 0 0 0;
 }
 h2,
-h3 {
+h3,
+h4 {
 margin: 1em 0 0 0;
+}
+h4 {
+font-size: smaller;
 }
 ol,
 ul {
