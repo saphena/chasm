@@ -216,12 +216,22 @@ function fetchEntrantDetails(obj) {
       } else {
         let ed = document.getElementById("entrantDetails");
         let edf = document.getElementById("edflag");
+        let wrn = document.getElementById("edwarn");
+        if (wrn) {
+          wrn.classList.add("hide");
+        }
         console.log(data);
         ed.innerHTML = data.name;
         if (data.team) {
           edf.classList.remove("hide");
         } else {
           edf.classList.add("hide");
+        }
+        if (data.warn && wrn) {
+          wrn.innerHTML = data.warn;
+          if (data.wrn != "") {
+            wrn.classList.remove("hide");
+          }
         }
       }
     })

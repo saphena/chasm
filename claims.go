@@ -99,7 +99,7 @@ const judginghelp = `
 <p>Specific bonus requirements are shown including icons indicating "Alert", "Bike in photo", "Daylight only", "Face in photo", "Night only", "Restricted hours/access" and "Receipt/ticket required"</p>
 <p><strong>Accept good claim</strong> awards the points and other benefits of the claim</p>
 <p><strong>Leave undecided</strong> does not judge the claim but returns it to the end of the queue</p>
-<p>Other responses apart from "Exclude claim" reject the claim for the stated reason. The claim and reason for rejection will appear on the scorecard. This is the normal method of rejecting claims and should be used in preference to excluding the claim.</p>
+<p>Other responses apart from "Exclude claim" <strong>reject the claim</strong> for the stated reason. The claim and reason for rejection will appear on the scorecard. This is the normal method of rejecting claims and should be used in preference to excluding the claim.</p>
 <p><strong>Exclude claim</strong> excludes the claim from scoring altogether. It should only rarely be used as nothing will appear on the scorecard. It is intended for use with claims which are not judgeable as opposed to those which can be accepted or rejected.</p>
 <p>Clicking the info line after '@' will make odo reading and claim time editable</p>
 </article>
@@ -191,24 +191,6 @@ func fetchClaimDetails(claimid int) ClaimRecord {
 	cr.PercentPenalty = pp != 0
 
 	return cr
-
-}
-
-func fetchEntrantDetails(entrant int) EntrantDetails {
-
-	var ed EntrantDetails
-
-	ed.EntrantID = entrant
-	if entrant < 1 {
-		return ed
-	}
-
-	e := strconv.Itoa(entrant)
-
-	ed.RiderName = getStringFromDB("SELECT "+RiderNameSQL+" FROM entrants WHERE EntrantID="+e, e)
-	ed.PillionName = getStringFromDB("SELECT "+PillionNameSQL+" FROM entrants WHERE EntrantID="+e, "")
-	ed.TeamID = getIntegerFromDB("SELECT TeamID FROM entrants WHERE EntrantID="+e, 0)
-	return ed
 
 }
 
@@ -579,7 +561,7 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintf(w, `<input type="hidden" id="claimid" name="claimid" value="%v">`, claimid)
 	if claimid < 1 {
-		fmt.Fprint(w, `<input type="text" autofocus tabindex="1" class="subject" placeholder="Paste email Subject line here" oninput="pasteNewClaim(this)">`)
+		//fmt.Fprint(w, `<input type="text" autofocus tabindex="1" class="subject" placeholder="Paste email Subject line here" oninput="pasteNewClaim(this)">`)
 		cr.Decision = 0 // Good claim
 		claimdate = time.Now().Format("2006-01-02")
 		claimtime = time.Now().Format("15:04")
@@ -595,7 +577,7 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Fprint(w, `<fieldset class="claimfield">`)
 	fmt.Fprint(w, `<label for="EntrantID">Entrant</label>`)
-	fmt.Fprint(w, `<input type="number" tabindex="2" id="EntrantID" name="EntrantID" class="EntrantID" oninput="setdirty(this);fetchEntrantDetails(this);"`)
+	fmt.Fprint(w, `<input type="number" tabindex="2" autofocus id="EntrantID" name="EntrantID" class="EntrantID" oninput="setdirty(this);fetchEntrantDetails(this);"`)
 	if claimid > 0 {
 		fmt.Fprintf(w, ` readonly value="%v"`, cr.EntrantID)
 	}
@@ -610,6 +592,7 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, ` <span id="edflag" class="%v">`, hide)
 	fmt.Fprint(w, emitImage(flag_team, "TR", CS.FlagTeamTitle))
 	fmt.Fprint(w, `</span>`)
+	fmt.Fprint(w, ` <span id="edwarn" class="warn hide"></span>`)
 	fmt.Fprint(w, `</span>`)
 	fmt.Fprint(w, `</fieldset>`)
 

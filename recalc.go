@@ -230,6 +230,44 @@ const (
 
 var RallyParametersLoaded bool
 
+type eparams struct {
+	Team           int
+	StartTime      string
+	FinishTime     string
+	CorrectedMiles int
+	StartOdo       int
+	LastOdo        int
+	FinishOdo      int
+	FinishOdoCheck int
+	OdoIsKm        bool
+	EntrantStatus  int
+	CheckedIn      bool
+}
+
+func fetch_eparams(entrant int) eparams {
+	var ep eparams
+
+	sqlx := "SELECT TeamID,ifnull(StartTime,''),ifnull(FinishTime,''),ifnull(OdoRallyStart,0),ifnull(OdoCheckFinish,0),ifnull(OdoRallyFinish,0),OdoKms,EntrantStatus, CheckedIn"
+	sqlx += " FROM entrants WHERE EntrantID=" + strconv.Itoa(entrant)
+	rows, err := DBH.Query(sqlx)
+	checkerr(err)
+	defer rows.Close()
+	if rows.Next() {
+		var omk string
+		var ci int
+		err = rows.Scan(&ep.Team, &ep.StartTime, &ep.FinishTime, &ep.StartOdo, &ep.FinishOdoCheck, &ep.FinishOdo, &omk, &ep.EntrantStatus, &ci)
+		checkerr(err)
+		ep.OdoIsKm = omk == "K"
+		ep.CheckedIn = ci == 1
+		if ep.FinishOdo < 1 {
+			ep.FinishOdo = ep.FinishOdoCheck
+		}
+	}
+
+	return ep
+
+}
+
 // Build list of bonuses claimed
 func build_bonusclaim_array(entrant int) ClaimedBonusMap {
 
@@ -402,7 +440,7 @@ func BuildRallyParameters(Leg int) {
 
 }
 
-func calcEntrantStatus(Miles int, et EntrantTimes, TotalPoints int) ([]ScorexLine, int) {
+func calcEntrantStatus(Miles int, et EntrantTimes, TotalPoints int, CheckedIn bool) ([]ScorexLine, int) {
 
 	const DNF_icon = "DNF" //"&#9760;"
 
@@ -412,6 +450,9 @@ func calcEntrantStatus(Miles int, et EntrantTimes, TotalPoints int) ([]ScorexLin
 
 	var es int = EntrantFinisher
 
+	if !CS.AutoFinisher && !CheckedIn { // Check-in needed to be Finisher
+		es = EntrantOK
+	}
 	mklit := CS.UnitMilesLit
 	if CS.Basics.RallyUnitKms {
 		mklit = CS.UnitKmsLit
@@ -1310,6 +1351,9 @@ func recalc_scorecard(entrant int) {
 
 	BonusesClaimed = build_bonusclaim_array(entrant)
 
+	ep := fetch_eparams(entrant)
+
+	/**
 	Team := getIntegerFromDB(fmt.Sprintf("SELECT TeamID FROM entrants WHERE EntrantID=%v", entrant), 0)
 	StartTime := getStringFromDB(fmt.Sprintf("SELECT ifnull(StartTime,'') FROM entrants WHERE EntrantID=%v", entrant), "")
 	FinishTime := getStringFromDB(fmt.Sprintf("SELECT ifnull(FinishTime,'') FROM entrants WHERE EntrantID=%v", entrant), "")
@@ -1323,6 +1367,7 @@ func recalc_scorecard(entrant int) {
 	}
 	OdoIsKm := getIntegerFromDB(fmt.Sprintf("SELECT OdoKms FROM entrants WHERE EntrantID=%v", entrant), 0) != 0
 	EntrantStatus := getIntegerFromDB(fmt.Sprintf("SELECT EntrantStatus FROM entrants WHERE EntrantID=%v", entrant), 0)
+	**/
 
 	var sx ScorexLine
 	TotalPoints := 0
@@ -1356,33 +1401,33 @@ func recalc_scorecard(entrant int) {
 			continue
 		}
 
-		if EntrantStatus == EntrantDNS && CS.StartOption == FirstClaimStart {
-			EntrantStatus = EntrantOK
+		if ep.EntrantStatus == EntrantDNS && CS.StartOption == FirstClaimStart {
+			ep.EntrantStatus = EntrantOK
 		}
 
 		if BC.BonusScorecardIX >= 0 {
 			ScorecardBonuses[BC.BonusScorecardIX].Scored = BC.Decision == ClaimDecision_GoodClaim // Only good claims count against "must score" flag
 		}
 
-		if StartTime == "" {
-			StartTime = BC.ClaimTime
+		if ep.StartTime == "" {
+			ep.StartTime = BC.ClaimTime
 		}
-		if BC.ClaimTime < StartTime {
-			StartTime = BC.ClaimTime
+		if BC.ClaimTime < ep.StartTime {
+			ep.StartTime = BC.ClaimTime
 		}
 
-		if FinishTime == "" {
-			FinishTime = BC.ClaimTime
+		if ep.FinishTime == "" {
+			ep.FinishTime = BC.ClaimTime
 		}
-		if BC.ClaimTime > FinishTime {
-			FinishTime = BC.ClaimTime
+		if BC.ClaimTime > ep.FinishTime {
+			ep.FinishTime = BC.ClaimTime
 		}
-		LastOdo = BC.OdoReading
-		if StartOdo < 1 {
-			StartOdo = LastOdo
+		ep.LastOdo = BC.OdoReading
+		if ep.StartOdo < 1 {
+			ep.StartOdo = ep.LastOdo
 		}
-		if LastOdo > FinishOdo {
-			FinishOdo = LastOdo
+		if ep.LastOdo > ep.FinishOdo {
+			ep.FinishOdo = ep.LastOdo
 		}
 
 		sx = checkApplySequences(BC, LastBonusClaimed)
@@ -1546,8 +1591,8 @@ func recalc_scorecard(entrant int) {
 	Multipliers += nm
 	Scorex = append(Scorex, nc...)
 
-	ntp, nm, et := calcTimePenalty(StartTime, FinishTime)
-	if EntrantStatus != EntrantDNS {
+	ntp, nm, et := calcTimePenalty(ep.StartTime, ep.FinishTime)
+	if ep.EntrantStatus != EntrantDNS {
 		for _, px := range ntp {
 			TotalPoints += px.Points
 		}
@@ -1564,12 +1609,12 @@ func recalc_scorecard(entrant int) {
 	}
 		**/
 
-	CorrectedMiles = calcRallyDistance(StartOdo, FinishOdo, OdoIsKm)
+	ep.CorrectedMiles = calcRallyDistance(ep.StartOdo, ep.FinishOdo, ep.OdoIsKm)
 
-	fmt.Printf("CM=%v, s=%v, f=%v\n", CorrectedMiles, StartOdo, FinishOdo)
+	fmt.Printf("CM=%v, s=%v, f=%v\n", ep.CorrectedMiles, ep.StartOdo, ep.FinishOdo)
 
-	ntp, nm = calcMileagePenalty(CorrectedMiles)
-	if EntrantStatus != EntrantDNS {
+	ntp, nm = calcMileagePenalty(ep.CorrectedMiles)
+	if ep.EntrantStatus != EntrantDNS {
 		for _, px := range ntp {
 			TotalPoints += px.Points
 		}
@@ -1589,13 +1634,14 @@ func recalc_scorecard(entrant int) {
 		Scorex = append(Scorex, sx)
 	}
 
-	if EntrantStatus != EntrantDNS {
-		sxs, status := calcEntrantStatus(CorrectedMiles, et, TotalPoints)
-		EntrantStatus = status
+	if ep.EntrantStatus != EntrantDNS {
+		sxs, status := calcEntrantStatus(ep.CorrectedMiles, et, TotalPoints, ep.CheckedIn)
+		fmt.Printf("calcEntrantStatus returned %v from %v\n", status, ep.EntrantStatus)
+		ep.EntrantStatus = status
 		Scorex = append(Scorex, sxs...)
 	}
 
-	htmlSX := htmlScorex(Scorex, entrant, EntrantStatus, CorrectedMiles, TotalPoints, Team)
+	htmlSX := htmlScorex(Scorex, entrant, ep.EntrantStatus, ep.CorrectedMiles, TotalPoints, ep.Team)
 
 	/* 	_, err = DBH.Exec("COMMIT")
 	   	checkerr(err)
@@ -1608,22 +1654,22 @@ func recalc_scorecard(entrant int) {
 	defer stmt.Close()
 	//fmt.Println("update ok")
 
-	_, err = stmt.Exec(htmlSX, EntrantStatus, TotalPoints, CorrectedMiles, FinishOdo, StartOdo, StartTime, FinishTime, entrant)
+	_, err = stmt.Exec(htmlSX, ep.EntrantStatus, TotalPoints, ep.CorrectedMiles, ep.FinishOdo, ep.StartOdo, ep.StartTime, ep.FinishTime, entrant)
 	checkerr(err)
 	stmt.Close()
 
-	if CS.RallyTeamMethod == RankTeamsCloning && Team > 0 && len(BonusesClaimed) > 0 {
+	if CS.RallyTeamMethod == RankTeamsCloning && ep.Team > 0 && len(BonusesClaimed) > 0 {
 		sqlx = "UPDATE entrants SET ScoreX=?,EntrantStatus=?,TotalPoints=?,CorrectedMiles=?,OdoRallyFinish=?,OdoRallyStart=?,StartTime=?,FinishTime=? WHERE TeamID=?"
 		stmt, err = DBH.Prepare(sqlx)
 		checkerr(err)
 		defer stmt.Close()
 		//fmt.Println("update ok")
 
-		_, err = stmt.Exec(htmlSX, EntrantStatus, TotalPoints, CorrectedMiles, FinishOdo, StartOdo, StartTime, FinishTime, Team)
+		_, err = stmt.Exec(htmlSX, ep.EntrantStatus, TotalPoints, ep.CorrectedMiles, ep.FinishOdo, ep.StartOdo, ep.StartTime, ep.FinishTime, ep.Team)
 		checkerr(err)
 
 	}
-	fmt.Printf("CM=%v, TP=%v\n", CorrectedMiles, TotalPoints)
+	fmt.Printf("CM=%v, TP=%v\n", ep.CorrectedMiles, TotalPoints)
 	// Debugging code below
 	const dbgstyle = `<style>
     .sxitempoints { text-align: right;}

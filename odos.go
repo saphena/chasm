@@ -56,11 +56,14 @@ func show_odo(w http.ResponseWriter, r *http.Request, showstart bool) {
 	st := get_odolist_start_time(showstart)
 	sclist := ""
 	if showstart {
-		sclist = strconv.Itoa(EntrantDNS) + "," + strconv.Itoa(EntrantOK)
+		//sclist = strconv.Itoa(EntrantDNS) + "," + strconv.Itoa(EntrantOK)
+		sclist = " CheckedOut=0"
 	} else {
-		sclist = strconv.Itoa(EntrantOK) + "," + strconv.Itoa(EntrantFinisher)
+		//sclist = " EntrantStatus IN (" + strconv.Itoa(EntrantOK) + "," + strconv.Itoa(EntrantFinisher) + ")"
+		sclist = " CheckedOut=1 AND CheckedIn=0"
 	}
-	sqlx += " EntrantStatus IN (" + sclist + ")"
+	//sqlx += " EntrantStatus IN (" + sclist + ")"
+	sqlx += sclist
 	sqlx += " ORDER BY RiderLast,RiderFirst"
 	//fmt.Println(sqlx)
 	rows, err := DBH.Query(sqlx)
@@ -123,7 +126,7 @@ func show_odo(w http.ResponseWriter, r *http.Request, showstart bool) {
 		oe = !oe
 		fmt.Fprint(w, `">`)
 
-		fmt.Fprintf(w, `<label for="%v" class="name"><strong>%v</strong>, %v</label> `, itemno, RiderLast, RiderFirst)
+		fmt.Fprintf(w, `<label for="%v" class="name">#%v <strong>%v</strong>, %v</label> `, itemno, EntrantID, RiderLast, RiderFirst)
 		pch := "finish odo"
 		val := OdoFinish
 		if showstart {
@@ -164,19 +167,23 @@ func update_odo(w http.ResponseWriter, r *http.Request) {
 		if n < 1 {
 			ns = EntrantDNF
 		}
+		sqlx += ",CheckedIn=1"
 		sqlx += ",FinishTime='" + dt + "'"
 		sqlx += ",EntrantStatus=" + strconv.Itoa(ns)
 		sqlx += " WHERE EntrantID=" + r.FormValue("e")
-		sqlx += " AND FinishTime IS NULL"
-		sqlx += " AND EntrantStatus IN (" + strconv.Itoa(EntrantOK) + "," + strconv.Itoa(EntrantDNF) + ")"
+		sqlx += " AND CheckedIn=0"
+		//sqlx += " AND FinishTime IS NULL"
+		//sqlx += " AND EntrantStatus IN (" + strconv.Itoa(EntrantOK) + "," + strconv.Itoa(EntrantDNF) + ")"
 	case "s":
 		sqlx = "OdoRallyStart=" + r.FormValue("v")
 		sqlx += ",OdoCheckStart=" + r.FormValue("v")
 
 		sqlx += ",StartTime='" + dt + "'"
 		sqlx += ",EntrantStatus=" + strconv.Itoa(EntrantOK)
+		sqlx += ",CheckedOut=1"
 		sqlx += " WHERE EntrantID=" + r.FormValue("e")
-		sqlx += " AND EntrantStatus IN (" + strconv.Itoa(EntrantDNS) + "," + strconv.Itoa(EntrantOK) + ")"
+		sqlx += " AND CheckedOut=0"
+		//sqlx += " AND EntrantStatus IN (" + strconv.Itoa(EntrantDNS) + "," + strconv.Itoa(EntrantOK) + ")"
 	}
 	fmt.Println(sqlx)
 	_, err := DBH.Exec("UPDATE entrants SET " + sqlx)

@@ -115,6 +115,10 @@ No longer used cos, let's face it, a 20 mile check route really doesn't give any
 
 #### ScoreMaster AI
 
-A fully AI version of ScoreMaster may well appear by the 3rd quarter of 2026. This is an exciting prospect: ScoreMaster AI will be distinguished from regular ScoreMaster by the addition of "AI" after "ScoreMaster" on all screens and printouts. In all other respects, ScoreMaster AI will be exactly the same as ScoreMaster.
+A fully AI version of ScoreMaster may well appear by the 3rd quarter of 2026. This is an exciting prospect: ScoreMaster AI will be distinguished from regular ScoreMaster by the addition of "AI" after "ScoreMaster" on all screens and printouts. In all other respects, ScoreMaster AI will be exactly the same as regular ScoreMaster.
 
+
+#### Missed combo analysis
+
+This is a much requested feature - the ability to ask the question "why did this entrant not score this combo?" and receive a listing of "missed" or unclaimed bonuses resulting in failure to claim a combo.
 

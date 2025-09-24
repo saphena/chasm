@@ -22,19 +22,19 @@ var mainMenu = menu{
 	{"Show all claims", "Full list of processed claims", "/claims", ""},
 	{"Check-OUT @ start", "Take odo readings at start of rally", "/odos?check=out", ""},
 	{"Check-IN @ finish", "Take odo readings at end of rally", "/odos?check=in", ""},
-	{"Reporting", "Certificates, analyses,exports", "/menu?menu=Reports", ""},
-	{"Rally setup &amp; config", "Access all components", "/setup", ""},
+	{"Reporting", "Certificates, analyses,exports", "/menu/Reports", ""},
+	{"Rally setup &amp; config", "Access all components", "/menu/Setup", ""},
 	{"READ THESE NOTES", "Bob's rough guide to ScoreMaster", "/guide", "window.open(#url#,'_guide')"},
 }
 
 var setupmenu = menu{
 	{"Rally Parameters", "Configuration of this rally", "/config", ""},
 	{"Edit certificate content", "Maintain certificate templates", "/editcert", ""},
-	{"Entrants", "Maintain entrant details", "/menu?menu=Entrants", ""},
-	{"Bonuses / Combos", "Ordinary and combo bonuses", "/menu?menu=Bonuses", ""},
+	{"Entrants", "Maintain entrant details", "/menu/Entrants", ""},
+	{"Bonuses / Combos", "Ordinary and combo bonuses", "/menu/Bonuses", ""},
 	{"Time penalties", "Time penalties", "/timep", ""},
 	{"Complex calculation rules", "Scoring rules for use with categories", "/rules", ""},
-	{"Here be dragons!", "Rally database utilities", "/menu?menu=Utilities", ""},
+	{"Here be dragons!", "Rally database utilities", "/menu/Utilities", ""},
 }
 
 var entrantmenu = menu{
@@ -70,7 +70,7 @@ var menus = map[string]*menu{"main": &mainMenu, "Setup": &setupmenu, "Entrants":
 
 func show_menu(w http.ResponseWriter, r *http.Request) {
 
-	menu := r.FormValue("menu")
+	menu := r.PathValue("menu")
 	if menu == "" {
 		menu = "main"
 	}

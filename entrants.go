@@ -56,6 +56,8 @@ type EntrantDBRecord struct {
 	StartTimeTime        string
 	FinishTimeDate       string
 	FinishTimeTime       string
+	CheckedOut           int
+	CheckedIn            int
 }
 
 type EntrantDetails struct {
@@ -71,6 +73,8 @@ type EntrantDetails struct {
 	AcceptedByEntrant int
 	LastReviewed      string
 	ReviewStatus      int
+	CheckedOut        int
+	CheckedIn         int
 }
 
 // SQL for safely retrieving full names
@@ -90,7 +94,13 @@ func ajaxFetchEntrantDetails(w http.ResponseWriter, r *http.Request) {
 	}
 	tr := jsonBool(ed.PillionName != "" || ed.TeamID > 0)
 
-	fmt.Fprintf(w, `{"ok":true,"msg":"ok","name":"%v","team":%v}`, ed.RiderName, tr)
+	wrn := ""
+	if CS.StartOption != FirstClaimStart && ed.CheckedOut != 1 {
+		wrn = "NOT CHECKED OUT"
+	} else if !CS.AutoFinisher && ed.CheckedIn == 1 {
+		wrn = "CHECKED IN"
+	}
+	fmt.Fprintf(w, `{"ok":true,"msg":"ok","name":"%v","team":"%v","warn":"%v"}`, ed.RiderName, tr, wrn)
 
 }
 
@@ -130,6 +140,29 @@ func deleteEntrant(w http.ResponseWriter, r *http.Request) {
 	_, err := DBH.Exec(sqlx)
 	checkerr(err)
 	fmt.Fprint(w, `{"ok":true,"msg":"ok"}`)
+}
+
+func fetchEntrantDetails(entrant int) EntrantDetails {
+
+	var ed EntrantDetails
+
+	ed.EntrantID = entrant
+	if entrant < 1 {
+		return ed
+	}
+
+	e := strconv.Itoa(entrant)
+
+	sqlx := fmt.Sprintf("SELECT %v,%v,TeamID,CheckedOut,CheckedIn FROM entrants WHERE EntrantID=%v", RiderNameSQL, PillionNameSQL, e)
+	rows, err := DBH.Query(sqlx)
+	checkerr(err)
+	defer rows.Close()
+	if rows.Next() {
+		err = rows.Scan(&ed.RiderName, &ed.PillionName, &ed.TeamID, &ed.CheckedOut, &ed.CheckedIn)
+		checkerr(err)
+	}
+	return ed
+
 }
 
 func list_entrants(w http.ResponseWriter, r *http.Request) {
@@ -295,6 +328,14 @@ var tmplEntrantBasic = `
 			<option value="8" {{if eq .EntrantStatus 8}}selected{{end}}>Finisher</option>
 			<option value="3" {{if eq .EntrantStatus 3}}selected{{end}}>DNF</option>
 		</select>
+		<select id="CheckedOut" name="CheckedOut" data-save="saveEntrant" oninput="oi(this)" onchange="saveWntrant(this)">
+			<option value="0" {{if eq .CheckedOut 0}}selected{{end}}>not checked out</option>
+			<option value="1" {{if eq .CheckedOut 1}}selected{{end}}>Checked out</option>
+		</select>
+		<select id="CheckedIn" name="CheckedIn" data-save="saveEntrant" oninput="oi(this)" onchange="saveWntrant(this)">
+			<option value="0" {{if eq .CheckedIn 0}}selected{{end}}>not checked in</option>
+			<option value="1" {{if eq .CheckedIn 1}}selected{{end}}>Checked in</option>
+		</select>
 	</fieldset>
 	<fieldset>
 		<label for="Team">Team</label>
@@ -371,13 +412,13 @@ func fetchEntrantRecord(entrant int) EntrantDBRecord {
 		,ifnull(PillionFirst,''),ifnull(PillionLast,''),ifnull(PillionIBA,'')
 		,ifnull(OdoKms,'M'),ifnull(OdoRallyStart,0),ifnull(OdoRallyFinish,0),ifnull(CorrectedMiles,0)
 		,ifnull(FinishTime,''),ifnull(StartTime,''),EntrantStatus,ifnull(NokName,''),ifnull(NokPhone,''),ifnull(NokRelation,'')
-		,FinishPosition,TotalPoints,TeamID,Class		FROM entrants`
+		,FinishPosition,TotalPoints,TeamID,Class,CheckedOut,CheckedIn		FROM entrants`
 	sqlx += fmt.Sprintf(" WHERE EntrantID=%v", entrant)
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
 	defer rows.Close()
 	if rows.Next() {
-		err = rows.Scan(&er.EntrantID, &er.Bike, &er.BikeReg, &er.RiderFirst, &er.RiderLast, &er.RiderCountry, &er.RiderIBA, &er.RiderPhone, &er.RiderEmail, &er.PillionFirst, &er.PillionLast, &er.PillionIBA, &er.OdoKms, &er.OdoStart, &er.OdoFinish, &er.CorrectedMiles, &er.FinishTime, &er.StartTime, &er.EntrantStatus, &er.NokName, &er.NokPhone, &er.NokRelation, &er.FinishPosition, &er.TotalPoints, &er.TeamID, &er.Class)
+		err = rows.Scan(&er.EntrantID, &er.Bike, &er.BikeReg, &er.RiderFirst, &er.RiderLast, &er.RiderCountry, &er.RiderIBA, &er.RiderPhone, &er.RiderEmail, &er.PillionFirst, &er.PillionLast, &er.PillionIBA, &er.OdoKms, &er.OdoStart, &er.OdoFinish, &er.CorrectedMiles, &er.FinishTime, &er.StartTime, &er.EntrantStatus, &er.NokName, &er.NokPhone, &er.NokRelation, &er.FinishPosition, &er.TotalPoints, &er.TeamID, &er.Class, &er.CheckedOut, &er.CheckedIn)
 		checkerr(err)
 		er.StartTimeDate, er.StartTimeTime = splitDatetime(er.StartTime)
 		er.FinishTimeDate, er.FinishTimeTime = splitDateTime(er.FinishTime)
