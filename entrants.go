@@ -95,12 +95,14 @@ func ajaxFetchEntrantDetails(w http.ResponseWriter, r *http.Request) {
 	tr := jsonBool(ed.PillionName != "" || ed.TeamID > 0)
 
 	wrn := ""
-	if CS.StartOption != FirstClaimStart && ed.CheckedOut != 1 {
+	if ed.RiderName == "" {
+		wrn = "NO SUCH ENTRANT"
+	} else if CS.StartOption != FirstClaimStart && ed.CheckedOut != 1 {
 		wrn = "NOT CHECKED OUT"
 	} else if !CS.AutoFinisher && ed.CheckedIn == 1 {
 		wrn = "CHECKED IN"
 	}
-	fmt.Fprintf(w, `{"ok":true,"msg":"ok","name":"%v","team":"%v","warn":"%v"}`, ed.RiderName, tr, wrn)
+	fmt.Fprintf(w, `{"ok":true,"msg":"ok","name":"%v","team":%v,"warn":"%v"}`, ed.RiderName, tr, wrn)
 
 }
 

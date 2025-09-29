@@ -33,6 +33,7 @@ const myButtons = [
   {
     name: "db",
     iconURL: "images/fields.png",
+    tooltip: "Insert database field",
     list: liveFields,
     exec: (...args) => {
       for (let p in args[2]) {

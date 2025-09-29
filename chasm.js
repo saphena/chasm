@@ -886,6 +886,13 @@ function resetClaimslogFilter() {
   reloadClaimslog();
 }
 
+function showQDnfChanged(obj) {
+  let dnf = "";
+  if (obj.checked) {
+    dnf = "dnf";
+  }
+  reloadRankings("dnf", dnf);
+}
 function showQHotChanged(obj) {
   let hot = "";
   if (obj.checked) {
@@ -1004,6 +1011,17 @@ function pasteNewClaim(obj) {
 }
 
 function saveUpdatedClaim(obj) {
+  let entrant = document.getElementById("EntrantID");
+  let ename = document.getElementById("entrantDetails");
+  if (entrant.value == "" || ename.innerHTML == "") {
+    entrant.focus();
+    return false;
+  }
+  let bonus = document.getElementById("BonusID");
+  if (bonus.value == "") {
+    bonus.focus();
+    return false;
+  }
   let frm = document.getElementById("iclaim");
   frm.setAttribute("data-unloadok", 1);
   let url = "/x?f=saveclaim";

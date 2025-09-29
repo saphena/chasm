@@ -465,10 +465,12 @@ func insertNewClaim(r *http.Request) {
 
 	const Leg = 1
 
-	sqlx := "SELECT ifnull(OdoReading,0) FROM claims WHERE EntrantID=" + r.FormValue("EntrantID")
-	sqlx += " ORDER BY EntrantID,ClaimTime DESC"
+	sqlx := "SELECT ifnull(OdoRallyStart,0) FROM entrants WHERE EntrantID=" + r.FormValue("EntrantID")
+	checkoutodo := getIntegerFromDB(sqlx, 0)
+	sqlx = fmt.Sprintf("SELECT ifnull(OdoReading,%v) FROM claims WHERE EntrantID=%v", checkoutodo, r.FormValue("EntrantID"))
+	sqlx += " ORDER BY EntrantID,ClaimTime DESC,OdoReading DESC"
 
-	lastOdo := getIntegerFromDB(sqlx, 0)
+	lastOdo := getIntegerFromDB(sqlx, checkoutodo)
 	thisOdo := intval(r.FormValue("OdoReading"))
 	if thisOdo == 0 {
 		thisOdo = lastOdo + 1
@@ -636,7 +638,7 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `</span>`)
 	fmt.Fprint(w, `</fieldset>`)
 
-	fmt.Fprint(w, `<fieldset class="claimfield">`)
+	fmt.Fprint(w, `<fieldset class="claimfield" title="This defaults to last reading +1">`)
 	fmt.Fprint(w, `<label for="OdoReading">Odo reading</label>`)
 	fmt.Fprintf(w, `<input type="number" tabindex="4" id="OdoReading" name="OdoReading" onchange="setdirty(this)" class="odo" value="%v">`, cr.OdoReading)
 	fmt.Fprint(w, `</fieldset>`)
@@ -1058,10 +1060,12 @@ func saveEBC(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sqlx = "SELECT ifnull(OdoReading,0) FROM claims WHERE EntrantID=" + r.FormValue("EntrantID")
-	sqlx += " ORDER BY EntrantID,ClaimTime DESC"
+	sqlx = "SELECT ifnull(OdoRallyStart,0) FROM entrants WHERE EntrantID=" + r.FormValue("EntrantID")
+	checkoutodo := getIntegerFromDB(sqlx, 0)
+	sqlx = fmt.Sprintf("SELECT ifnull(OdoReading,%v) FROM claims WHERE EntrantID=%v", checkoutodo, r.FormValue("EntrantID"))
+	sqlx += " ORDER BY EntrantID,ClaimTime DESC,OdoReading DESC"
 
-	lastOdo := getIntegerFromDB(sqlx, 0)
+	lastOdo := getIntegerFromDB(sqlx, checkoutodo)
 	thisOdo := intval(r.FormValue("OdoReading"))
 	if thisOdo == 0 {
 		thisOdo = lastOdo + 1

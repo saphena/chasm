@@ -43,6 +43,12 @@ func show_qlist(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `<input type="hidden" name="ok" value="%v">`, r.FormValue("ok"))
 	fmt.Fprintf(w, `<span class="pushright"><label for="plusok">+ok</label> <input type="checkbox"  id="plusok" %v onchange="showQOkChanged(this)"></span>`, checked)
 	checked = ""
+	showdnf := r.FormValue("dnf") != ""
+	if showdnf {
+		checked = "checked"
+	}
+	fmt.Fprintf(w, `<input type="hidden" name="dnf" value="%v">`, r.FormValue("dnf"))
+	fmt.Fprintf(w, `<span class="pushright"><label for="plusdnf">+DNF</label> <input type="checkbox"  id="plusdnf" %v onchange="showQDnfChanged(this)"></span>`, checked)
 
 	checked = ""
 	if showHot {
@@ -77,13 +83,16 @@ func show_qlist(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `<fieldset class="col hdr right sort" onclick="reloadRankings('seq','PPM')">P&divide;%v</fieldset>`, string(mk[0]))
 	fmt.Fprint(w, `</fieldset></div><!-- rankings --><hr></header>`)
 
-	sqlx := "SELECT ifnull(FinishPosition,0)," + RiderNameSQL + ",ifnull(PillionName,''),ifnull(CorrectedMiles,0),ifnull(TotalPoints,0),EntrantStatus"
+	sqlx := "SELECT ifnull(FinishPosition,0)," + RiderNameSQL + "," + PillionNameSQL + ",ifnull(CorrectedMiles,0),ifnull(TotalPoints,0),EntrantStatus"
 	sqlx += ",IfNull((TotalPoints*1.0) / CorrectedMiles,0) As PPM,EntrantID"
 	sqlx += " FROM entrants"
 	sqlx += " WHERE EntrantStatus IN ("
-	sqlx += strconv.Itoa(EntrantFinisher) + "," + strconv.Itoa(EntrantDNF)
+	sqlx += strconv.Itoa(EntrantFinisher)
 	if showok {
 		sqlx += "," + strconv.Itoa(EntrantOK)
+	}
+	if showdnf {
+		sqlx += "," + strconv.Itoa(EntrantDNF)
 	}
 	sqlx += ")"
 	sqlx += " ORDER BY "

@@ -499,7 +499,7 @@ func show_bonus(w http.ResponseWriter, r *http.Request) {
 		set.BonusID = bonus
 		set.CatNow = br.B.Cat[i]
 		set.Cats = fetchSetCats(set.Set, true)
-		fmt.Printf("%v\n", set)
+		//fmt.Printf("%v\n", set)
 		t, err := template.New("BonusCat").Parse(BonusCatSelector)
 		checkerr(err)
 		err = t.Execute(w, set)

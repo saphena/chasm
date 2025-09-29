@@ -44,7 +44,7 @@ ScoreMaster caters for some very complex methods of building scores. The simples
 
 ## Combos
 
-Combos provide an additional layer of scoring, claimed automatically by the software when underlying bonuses (or alphabetically lower combos) are scored. The value of a combo can vary depending on the number of underlying bonuses scored.
+Combos provide an additional layer of scoring, claimed automatically by the software when underlying bonuses (or alphanumerically lower combos) are scored. The value of a combo can vary depending on the number of underlying bonuses scored.
 
 ## DNF opportunities
 
@@ -120,5 +120,5 @@ A fully AI version of ScoreMaster may well appear by the 3rd quarter of 2026. Th
 
 #### Missed combo analysis
 
-This is a much requested feature - the ability to ask the question "why did this entrant not score this combo?" and receive a listing of "missed" or unclaimed bonuses resulting in failure to claim a combo.
+This is a niche requirement desired by rally teams with too much time on their hands - the ability to ask the question "why did this entrant not score this combo?" and receive a listing of "missed" or unclaimed bonuses resulting in failure to claim a combo.
 

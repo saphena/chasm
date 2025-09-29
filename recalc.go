@@ -910,6 +910,7 @@ func htmlScorex(sx []ScorexLine, e int, es int, cm int, tp int, team int) string
 		xx = crewNames(e, true)
 	} else {
 		xx = teamNames(team, true)
+		xx += getStringFromDB("SELECT BriefDesc FROM teams WHERE TeamID="+strconv.Itoa(team), "")
 	}
 	esx, ok := EntrantStatusLits[es]
 	if !ok {
@@ -1353,21 +1354,11 @@ func recalc_scorecard(entrant int) {
 
 	ep := fetch_eparams(entrant)
 
-	/**
-	Team := getIntegerFromDB(fmt.Sprintf("SELECT TeamID FROM entrants WHERE EntrantID=%v", entrant), 0)
-	StartTime := getStringFromDB(fmt.Sprintf("SELECT ifnull(StartTime,'') FROM entrants WHERE EntrantID=%v", entrant), "")
-	FinishTime := getStringFromDB(fmt.Sprintf("SELECT ifnull(FinishTime,'') FROM entrants WHERE EntrantID=%v", entrant), "")
-
-	CorrectedMiles := 0
-	StartOdo := getIntegerFromDB(fmt.Sprintf("SELECT ifnull(OdoRallyStart,0) FROM entrants WHERE EntrantID=%v", entrant), 0)
-	LastOdo := StartOdo
-	FinishOdo := getIntegerFromDB(fmt.Sprintf("SELECT ifnull(OdoCheckFinish,0) FROM entrants WHERE EntrantID=%v", entrant), 0)
-	if FinishOdo < 1 {
-		FinishOdo = getIntegerFromDB(fmt.Sprintf("SELECT ifnull(OdoRallyFinish,0) FROM entrants WHERE EntrantID=%v", entrant), 0)
+	if CS.RallyTeamMethod == RankTeamsCloning && len(BonusesClaimed) < 1 && ep.Team > 0 {
+		//fmt.Printf("Skipping team member %v\n", entrant)
+		return
 	}
-	OdoIsKm := getIntegerFromDB(fmt.Sprintf("SELECT OdoKms FROM entrants WHERE EntrantID=%v", entrant), 0) != 0
-	EntrantStatus := getIntegerFromDB(fmt.Sprintf("SELECT EntrantStatus FROM entrants WHERE EntrantID=%v", entrant), 0)
-	**/
+	//fmt.Printf("Recalculating %v with %v claims\n", entrant, len(BonusesClaimed))
 
 	var sx ScorexLine
 	TotalPoints := 0
@@ -1600,18 +1591,9 @@ func recalc_scorecard(entrant int) {
 		Scorex = append(Scorex, ntp...)
 	}
 
-	/**
-	if CS.UseCheckinForOdo && FinishOdo > StartOdo {
-		LastOdo = FinishOdo
-	}
-	if !CS.UseCheckinForOdo {
-		FinishOdo = LastOdo
-	}
-		**/
-
 	ep.CorrectedMiles = calcRallyDistance(ep.StartOdo, ep.FinishOdo, ep.OdoIsKm)
 
-	fmt.Printf("CM=%v, s=%v, f=%v\n", ep.CorrectedMiles, ep.StartOdo, ep.FinishOdo)
+	//fmt.Printf("CM=%v, s=%v, f=%v\n", ep.CorrectedMiles, ep.StartOdo, ep.FinishOdo)
 
 	ntp, nm = calcMileagePenalty(ep.CorrectedMiles)
 	if ep.EntrantStatus != EntrantDNS {
@@ -1636,7 +1618,7 @@ func recalc_scorecard(entrant int) {
 
 	if ep.EntrantStatus != EntrantDNS {
 		sxs, status := calcEntrantStatus(ep.CorrectedMiles, et, TotalPoints, ep.CheckedIn)
-		fmt.Printf("calcEntrantStatus returned %v from %v\n", status, ep.EntrantStatus)
+		//fmt.Printf("calcEntrantStatus returned %v from %v\n", status, ep.EntrantStatus)
 		ep.EntrantStatus = status
 		Scorex = append(Scorex, sxs...)
 	}
@@ -1659,6 +1641,7 @@ func recalc_scorecard(entrant int) {
 	stmt.Close()
 
 	if CS.RallyTeamMethod == RankTeamsCloning && ep.Team > 0 && len(BonusesClaimed) > 0 {
+		//fmt.Printf("Entrant %v cloning to team %v\n", entrant, ep.Team)
 		sqlx = "UPDATE entrants SET ScoreX=?,EntrantStatus=?,TotalPoints=?,CorrectedMiles=?,OdoRallyFinish=?,OdoRallyStart=?,StartTime=?,FinishTime=? WHERE TeamID=?"
 		stmt, err = DBH.Prepare(sqlx)
 		checkerr(err)
@@ -1669,7 +1652,7 @@ func recalc_scorecard(entrant int) {
 		checkerr(err)
 
 	}
-	fmt.Printf("CM=%v, TP=%v\n", ep.CorrectedMiles, TotalPoints)
+	//fmt.Printf("CM=%v, TP=%v\n", ep.CorrectedMiles, TotalPoints)
 	// Debugging code below
 	const dbgstyle = `<style>
     .sxitempoints { text-align: right;}
