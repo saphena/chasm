@@ -40,6 +40,10 @@ func show_qlist(w http.ResponseWriter, r *http.Request) {
 	if showok {
 		checked = "checked"
 	}
+
+	fmt.Fprint(w, `<span class="pushright"><label for="plusfinisher">Finishers</label> `)
+	fmt.Fprint(w, `<input type="checkbox" disabled id="plusfinisher" checked> </span> `)
+
 	fmt.Fprintf(w, `<input type="hidden" name="ok" value="%v">`, r.FormValue("ok"))
 	fmt.Fprintf(w, `<span class="pushright"><label for="plusok">+ok</label> <input type="checkbox"  id="plusok" %v onchange="showQOkChanged(this)"></span>`, checked)
 	checked = ""

@@ -27,6 +27,7 @@ body {
 background-color: #F0FFFF;
 }
 .guide {
+width: 98%;
 max-width: 200mm;
 margin: auto;
 padding: 0 0 2em 0;

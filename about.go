@@ -15,7 +15,7 @@ const PROGRAMTITLE = "ScoreMaster"
 const PROGRAMVERSION = "4.0"
 
 const CopyriteYear = "2025"
-const ChasmVersion = "0.5"
+const ChasmVersion = "0.5a"
 
 var EBCFetchVersion string = "0.0" // Loaded at runtime
 
@@ -56,6 +56,10 @@ func showAboutChasm(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `<dt>Database file</dt>`)
 	path, _ := filepath.Abs(*DBNAME)
 	fmt.Fprintf(w, `<dd>%v</dd>`, path)
+	fmt.Fprint(w, `<dt>Root folder</dt>`)
+	dir, err := os.Getwd()
+	checkerr(err)
+	fmt.Fprintf(w, `<dd>%v</dd>`, dir)
 	fmt.Fprintf(w, `<dt>Freespace</dt><dd>%v</dd>`, showFreeSpace(filepath.Dir(path)))
 	fmt.Fprint(w, `</dl>`)
 	fmt.Fprint(w, `<hr>`)
@@ -70,7 +74,9 @@ func showAboutChasm(w http.ResponseWriter, r *http.Request) {
 		dbg = ""
 	}
 	fmt.Fprintf(w, `<dt>Chasm [v%v%v]</dt><dd>github.com/saphena/chasm</dd>`, ChasmVersion, dbg)
-	fmt.Fprintf(w, `<dt>EBCFetch [v%v]</dt><dd>github.com/ibauk/ebcfetch</dd>`, EBCFetchVersion)
+
+	//fmt.Fprintf(w, `<dt>EBCFetch [v%v]</dt><dd>github.com/ibauk/ebcfetch</dd>`, EBCFetchVersion)
+
 	fmt.Fprint(w, `<dt>Licence</dt>`)
 	fmt.Fprintf(w, `<dd class="link" onclick="toggleLicenceMIT()">MIT - Copyright &copy; %v %v</dd>`, CopyriteYear, CopyriteHolder)
 	fmt.Fprintf(w, `</dl>`)

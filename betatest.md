@@ -34,7 +34,7 @@ Normally, claims will be either accepted or rejected. Excluding a claim should b
 
 ## Scoring possibilities
 
-ScoreMaster caters for some very complex methods of building scores. The simplest rallies use only simple, fixed point, bonuses and simple combos but the software also allows question/answer extras, score multipliers, bonus points modification based on groups of bonuses and additional points based on groups of bonuses.
+ScoreMaster caters for some very complex methods of building scores. The simplest rallies use only simple, fixed point, bonuses and simple combos but the software also allows question/answer extras, score multipliers, bonus points modification based on groups of bonuses and additional points based on groups of bonuses. A fuller discussion of this topic lives [here](https://github.com/ibauk/smdox/blob/main/smethods.md)
 
 1. Scores are built in the first instance by processing individual bonus claims. The score for the bonus itself, usually a fixed number of points, can be adjusted in several ways: some bonuses have variable points, manually input by the judge; some bonuses might represent a multiple of the last bonus scored.
 2. A second optional layer examines whether an uninterrupted sequence of bonus claims within a particular category of bonuses exists.
@@ -112,6 +112,14 @@ Probably no longer needed. Was useful during Covid but starts now tend to be eit
 #### Odo check facility
 
 No longer used cos, let's face it, a 20 mile check route really doesn't give anything like accuracy, even when the team remembers to include tenths in the trip reading.
+
+#### Double-claim rest bonuses
+
+The rest bonus claim method of sending separate start and finish claims has proved open to failure by entrants and is to be replaced with single claim, double receipts, instead. ScoreMaster's claim matching facility will be continued but is not a priority.
+
+#### Limit number of claims
+
+The facility to impose a limit on the number of claims available for scoring has never actually been used so is not currently a priority.
 
 #### ScoreMaster AI
 

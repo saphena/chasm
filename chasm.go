@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -25,6 +26,8 @@ var DBNAME *string = flag.String("db", "chasm.db", "database file")
 var HTTPPort *string = flag.String("port", "8080", "Web port")
 
 var runOnline *bool = flag.Bool("online", true, "act as webserver")
+
+var rootDir *string = flag.String("dir", ".", "Make this the current directory")
 
 // DBH provides access to the database
 var DBH *sql.DB
@@ -49,6 +52,10 @@ func main() {
 	dbx, _ := filepath.Abs(*DBNAME)
 	fmt.Printf("Using %v\n", dbx)
 
+	if *rootDir != "." {
+		os.Chdir(*rootDir)
+	}
+
 	var err error
 	DBH, err = sql.Open("sqlite3", dbx)
 	if err != nil {
@@ -61,6 +68,8 @@ func main() {
 		fmt.Println("Duff database")
 		return
 	}
+
+	defer fmt.Println("Chasm exiting")
 
 	loadJsonConfigs()
 	loadRallyBasics(&CS.Basics)
