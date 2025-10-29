@@ -812,6 +812,7 @@ func checkCatRatios() string {
 		}
 		if cr.Triggered {
 			sx := ""
+			//fmt.Printf("a=%v, c1=%v, c2=%v, min=%v\n", cr.Axis, cr.Cat, cr.Power, cr.Min)
 			x := getStringFromDB(fmt.Sprintf("SELECT BriefDesc FROM categories WHERE Axis=%v AND Cat=%v", cr.Axis, cr.Cat), "*")
 			y := getStringFromDB(fmt.Sprintf("SELECT BriefDesc FROM categories WHERE Axis=%v AND Cat=%v", cr.Axis, cr.Power), "*")
 			if cr.Min > 1 {
@@ -851,6 +852,53 @@ func compoundRuleTestFail(cr CompoundRule) string {
 	msg += fmt.Sprintf("%v", cr.Min)
 
 	return msg
+}
+
+// downgradeUnbalanced is called when cat ratio DNFs are used in order to exclude certain
+// claims in order to eliminate the imbalance
+func downgradeUnbalanced(entrant int) {
+
+	for _, cr := range CompoundRules {
+		if cr.Ruletype != CAT_RatioRule {
+			continue
+		}
+		catcount1 := 0
+		cc, ok := AxisCounts[cr.Axis].CatCounts[cr.Cat]
+		if ok {
+			catcount1 = cc
+		}
+		catcount2 := 0
+		cc, ok = AxisCounts[cr.Axis].CatCounts[cr.Power]
+		if ok {
+			catcount2 = cc
+		}
+		if cr.Min == 1 {
+			for catcount1 != catcount2 {
+				if catcount1 > catcount2 {
+					if !reduceClaimCount(entrant, cr.Axis, cr.Cat) {
+						break
+					}
+					catcount1--
+				} else {
+					if !reduceClaimCount(entrant, cr.Axis, cr.Power) {
+						break
+					}
+					catcount2--
+				}
+			}
+
+		} else {
+			for catcount1 < catcount2*cr.Min {
+				if !reduceClaimCount(entrant, cr.Axis, cr.Power) {
+					break
+				}
+				catcount2--
+			}
+		}
+
+	}
+	recalc_scorecard(entrant)
+
 }
 
 func excludeClaim(SB ScorecardBonusDetail) ScorexLine {
@@ -1667,6 +1715,52 @@ func recalc_scorecard(entrant int) {
 
 }
 
+// reduceClaimCount is called repeatedly by downgradeUnbalanced
+// The first, highest value, claim will be excluded along with
+// any other good claims for the same bonus.
+// Returning true indicates that a claim was eliminated
+func reduceClaimCount(entrant int, axis int, cat int) bool {
+
+	const ExcludeUnbalanced = 3
+
+	sqlx := "SELECT claims.rowid,claims.BonusID"
+	sqlx += fmt.Sprintf(",Cat%v AS acat", axis)
+	sqlx += " FROM claims LEFT JOIN bonuses ON claims.BonusID=bonuses.BonusID"
+	sqlx += fmt.Sprintf(" WHERE EntrantID=%v AND acat=%v AND Decision=0", entrant, cat)
+	sqlx += " ORDER BY claims.Points DESC"
+	rows, err := DBH.Query(sqlx)
+	checkerr(err)
+	defer rows.Close()
+	sqlx = fmt.Sprintf("UPDATE claims SET Decision=%v WHERE rowid=?", ExcludeUnbalanced)
+	stmt, err := DBH.Prepare(sqlx)
+	checkerr(err)
+	defer stmt.Close()
+	var eliminatedbonus string
+	var res bool
+	ids := make([]int, 0)
+	for rows.Next() {
+		var id int
+		var bonus string
+		var acat int
+		err = rows.Scan(&id, &bonus, &acat)
+		checkerr(err)
+		if !res {
+			eliminatedbonus = bonus
+			res = true
+			ids = append(ids, id)
+
+		} else if bonus == eliminatedbonus {
+			ids = append(ids, id)
+		}
+	}
+	rows.Close()
+	for i := range ids {
+		_, err = stmt.Exec(ids[i])
+		checkerr(err)
+	}
+	return res
+
+}
 func updateBonusCatCounts(BS ScorecardBonusDetail) {
 
 	updateCatCounts(BS.CatValue[:])

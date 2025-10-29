@@ -86,6 +86,7 @@ func main() {
 	fileserver := http.FileServer(http.Dir("."))
 	http.Handle("/images/", fileserver)
 	http.HandleFunc("/about", showAboutChasm)
+	http.HandleFunc("/rebalance", rebalance_scorecard)
 	http.HandleFunc("/report/ba", exportBonusesReport)
 	http.HandleFunc("/report/fincsv", exportFinisherCSV)
 	http.HandleFunc("/report/finjson", exportFinisherJSON)

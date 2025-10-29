@@ -30,6 +30,14 @@ type ScorecardRec struct {
 	ReviewStatus      int
 }
 
+func rebalance_scorecard(w http.ResponseWriter, r *http.Request) {
+
+	ent := intval(r.FormValue("e"))
+	recalc_scorecard(ent) // Needed to load necessary variables
+	downgradeUnbalanced(ent)
+	showScorecard(w, r)
+
+}
 func recalc_handler(w http.ResponseWriter, r *http.Request) {
 
 	const recalcfrm = `
@@ -108,6 +116,9 @@ func showScorecard(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintf(w, `<div class="scorecard">`)
 	fmt.Fprintf(w, `<div class="topline noprint"><span>#%v %v</span><span>%v %v</span><span>%v points</span><span>%v</span>`, entrant, team, sr.Miles, mk, sr.Points, EntrantStatusLits[sr.Status])
+	if sr.Status == EntrantDNF {
+		fmt.Fprintf(w, `<button onclick="loadPage('/rebalance?e=%v')">Rebalance</button>`, entrant)
+	}
 	fmt.Fprintf(w, `<select id="ReviewStatus" name="ReviewStatus" data-e="%v" onchange="saveRS(this);">`, entrant)
 	sel := ""
 	if sr.ReviewStatus == rs_notreviewed {

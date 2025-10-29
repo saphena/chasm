@@ -11,18 +11,22 @@ import (
 )
 
 type emailSettings struct {
-	SMTP struct {
-		Host          string
-		Port          string
-		UseInboxCreds bool
-		Userid        string
-		Password      string
-		CertName      string // May need to override the certificate name used for TLS
-	}
-	IMAP struct {
-		HostPort string
+	DontRun  bool
+	TestMode bool
+	SMTP     struct {
+		Host     string
+		Port     string
 		Userid   string
 		Password string
+		CertName string // May need to override the certificate name used for TLS
+	}
+	IMAP struct {
+		Host      string
+		Port      string
+		Userid    string
+		Password  string
+		NotBefore string
+		NotAfter  string
 	}
 }
 type RallyBasics struct {
