@@ -16,7 +16,7 @@ type menuItem struct {
 type menu []menuItem
 
 var mainMenu = menu{
-	{"Judge incoming claims", "Process incoming claims from email", "/ebclist", ""},
+	{"Judge incoming claims", "Process new claims", "/judgenew", ""},
 	{"Review scorecards", "", "/cards", ""},
 	{"Show current rankings", "Show state of play", "/qlist", ""},
 	{"Show all claims", "Full list of processed claims", "/claims", ""},

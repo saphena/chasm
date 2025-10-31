@@ -22,6 +22,18 @@ const ordered_list_icon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" he
 function chgRuleType(obj) {
   saveRule(obj);
   showCurrentRule();
+  // If this updates a rule to a CatRatioDNF, it is
+  // possible that NPower (used as Cat2) will be
+  // outside the bounds. Manual correction might be
+  // needed s let's just force it.
+  let rt = document.getElementById("RuleType");
+  if (rt && rt.value == CAT_RatioRule) {
+    let c2 = document.getElementById("NPower");
+    if (c2) {
+      c2.value = 0;
+      saveRule(c2);
+    }
+  }
 }
 
 function addRule() {
@@ -1925,4 +1937,48 @@ function checkMaxHours() {
     saveSetupConfig(xx);
   }
   console.log("Max hours is " + mh);
+}
+
+/** @param {Event} event */
+function handleSubmit(event) {
+  /** @type {HTMLFormElement} */
+  const form = event.currentTarget;
+  const url = new URL(form.action);
+  const formData = new FormData(form);
+  const searchParams = new URLSearchParams(formData);
+
+  /** @type {Parameters<fetch>[1]} */
+  const fetchOptions = {
+    method: form.method,
+  };
+
+  if (form.method.toLowerCase() === "post") {
+    if (form.enctype === "multipart/form-data") {
+      fetchOptions.body = formData;
+    } else {
+      fetchOptions.body = searchParams;
+    }
+  } else {
+    url.search = searchParams;
+  }
+  console.log("Fetching " + url);
+  fetch(url, fetchOptions);
+
+  event.preventDefault();
+}
+
+function handleImgSubmit(event) {
+  handleSubmit(event);
+  let img = document.querySelector("#Image");
+  if (img) {
+    let opt = document.createElement("option");
+    let iname = document.querySelector("#imgname");
+    opt.value = iname.value.replace(/^.*(\\|\/|\:)/, "");
+    opt.innerHTML = opt.value;
+    img.appendChild(opt);
+    img.selectedIndex = img.length - 1;
+    let btn = document.querySelector("#imgbtn");
+    if (btn) btn.disabled = true;
+    saveBonus(img);
+  }
 }

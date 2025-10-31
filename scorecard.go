@@ -73,6 +73,18 @@ func recalc_handler(w http.ResponseWriter, r *http.Request) {
 
 }
 
+const RebalanceHelp = `
+<article id="rebalancehelp" class="popover" popover>
+<h1>Category rebalancing</h1>
+<p>If DNF has been triggered by category ratio rules, the offending imbalance can be adjusted automatically
+by disallowing individual claims.</p>
+<p>The claims downgraded will be those with the highest points value belonging to the overpopulated category.</p>
+<p>Claims are downgraded by having their Decision set to the value specified by the <em>DowngradedClaimDecision</em> variable
+accessible via the Edit Raw Options screen. The default value is 3 "Out of hours/disallowed" which means that the claim will appear on the scorecard with a status of rejected.</p>
+<p>This is a safe procedure. If there is no imbalance, nothing will be done. If there is an imbalance, it will be rebalanced but that can be undone manually via the claims log if necessary.</p>
+</article>
+`
+
 func showScorecard(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
@@ -116,8 +128,13 @@ func showScorecard(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintf(w, `<div class="scorecard">`)
 	fmt.Fprintf(w, `<div class="topline noprint"><span>#%v %v</span><span>%v %v</span><span>%v points</span><span>%v</span>`, entrant, team, sr.Miles, mk, sr.Points, EntrantStatusLits[sr.Status])
-	if sr.Status == EntrantDNF {
-		fmt.Fprintf(w, `<button onclick="loadPage('/rebalance?e=%v')">Rebalance</button>`, entrant)
+
+	// Special code to allow rebalancing when CatRatioDNF rule has been triggered
+	if sr.Status == EntrantDNF && catRatioRuleUsed() {
+		fmt.Fprint(w, RebalanceHelp)
+		fmt.Fprintf(w, `<span><button onclick="loadPage('/rebalance?e=%v')" title="Rebalance claim categories by downgrading">Rebalance</button>`, entrant)
+		fmt.Fprint(w, `	<input type="button" title="Explain about rebalancing" class="popover" popovertarget="rebalancehelp" value="[Rebalance?]"></span>
+`)
 	}
 	fmt.Fprintf(w, `<select id="ReviewStatus" name="ReviewStatus" data-e="%v" onchange="saveRS(this);">`, entrant)
 	sel := ""

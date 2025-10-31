@@ -194,6 +194,12 @@ func fetchClaimDetails(claimid int) ClaimRecord {
 
 }
 
+func judge_new_claims(w http.ResponseWriter, r *http.Request) {
+
+	list_EBC_claims(w, r)
+
+}
+
 func list_claims(w http.ResponseWriter, r *http.Request) {
 
 	const addnew_icon = "&nbsp;+&nbsp;"

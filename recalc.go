@@ -1721,8 +1721,6 @@ func recalc_scorecard(entrant int) {
 // Returning true indicates that a claim was eliminated
 func reduceClaimCount(entrant int, axis int, cat int) bool {
 
-	const ExcludeUnbalanced = 3
-
 	sqlx := "SELECT claims.rowid,claims.BonusID"
 	sqlx += fmt.Sprintf(",Cat%v AS acat", axis)
 	sqlx += " FROM claims LEFT JOIN bonuses ON claims.BonusID=bonuses.BonusID"
@@ -1731,7 +1729,7 @@ func reduceClaimCount(entrant int, axis int, cat int) bool {
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
 	defer rows.Close()
-	sqlx = fmt.Sprintf("UPDATE claims SET Decision=%v WHERE rowid=?", ExcludeUnbalanced)
+	sqlx = fmt.Sprintf("UPDATE claims SET Decision=%v WHERE rowid=?", CS.DowngradedClaimDecision)
 	stmt, err := DBH.Prepare(sqlx)
 	checkerr(err)
 	defer stmt.Close()

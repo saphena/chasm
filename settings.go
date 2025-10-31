@@ -45,47 +45,48 @@ const (
 )
 
 type chasmSettings struct {
-	StartOption         int
-	AutoFinisher        bool
-	ShowExcludedClaims  bool // If a claim is marked 'excluded' and is not superseded, show it on the scoresheet
-	CurrentLeg          int
-	UseCheckinForOdo    bool // If true, OdoRallyFinish updated only by check-in, not by individual claims
-	Basics              RallyBasics
-	UnitMilesLit        string
-	UnitKmsLit          string
-	PenaltyMilesDNF     int
-	PenaltyMilesMax     int
-	PenaltyMilesMethod  int
-	PenaltyMilesPoints  int
-	RallyMinMiles       int
-	DebugRules          bool
-	AutoLateDNF         bool
-	RallyMinPoints      int
-	RallyUseQA          bool
-	RallyQAPoints       int
-	RallyUsePctPen      bool
-	RallyPctPenVal      int
-	RallyRankEfficiency bool
-	RallySplitTies      bool
-	RallyTeamMethod     int
-	FlagTeamTitle       string
-	FlagAlertTitle      string
-	FlagBikeTitle       string
-	FlagDaylightTitle   string
-	FlagFaceTitle       string
-	FlagNightTitle      string
-	FlagRestrictedTitle string
-	FlagReceiptTitle    string
-	CloseEBCUndecided   string
-	CloseEBC            []string
-	ImgBonusFolder      string // Holds rally book bonus photos
-	ImgEbcFolder        string // Holds images captured from emails
-	RallyBookImgTitle   string
-	EBCImgTitle         string
-	EBCImgSwapTitle     string
-	Email               emailSettings
-	UploadsFolder       string
-	NoSuchBonus         string
+	StartOption             int
+	AutoFinisher            bool
+	ShowExcludedClaims      bool // If a claim is marked 'excluded' and is not superseded, show it on the scoresheet
+	CurrentLeg              int
+	UseCheckinForOdo        bool // If true, OdoRallyFinish updated only by check-in, not by individual claims
+	Basics                  RallyBasics
+	UnitMilesLit            string
+	UnitKmsLit              string
+	PenaltyMilesDNF         int
+	PenaltyMilesMax         int
+	PenaltyMilesMethod      int
+	PenaltyMilesPoints      int
+	RallyMinMiles           int
+	DebugRules              bool
+	AutoLateDNF             bool
+	RallyMinPoints          int
+	RallyUseQA              bool
+	RallyQAPoints           int
+	RallyUsePctPen          bool
+	RallyPctPenVal          int
+	RallyRankEfficiency     bool
+	RallySplitTies          bool
+	RallyTeamMethod         int
+	FlagTeamTitle           string
+	FlagAlertTitle          string
+	FlagBikeTitle           string
+	FlagDaylightTitle       string
+	FlagFaceTitle           string
+	FlagNightTitle          string
+	FlagRestrictedTitle     string
+	FlagReceiptTitle        string
+	CloseEBCUndecided       string
+	CloseEBC                []string
+	ImgBonusFolder          string // Holds rally book bonus photos
+	ImgEbcFolder            string // Holds images captured from emails
+	RallyBookImgTitle       string
+	EBCImgTitle             string
+	EBCImgSwapTitle         string
+	Email                   emailSettings
+	UploadsFolder           string
+	NoSuchBonus             string
+	DowngradedClaimDecision int
 }
 
 var CS chasmSettings
@@ -133,7 +134,8 @@ const defaultCS = `{
 	"EBCImgSwapTitle":		"Click to view this image",
 	"Rally":				{"A1":"AAAAAAAAAAAAAA","A2":"22222222222222"},
 	"UploadsFolder":		"uploads",
-	"NoSuchBonus":			"** NO SUCH BONUS **"
+	"NoSuchBonus":			"** NO SUCH BONUS **",
+	"DowngradedClaimDecision": 3
 }`
 
 const debugDefaults = `{

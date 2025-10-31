@@ -174,6 +174,12 @@ var tmpltSingleRule = `
 showCurrentRule();
 </script>`
 
+func catRatioRuleUsed() bool {
+
+	sqlx := fmt.Sprintf("SELECT rowid FROM catcompound WHERE RuleType=%v", CAT_RatioRule)
+	return getIntegerFromDB(sqlx, 0) > 0
+}
+
 func createRule(w http.ResponseWriter, r *http.Request) {
 
 	sqlx := "INSERT INTO catcompound(Axis,Cat,NMethod,NMin,PointsMults,NPower,Ruletype,ModBonus) VALUES(1,0,0,0,0,0,0,0)"
@@ -284,7 +290,7 @@ func showSingleRule(w http.ResponseWriter, r *http.Request, cr CompoundRule) {
 		}
 		xx := strconv.Itoa(ix + 1)
 		x := fmt.Sprintf(tmpltOption, xx, sel, axis)
-		log.Printf("x=%v, ix=%d, xx=%v\n", x, ix, xx)
+		//log.Printf("x=%v, ix=%d, xx=%v\n", x, ix, xx)
 		axisopts = append(axisopts, x)
 	}
 

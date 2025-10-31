@@ -126,8 +126,35 @@ var BonusDisplayScreen = `
 			<select id="Image" data-b="{{.B.BonusID}}" name="Image" class="Image" onchange="saveBonus(this)">
 			%v
 			</select>
+			
+			<script>
+				function uploadFile(obj) {
+					console.log('Uploading file '+obj.value);
+					document.getElementById('imgname').value=obj.value;
+					let frm = obj.form;
+					let imgbid = frm.querySelector('#imgbid');
+					let bid = document.querySelector('#BonusID');
+					if (bid && imgbid) imgbid.value = bid.value;
+					let btn = frm.querySelector('button');
+					if (btn) btn.disabled = false;
+				}
+			</script>
+			<span class="import">
+				<form action="/upload" method="post" enctype="multipart/form-data" onsubmit="handleImgSubmit(event)">
+					<input type="hidden" name="filetype" value="bonusimage">
+					<input type="hidden" name="b" id="imgbid">
+					<fieldset>
+						<label for="imgfile"> </label>
+						<input type="file" id="imgfile" name="imgfile" onchange="uploadFile(this)">
+						<input type="hidden" id="imgname" name="imgname">
+						<button id="imgbtn" disabled> Upload </button>
+					</fieldset>
+				</form>
+			</span>
+
+
 		</fieldset><fieldset>
-			<img alt="*" id="imgImage" data-bimg-folder="{{.BonusImgFldr}}"class="thumbnail toggle" src="{{.BonusImgFldr}}/{{.B.Image}}" onclick="this.classList.toggle('thumbnail')">
+			<img alt="*" id="imgImage" data-bimg-folder="{{.BonusImgFldr}}" class="thumbnail toggle" src="{{.BonusImgFldr}}/{{.B.Image}}" onclick="this.classList.toggle('thumbnail')">
 		</fieldset>
 		<fieldset>
 			<label for="Compulsory">Compulsory?</label> 

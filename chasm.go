@@ -117,6 +117,7 @@ func main() {
 	http.HandleFunc("/img", builtin_images)
 	http.HandleFunc("/import", showImport)
 	http.HandleFunc("/js", send_js)
+	http.HandleFunc("/judgenew", judge_new_claims)
 	http.HandleFunc("/menu/{menu}", show_menu)
 	http.HandleFunc("/niy", niy)
 	http.HandleFunc("/odos", show_odo_checks)
