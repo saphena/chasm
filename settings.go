@@ -87,6 +87,7 @@ type chasmSettings struct {
 	UploadsFolder           string
 	NoSuchBonus             string
 	DowngradedClaimDecision int
+	UseEBC                  bool
 }
 
 var CS chasmSettings
@@ -135,7 +136,8 @@ const defaultCS = `{
 	"Rally":				{"A1":"AAAAAAAAAAAAAA","A2":"22222222222222"},
 	"UploadsFolder":		"uploads",
 	"NoSuchBonus":			"** NO SUCH BONUS **",
-	"DowngradedClaimDecision": 3
+	"DowngradedClaimDecision": 3,
+	"UseEBC":				true
 }`
 
 const debugDefaults = `{
@@ -444,6 +446,10 @@ func buildRallyVarsSettings() string {
 	x += `<fieldset class="hide"><label for="RallyTeamMethod">`
 	x += `Team ranking</label>`
 	x += emitConfigSelect("RallyTeamMethod", []string{"individual placing", "highest ranked member", "lowest ranked member", "clone team member scores"}, CS.RallyTeamMethod) + `</fieldset>`
+
+	x += `<fieldset class="hide"><label for="UseEBC">`
+	x += `Use EBC</label>`
+	x += emitConfigBool("UseEBC", []string{"Manually enter claims", "Claims from EBC"}, CS.UseEBC) + `</fieldset>`
 
 	x += `</fieldset></article>`
 	return x

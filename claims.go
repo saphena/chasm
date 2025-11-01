@@ -90,6 +90,10 @@ type ClaimRecord struct {
 	Leg              int
 }
 
+const tick_icon = "&#10004;"
+const cross_icon = "&#10006;"
+const undecided_icon = "?"
+
 const maximg = 3
 
 const judginghelp = `
@@ -196,17 +200,16 @@ func fetchClaimDetails(claimid int) ClaimRecord {
 
 func judge_new_claims(w http.ResponseWriter, r *http.Request) {
 
-	list_EBC_claims(w, r)
-
+	if CS.UseEBC {
+		list_EBC_claims(w, r)
+		return
+	}
+	showClaim(w, r)
 }
 
 func list_claims(w http.ResponseWriter, r *http.Request) {
 
 	const addnew_icon = "&nbsp;+&nbsp;"
-
-	const tick_icon = "&#10004;"
-	const cross_icon = "&#10006;"
-	const undecided_icon = "?"
 
 	const filterclear = `-`
 
@@ -529,6 +532,14 @@ const claimTopline = `
 		</fieldset>
 	</div>
 `
+
+const lastClaimTopline = `
+	<div class="topline">
+		<fieldset>
+			Last claim: %v [%v] - %v %v - %v
+		</fieldset>
+	</div>
+`
 const unloadTrapper = `
 
 <script>
@@ -542,6 +553,33 @@ window.addEventListener("beforeunload",function(e) {
 </script>
 ->
 `
+
+func emitLastClaimTopline(w http.ResponseWriter) {
+
+	sqlx := "SELECT claims.EntrantID," + RiderNameSQL + ",claims.BonusID,BriefDesc,Decision"
+	sqlx += " FROM claims LEFT JOIN entrants ON claims.EntrantID=entrants.EntrantID"
+	sqlx += " LEFT JOIN bonuses ON claims.BonusID=bonuses.BonusID"
+	sqlx += " ORDER BY LoggedAt DESC LIMIT 1"
+
+	rows, err := DBH.Query(sqlx)
+	checkerr(err)
+	defer rows.Close()
+	if rows.Next() {
+		var entrant int
+		var rname string
+		var bid, briefdesc string
+		var decision int
+		err = rows.Scan(&entrant, &rname, &bid, &briefdesc, &decision)
+		checkerr(err)
+		xd := undecided_icon
+		if decision == 0 {
+			xd = tick_icon
+		} else {
+			xd = cross_icon
+		}
+		fmt.Fprintf(w, lastClaimTopline, rname, entrant, bid, briefdesc, xd)
+	}
+}
 
 func showClaim(w http.ResponseWriter, r *http.Request) {
 
@@ -562,12 +600,20 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 	}
 	startHTMLBL(w, claimhdr, "/claims")
 
-	fmt.Fprint(w, claimTopline)
+	if claimid > 0 {
+		fmt.Fprint(w, claimTopline)
+	} else if !CS.UseEBC {
+		emitLastClaimTopline(w)
+	}
 
 	fmt.Fprint(w, `</header><div class="claim">`)
 	fmt.Fprint(w, `<form id="iclaim" data-unloadok="1">`)
 
-	fmt.Fprintf(w, `<input type="hidden" id="claimid" name="claimid" value="%v">`, claimid)
+	datasave := "claims"
+	if claimid < 1 && !CS.UseEBC {
+		datasave = "judgenew"
+	}
+	fmt.Fprintf(w, `<input type="hidden" id="claimid" name="claimid" data-save="%v" value="%v">`, datasave, claimid)
 	if claimid < 1 {
 		//fmt.Fprint(w, `<input type="text" autofocus tabindex="1" class="subject" placeholder="Paste email Subject line here" oninput="pasteNewClaim(this)">`)
 		cr.Decision = 0 // Good claim
@@ -644,12 +690,17 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `</span>`)
 	fmt.Fprint(w, `</fieldset>`)
 
-	fmt.Fprint(w, `<fieldset class="claimfield" title="This defaults to last reading +1">`)
+	manclm := "hide"
+	if CS.UseEBC {
+		manclm = ""
+	}
+
+	fmt.Fprintf(w, `<fieldset class="claimfield %v" title="This defaults to last reading +1">`, manclm)
 	fmt.Fprint(w, `<label for="OdoReading">Odo reading</label>`)
 	fmt.Fprintf(w, `<input type="number" tabindex="4" id="OdoReading" name="OdoReading" onchange="setdirty(this)" class="odo" value="%v">`, cr.OdoReading)
 	fmt.Fprint(w, `</fieldset>`)
 
-	fmt.Fprint(w, `<fieldset class="claimfield">`)
+	fmt.Fprintf(w, `<fieldset class="claimfield %v">`, manclm)
 	fmt.Fprint(w, `<label for="ClaimDate">Claim time</label>`)
 	fmt.Fprintf(w, `<input type="hidden" id="ClaimTimeISO" name="ClaimTime" value="%v">`, cr.ClaimTime)
 	fmt.Fprint(w, `<span>`)
@@ -685,7 +736,7 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 
 	hide = "hide"
 	//fmt.Printf("bd=%v\n", bd)
-	if bd.AskPoints || true {
+	if bd.AskPoints || false {
 		hide = ""
 	}
 	pm := "p"
@@ -745,7 +796,11 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `<textarea tabindex="11" id="JudgesNotes" name="JudgesNotes" oninput="setdirty(this)" class="judgesnotes">%v</textarea>`, cr.JudgesNotes)
 	fmt.Fprint(w, `</fieldset>`)
 
-	fmt.Fprint(w, `<button class="closebutton" id="closebutton" tabindex="12" onclick="saveUpdatedClaim(this);return false">Save updated claim</button>`)
+	savex := "Save updated claim"
+	if claimid < 1 {
+		savex = "Save new claim"
+	}
+	fmt.Fprintf(w, `<button class="closebutton" id="closebutton" tabindex="12" onclick="saveUpdatedClaim(this);return false">%v</button>`, savex)
 
 	ebcimg := strings.Split(cr.Photo, ",")
 	for i := 0; i < len(ebcimg); i++ {

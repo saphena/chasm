@@ -72,5 +72,8 @@
     }
   },
   "UploadsFolder": "uploads",
-  "NoSuchBonus": "** NO SUCH BONUS **"
+  "NoSuchBonus": "** NO SUCH BONUS **",
+ 	"DowngradedClaimDecision": 3,
+	"UseEBC":				true
+
 }

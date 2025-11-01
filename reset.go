@@ -130,6 +130,7 @@ func reloadDemoRally() {
 	fmt.Printf("Resetting demo from %v to %v\n", OrigDate, todaysDate)
 
 	sqlx := strings.ReplaceAll(basicdemosql, OrigDate, todaysDate)
+	//fmt.Println(sqlx)
 	_, err := DBH.Exec(sqlx)
 	checkerr(err)
 

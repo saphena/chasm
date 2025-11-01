@@ -1034,6 +1034,8 @@ function saveUpdatedClaim(obj) {
     bonus.focus();
     return false;
   }
+  let clm = document.getElementById("claimid");
+  let sav = clm.getAttribute("data-save")
   let frm = document.getElementById("iclaim");
   frm.setAttribute("data-unloadok", 1);
   let url = "/x?f=saveclaim";
@@ -1067,7 +1069,7 @@ function saveUpdatedClaim(obj) {
     })
     .then((data) => {
       if (!data.OK) {
-        window.location.href = "/claims";
+        window.location.href = "/" + sav;
       }
     })
     .catch((error) => {
