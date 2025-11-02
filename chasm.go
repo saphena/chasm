@@ -198,6 +198,9 @@ func json_requests(w http.ResponseWriter, r *http.Request) {
 	case "addteam":
 		addNewTeam(w, r)
 		return
+	case "chkfclaims":
+		countFixedClaims(w, r)
+		return
 	case "delb":
 		deleteBonus(w, r)
 		return
@@ -258,6 +261,9 @@ func json_requests(w http.ResponseWriter, r *http.Request) {
 	case "fetchmembers":
 		showTeamMembers(w, r)
 
+		return
+	case "fixfclaims":
+		fixFixedClaims(w, r)
 		return
 	case "putodo":
 		update_odo(w, r)

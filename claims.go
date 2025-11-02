@@ -109,6 +109,14 @@ const judginghelp = `
 </article>
 `
 
+func countFixedClaims(w http.ResponseWriter, r *http.Request) {
+
+	sqlx := "SELECT count(*) FROM claims WHERE BonusID='" + r.FormValue("b") + "' AND AskPoints=0 AND Decision >= 0"
+	//fmt.Println(sqlx)
+	n := getIntegerFromDB(sqlx, 0)
+	fmt.Fprintf(w, `{"ok":true,"msg":"%v"}`, n)
+}
+
 func deleteClaim(w http.ResponseWriter, r *http.Request) {
 
 	claimid := r.PathValue("claimid")
@@ -195,6 +203,20 @@ func fetchClaimDetails(claimid int) ClaimRecord {
 	cr.PercentPenalty = pp != 0
 
 	return cr
+
+}
+
+func fixFixedClaims(w http.ResponseWriter, r *http.Request) {
+
+	points := intval(r.FormValue("p"))
+	sqlx := fmt.Sprintf("UPDATE claims SET Points=%v WHERE BonusID='%v' ", points, r.FormValue("b"))
+	if r.FormValue("d") == "new" {
+		sqlx += " AND Decision < 0"
+	}
+	//fmt.Println(sqlx)
+	_, err := DBH.Exec(sqlx)
+	checkerr(err)
+	fmt.Fprint(w, `{"ok":true,"msg":"ok"}`)
 
 }
 

@@ -500,6 +500,43 @@ function addEntrant(obj) {
     });
 }
 
+async function checkBonusFixedClaims(bid) {
+  let url = "/x?f=chkfclaims&b=" + encodeURIComponent(bid);
+  console.log("Checking " + url);
+  let resb = false;
+  await fetch(url)
+    .then((response) => {
+      if (!response.ok) {
+        // Handle HTTP errors
+        bd.value = `HTTP error! Status: ${response.status}`;
+        return;
+      }
+      return response.json();
+    })
+    .then((data) => {
+      if (data.err) {
+        // Handle JSON error field
+        console.error(`Error: ${data.msg}`);
+        bd.value = `Error: ${data.msg}`;
+        return;
+      } else if (data.ok) {
+        // Process the data if no error
+        let res = `${data.msg}`;
+        resb = res != 0;
+        console.log(`data.msg==` + res + " (" + resb + ")");
+      } else {
+        bd.value = `Error: ${data.msg}`;
+        bd.setAttribute("title", bd.value);
+      }
+    })
+    .catch((error) => {
+      // Handle network or other errors
+      console.error("Fetch error:", error);
+
+      return;
+    });
+  return resb;
+}
 function saveBonus(obj) {
   if (obj.timer) clearTimeout(obj.timer);
   let b = obj.getAttribute("data-b");
@@ -518,17 +555,69 @@ function saveBonus(obj) {
   }
   url += "&ff=" + nm + "&" + nm + "=" + encodeURIComponent(ov);
   console.log("saveBonus: " + url);
-  stackTransaction(url, obj.id);
-  sendTransactions();
-  switch (obj.name) {
-    case "Image":
-      let img = document.getElementById("imgImage");
-      if (!img) break;
-      img.setAttribute(
-        "src",
-        img.getAttribute("data-bimg-folder") + "/" + obj.value
-      );
-  }
+  //stackTransaction(url, obj.id);
+  //sendTransactions();
+
+  fetch(url)
+    .then((response) => {
+      if (!response.ok) {
+        // Handle HTTP errors
+        bd.value = `HTTP error! Status: ${response.status}`;
+        return;
+      }
+      return response.json();
+    })
+    .then((data) => {
+      if (data.err) {
+        // Handle JSON error field
+        console.error(`Error: ${data.msg}`);
+        bd.value = `Error: ${data.msg}`;
+        return;
+      } else if (data.ok) {
+        // Process the data if no error
+
+        switch (obj.name) {
+          case "Image":
+            let img = document.getElementById("imgImage");
+            if (!img) break;
+            img.setAttribute(
+              "src",
+              img.getAttribute("data-bimg-folder") + "/" + obj.value
+            );
+            break;
+          case "Points":
+            saveBonusPoints(b, ov);
+        }
+      } else {
+        bd.value = `Error: ${data.msg}`;
+        bd.setAttribute("title", bd.value);
+      }
+    })
+    .catch((error) => {
+      // Handle network or other errors
+      console.error("Fetch error:", error);
+
+      return;
+    });
+}
+
+function saveBonusPoints(bid, pts) {
+  checkBonusFixedClaims(bid).then((response) => {
+    let oldclaims = `${response}` == "true";
+    let updateold = false;
+    if (oldclaims) {
+      let m = "One or more claims have already been decided for this bonus.\n";
+      m += "Should I also update the points value of those claims?\n\n";
+      m += "Cancel to update the bonus record and new claims only.";
+      updateold = confirm(m);
+    }
+    console.log("Updating ...");
+    let url = "/x?f=fixfclaims&b=" + encodeURIComponent(bid);
+    url += "&p=" + pts + "&d=";
+    if (updateold) url += "all";
+    else url += "new";
+    fetch(url);
+  });
 }
 
 function saveCombo(obj) {
@@ -1035,7 +1124,7 @@ function saveUpdatedClaim(obj) {
     return false;
   }
   let clm = document.getElementById("claimid");
-  let sav = clm.getAttribute("data-save")
+  let sav = clm.getAttribute("data-save");
   let frm = document.getElementById("iclaim");
   frm.setAttribute("data-unloadok", 1);
   let url = "/x?f=saveclaim";

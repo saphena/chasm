@@ -214,7 +214,7 @@ func ajaxUpdateSettings(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
 
-	fmt.Printf("ajaxUS %v\n", r.Form)
+	//fmt.Printf("ajaxUS %v\n", r.Form)
 
 	ok := "false"
 	msg := fmt.Sprintf("[%v] not implemented yet", r.FormValue("ff"))
