@@ -42,6 +42,7 @@ func loadJsonConfigs() {
 	checkerr(err)
 	err = json.Unmarshal([]byte(getStringFromDB("SELECT ifnull(Settings,'{}') FROM config", "{}")), &CS)
 	checkerr(err)
+	fmt.Printf("Handling %v\n", CS.Basics.RallyTitle)
 
 }
 func main() {
@@ -62,10 +63,7 @@ func main() {
 		panic(err)
 	}
 
-	sqlx := "SELECT DBInitialised FROM config"
-	dbi := getStringFromDB(sqlx, "0")
-	if dbi != "1" {
-		fmt.Println("Duff database")
+	if !establishDatabase() {
 		return
 	}
 
@@ -76,6 +74,8 @@ func main() {
 
 	RallyTimezone, err = time.LoadLocation(CS.Basics.RallyTimezone)
 	checkerr(err)
+
+	establishImageFolders()
 
 	if !*runOnline {
 		return
@@ -114,6 +114,7 @@ func main() {
 	http.HandleFunc("/entrant/{e}", showEntrant)
 	http.HandleFunc("/entrants", list_entrants)
 	http.HandleFunc("/guide", showGuides)
+	http.HandleFunc("/guide/{guide}", showGuides)
 	http.HandleFunc("/img", builtin_images)
 	http.HandleFunc("/import", showImport)
 	http.HandleFunc("/js", send_js)

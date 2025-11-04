@@ -93,6 +93,11 @@ type chasmSettings struct {
 var CS chasmSettings
 
 const defaultCS = `{
+	"Basics": {
+		"RallyTitle":			"Bare Bones Rally",
+		"RallyTimezone":		"Europe/London",
+		"RallyMaxHours":		12
+	},
 	"StartOption": 			0,
 	"AutoFinisher":			false,
 	"ShowExcludedClaims": 	false,
@@ -105,12 +110,10 @@ const defaultCS = `{
 	"PenaltyMilesMax":		99999,
 	"PenaltyMilesMethod":	0,
 	"PenaltyMilesPoints":	0,
-	"RallyTitle":			"Brit Butt Rally 2025",
 	"RallyMinMiles":		0,
 	"DebugRules":			false,
 	"AutoLateDNF": 			true,
 	"RallyMinPoints":		-99999,
-	"RallyTimezone":		"Europe/London",
 	"RallyUseQA":			false,
 	"RallyQAPoints":		50,
 	"RallyUsePctPen":		false,
@@ -224,47 +227,22 @@ func ajaxUpdateSettings(w http.ResponseWriter, r *http.Request) {
 		ok = "true"
 		msg = "ok"
 		fmt.Printf("Setting rally title to [ %v ]\n", CS.Basics.RallyTitle)
-		//stmt, err := DBH.Prepare("UPDATE rallyparams SET RallyTitle=?")
-		//checkerr(err)
-		//defer stmt.Close()
-		//_, err = stmt.Exec(CS.Basics.RallyTitle)
-		//checkerr(err)
 	case "RallyStart":
 		CS.Basics.RallyStarttime = r.FormValue("v")
 		ok = "true"
 		msg = "ok"
-		//stmt, err := DBH.Prepare("UPDATE rallyparams SET StartTime=?")
-		//checkerr(err)
-		//defer stmt.Close()
-		//_, err = stmt.Exec(CS.Basics.RallyStarttime)
-		//checkerr(err)
 	case "RallyFinish":
 		CS.Basics.RallyFinishtime = r.FormValue("v")
 		ok = "true"
 		msg = "ok"
-		//stmt, err := DBH.Prepare("UPDATE rallyparams SET FinishTime=?")
-		//checkerr(err)
-		//defer stmt.Close()
-		//_, err = stmt.Exec(CS.Basics.RallyFinishtime)
-		//checkerr(err)
 	case "MaxHours":
 		CS.Basics.RallyMaxHours = intval(r.FormValue("v"))
 		ok = "true"
 		msg = "ok"
-		//stmt, err := DBH.Prepare("UPDATE rallyparams SET MaxHours=?")
-		//checkerr(err)
-		//defer stmt.Close()
-		//_, err = stmt.Exec(CS.Basics.RallyMaxHours)
-		//checkerr(err)
 	case "StartOption":
 		rs := r.FormValue("v")
 		ok = "true"
 		msg = "ok"
-		//stmt, err := DBH.Prepare("UPDATE rallyparams SET StartOption=?")
-		//checkerr(err)
-		//defer stmt.Close()
-		//_, err = stmt.Exec(rs)
-		//checkerr(err)
 		CS.StartOption = intval(rs)
 	case "FinishOption":
 		rs := r.FormValue("v")
@@ -280,11 +258,6 @@ func ajaxUpdateSettings(w http.ResponseWriter, r *http.Request) {
 		CS.Basics.RallyTimezone = r.FormValue("v")
 		ok = "true"
 		msg = "ok"
-		//stmt, err := DBH.Prepare("UPDATE rallyparams SET LocalTZ=?")
-		//checkerr(err)
-		//defer stmt.Close()
-		//_, err = stmt.Exec(CS.Basics.RallyTimezone)
-		//checkerr(err)
 		var err error
 		RallyTimezone, err = time.LoadLocation(CS.Basics.RallyTimezone)
 		checkerr(err)
@@ -293,11 +266,6 @@ func ajaxUpdateSettings(w http.ResponseWriter, r *http.Request) {
 		CS.Basics.RallyUnitKms = rs == "1"
 		ok = "true"
 		msg = "ok"
-		//stmt, err := DBH.Prepare("UPDATE rallyparams SET MilesKms=?")
-		//checkerr(err)
-		//defer stmt.Close()
-		//_, err = stmt.Exec(rs)
-		//checkerr(err)
 	default:
 		fn := r.FormValue("ff")
 		fv := r.FormValue("v")

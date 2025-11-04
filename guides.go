@@ -10,8 +10,20 @@ import (
 	"github.com/gomarkdown/markdown/parser"
 )
 
-//go:embed betatest.md
+//go:embed guide/betatest.md
 var betatest string
+
+//go:embed guide/smethods.md
+var smethods string
+
+//go:embed guide/complex.md
+var complex string
+
+//go:embed guide/niy.md
+var niyguide string
+
+//go:embed guide/penalties.md
+var penalties string
 
 var guideheader = `
 <!DOCTYPE html>
@@ -80,7 +92,20 @@ func showGuides(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprint(w, guideheader)
 	fmt.Fprint(w, `<article class="guide">`)
-	md := []byte(betatest)
+	var md []byte
+	guide := r.PathValue("guide")
+	switch guide {
+	case "niy":
+		md = []byte(niyguide)
+	case "smethods":
+		md = []byte(smethods)
+	case "complex":
+		md = []byte(complex)
+	case "penalty":
+		md = []byte(penalties)
+	default:
+		md = []byte(betatest)
+	}
 	html := mdToHTML(md)
 	fmt.Fprint(w, string(html))
 	fmt.Fprint(w, `</article>`)

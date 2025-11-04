@@ -830,11 +830,7 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 			ebcimg[i] = "/" + strings.ReplaceAll(filepath.Join(CS.ImgEbcFolder, filepath.Base(ebcimg[i])), "\\", "/")
 		}
 	}
-	hide = "hide"
-	if claimid > 0 {
-		hide = ""
-	}
-	fmt.Fprintf(w, `<fieldset class="claimphotos %v">`, hide)
+	fmt.Fprint(w, `<fieldset class="claimphotos ">`)
 
 	showPhotoFrame(w, ebcimg, cr.BonusID)
 
@@ -1090,14 +1086,14 @@ func showPhotoFrame(w http.ResponseWriter, photos []string, BonusID string) {
 	}
 	fmt.Fprint(w, `<div class="ebcimgdiv cangrow" id="ebcimgdiv" onclick="cycleImgSize(this)">`)
 
-	fmt.Fprintf(w, `<img id="imgdivimg" alt="*" src="%v" title="%v">`, photo0, CS.EBCImgTitle)
+	fmt.Fprintf(w, `<img id="imgdivimg" alt=" " src="%v" title="%v">`, photo0, CS.EBCImgTitle)
 	fmt.Fprintf(w, `<input type="hidden" id="chosenPhoto" name="Photo" value="%v">`, photos[0])
 
 	fmt.Fprint(w, `<div id="imgdivs">`)
 
 	for ix := 1; ix < maximg; ix++ {
 		if photos[ix] != "" {
-			fmt.Fprintf(w, `<img src="%v" alt="*" onclick="swapimg(this)" title="%v">`, photos[ix], CS.EBCImgSwapTitle)
+			fmt.Fprintf(w, `<img src="%v" alt=" " onclick="swapimg(this)" title="%v">`, photos[ix], CS.EBCImgSwapTitle)
 		}
 	}
 	fmt.Fprint(w, `</div>`) // imgdivs
@@ -1105,7 +1101,7 @@ func showPhotoFrame(w http.ResponseWriter, photos []string, BonusID string) {
 
 	fmt.Fprint(w, `<div class="bonusimgdiv" id="bonusimgdiv">`)
 	bimg := "/" + strings.ReplaceAll(filepath.Join(CS.ImgBonusFolder, filepath.Base(getStringFromDB("SELECT ifnull(Image,'') FROM bonuses WHERE BonusID='"+BonusID+"'", ""))), `\`, `/`)
-	fmt.Fprintf(w, `<img src="%v" alt="*" title="%v">`, bimg, CS.RallyBookImgTitle)
+	fmt.Fprintf(w, `<img src="%v" id="bonusPhoto" alt=" " title="%v" data-folder="%v">`, bimg, CS.RallyBookImgTitle, CS.ImgBonusFolder)
 	fmt.Fprint(w, `</div>`)
 
 }

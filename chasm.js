@@ -172,6 +172,7 @@ function fetchBonusDetails(obj) {
       if (!data.ok) {
         console.error(`Error! ${data.ok}`);
       } else {
+        console.log(data)
         let bd = document.getElementById("bonusDetails");
         bd.innerHTML = data.name;
         let flags = data.flags;
