@@ -52,6 +52,7 @@ form {
 }
 fieldset {
   padding: 0;
+  border: none;
 }
 
 input,
@@ -515,6 +516,24 @@ article.config {
   }
 }
 
+article.wizard {
+
+  max-width: var(--default-max-width);
+  border: double 6px;
+  border-radius: 6px;
+  padding: .5em;
+  margin: auto;
+  fieldset {
+    margin: .5em .5em 1em .5em;
+  }
+  p {
+    margin: 1em 1em 2em 1em;
+  }
+}
+.PortSMTP,
+.PortIMAP {
+  width: 4em;
+}
 .menu {
   display: flex;
   flex-direction: column;
@@ -992,11 +1011,14 @@ td.sxtotalpoints {
 .RallyMinMiles {
   width: 6em;
 }
+.RallyMinMiles,
 .RallyMinPoints,
 .RallyQAPoints {
   width: 5em;
 }
-
+.RallyMaxHours {
+  width: 4em;
+}
 .RallyPctPenVal {
   width: 3em;
 }

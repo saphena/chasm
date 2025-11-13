@@ -13,6 +13,7 @@ import (
 type emailSettings struct {
 	DontRun  bool
 	TestMode bool
+	UseSMTP  bool
 	SMTP     struct {
 		Host     string
 		Port     string
@@ -421,6 +422,15 @@ func buildRallyVarsSettings() string {
 
 	x += `</fieldset></article>`
 	return x
+
+}
+
+func calcMaxHours(stime, ftime string) int {
+
+	st := parseStoredDate(stime)
+	ft := parseStoredDate(ftime)
+	dt := ft.Sub(st)
+	return int(dt.Hours())
 
 }
 

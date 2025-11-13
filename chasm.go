@@ -43,6 +43,12 @@ func loadJsonConfigs() {
 	err = json.Unmarshal([]byte(getStringFromDB("SELECT ifnull(Settings,'{}') FROM config", "{}")), &CS)
 	checkerr(err)
 	fmt.Printf("Handling %v\n", CS.Basics.RallyTitle)
+	if CS.Basics.RallyStarttime == "" {
+		dt := time.Now()
+		CS.Basics.RallyStarttime = dt.Format(time.DateOnly) + "T07:00"
+		CS.Basics.RallyMaxHours = 12
+		CS.Basics.RallyFinishtime = dt.Format(time.DateOnly) + "T19:00"
+	}
 
 }
 func main() {
@@ -144,6 +150,8 @@ func main() {
 	http.HandleFunc("/timep/{rec}", show_timepenalty)
 	http.HandleFunc("/updtcrule", update_rule)
 	http.HandleFunc("/upload", uploadImportDatafile)
+	http.HandleFunc("/wiz", showWizard)
+	http.HandleFunc("/wiz/{page}", showWizard)
 	http.HandleFunc("/x", json_requests)
 	http.HandleFunc("/", central_dispatch)
 	http.ListenAndServe(":"+*HTTPPort, nil)

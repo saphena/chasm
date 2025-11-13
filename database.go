@@ -45,7 +45,7 @@ func ensureDirWritable(path string) error {
 
 func establishImageFolders() {
 
-	fmt.Println("Checking/estabishing image folders")
+	fmt.Println("Checking/establishing image folders")
 	err := ensureDirWritable(CS.ImgBonusFolder)
 	if err != nil {
 		fmt.Printf("Bonus image folder : %v\n", err)
