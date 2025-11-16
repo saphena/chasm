@@ -83,6 +83,19 @@ const wizStartPage = `
 
 const wizPage2 = `
 <article class="wizard">
+<script>
+function wizp2next(btn) {
+let nxt = document.getElementById('wiznext');
+if (!nxt) return true;
+let ebc = document.getElementById('UseEBC');
+let smtp = document.getElementById('UseSMTP');
+if ((ebc && ebc.value=='1') || (smtp && smtp.value=='1'))
+	nxt.value='email';
+else
+	nxt.value='score1';
+return true;
+}
+</script>
 	<h1>RALLY SETUP</h1>
 	<form action="/wiz">
 	<input type="hidden" name="wizsave" value="setup2">
@@ -123,7 +136,7 @@ const wizPage2 = `
 	<fieldset class="wiznav">
 		<input type="hidden" id="wiznext" name="wizpage" value="email">
 		<button onclick="document.getElementById('wiznext').value='1'">Previous</button>
-		<button onclick="document.getElementById('wiznext').value='email'">Next</button>
+		<button onclick="wizp2next(this)">Next</button>
 	</fieldset>
 
 	</form>
@@ -164,6 +177,9 @@ const wizPageEmail = `
 		<label for="PasswordSMTP">Password</label>
 		<input type="text" id="PasswordIMAP" name="PasswordIMAP" class="PasswordIMAP" value="{{.IMAP.Password}}">
 	</fieldset>
+	<div>
+		<p>These details can be completed or updated later if you wish.</p>
+	</div>
 	<fieldset class="wiznav">
 		<input type="hidden" id="wiznext" name="wizpage" value="email">
 		<button onclick="document.getElementById('wiznext').value='2'">Previous</button>
@@ -199,12 +215,9 @@ const wizScoring1 = `
 		<label for="RallyMinMiles">Minimum {{if .RallyUnitKms}}{{.UnitKmsLit}}{{else}}{{.UnitMilesLit}}{{end}} needed to qualify as Finisher</label>
 		<input type="number" id="RallyMinMiles" name="RallyMinMiles" class="RallyMinMiles" value="{{.RallyMinMiles}}">
 	</fieldset>
-	<fieldset>
-		<label for="RallyUseCats">Will you use complex scoring methods involving bonus categories</label>
-	</fieldset>
 	<fieldset class="wiznav">
 		<input type="hidden" id="wiznext" name="wizpage" value="email">
-		<button onclick="document.getElementById('wiznext').value='email'">Previous</button>
+		<button onclick="document.getElementById('wiznext').value='{{if .UseEBC}}email{{else if .UseSMTP}}email{{else}}2{{end}}'">Previous</button>
 		<button onclick="document.getElementById('wiznext').value='finish'">Next</button>
 	</fieldset>
 
@@ -219,7 +232,16 @@ const wizFinish = `
 	<div>
 		<p>		This initial wizard is now complete.		</p>
 		<p>You should now continue with the rally setup process using the facilities under "Rally setup &amp; config".</p>
+		<p>If you want to use anything more complex than simple bonuses and combos, you will need to establish one or more sets of bonus categories before you can create rules affecting groups or sequences of bonuses.</p>
+		<p>You might want to award extra points based on group membership, for example, or make scoring in particular categories mandatory. </p>
+		<p>It is also possible to impose time or distance based penalties, different certificates for different classes of Finisher, etc.</p>
 	</div>
+		<fieldset class="wiznav">
+		<input type="hidden" id="wiznext" name="wizpage" value="">
+		<button onclick="document.getElementById('wiznext').value='score1'">Previous</button>
+		<button onclick="document.getElementById('wiznext').value='end'">Finish</button>
+	</fieldset>
+
 	</form>
 </article>
 `
@@ -289,6 +311,8 @@ func saveWizard(r *http.Request) {
 		CS.RallyQAPoints = intval(r.FormValue("RallyQAPoints"))
 		CS.RallyMinPoints = intval(r.FormValue("RallyMinPoints"))
 		CS.RallyMinMiles = intval(r.FormValue("RallyMinMiles"))
+	case "finish":
+		CS.ShowSetupWizard = false
 	}
 	saveSettings()
 
@@ -320,6 +344,11 @@ func showWizard(w http.ResponseWriter, r *http.Request) {
 	case "finish":
 		t, err = template.New("wizfinish").Parse(wizFinish)
 		checkerr(err)
+		CS.ShowSetupWizard = false
+
+	case "end":
+		central_dispatch(w, r)
+		return
 	default:
 		t, err = template.New("wizpage").Parse(wizStartPage)
 		checkerr(err)

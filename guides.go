@@ -25,6 +25,12 @@ var niyguide string
 //go:embed guide/penalties.md
 var penalties string
 
+//go:embed guide/classes.md
+var classes string
+
+//go:embed guide/claims.md
+var claimsmd string
+
 var guideheader = `
 <!DOCTYPE html>
 <html lang="en">
@@ -103,6 +109,10 @@ func showGuides(w http.ResponseWriter, r *http.Request) {
 		md = []byte(complex)
 	case "penalty":
 		md = []byte(penalties)
+	case "classes":
+		md = []byte(classes)
+	case "claims":
+		md = []byte(claimsmd)
 	default:
 		md = []byte(betatest)
 	}

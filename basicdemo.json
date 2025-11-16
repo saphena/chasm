@@ -74,6 +74,7 @@
   "UploadsFolder": "uploads",
   "NoSuchBonus": "** NO SUCH BONUS **",
  	"DowngradedClaimDecision": 3,
-	"UseEBC":				true
+	"UseEBC":				true,
+  "ShowSetupWizard": false
 
 }

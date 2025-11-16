@@ -82,7 +82,7 @@ func doTheReset(w http.ResponseWriter, r *http.Request) {
 
 	startHTML(w, "Database reset")
 
-	fmt.Printf("doTheReset called with level %v\n", r.FormValue("zaplevel"))
+	//fmt.Printf("doTheReset called with level %v\n", r.FormValue("zaplevel"))
 
 	//_, err := DBH.Exec("BEGIN TRANSACTION")
 	//checkerr(err)
@@ -220,6 +220,9 @@ func zapRallyConfig() {
 		_, err := DBH.Exec(sqlx)
 		checkerr(err)
 	}
+	sqlx := "UPDATE config SET settings='{}'"
+	_, err := DBH.Exec(sqlx)
+	checkerr(err)
 
 }
 

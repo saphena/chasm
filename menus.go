@@ -54,6 +54,7 @@ var bonusmenu = menu{
 
 var advancedmenu = menu{
 	{"Recalculate scorecards", "Recalculate scorecards", "/recalc", ""},
+	{"Run setup wizard", "Run the setup wizard again", "/wiz", ""},
 	{"Reset Rally", "Reset the rally database", "/reset", ""},
 	{"Edit raw options", "Directly edit JSON configuration", "/opts", ""},
 	{"Run raw SQL", "Use SQL to update the database", "/sql", ""},

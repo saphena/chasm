@@ -89,6 +89,7 @@ type chasmSettings struct {
 	NoSuchBonus             string
 	DowngradedClaimDecision int
 	UseEBC                  bool
+	ShowSetupWizard         bool
 }
 
 var CS chasmSettings
@@ -141,7 +142,8 @@ const defaultCS = `{
 	"UploadsFolder":		"uploads",
 	"NoSuchBonus":			"** NO SUCH BONUS **",
 	"DowngradedClaimDecision": 3,
-	"UseEBC":				true
+	"UseEBC":				true,
+	"ShowSetupWizard":		true
 }`
 
 const debugDefaults = `{

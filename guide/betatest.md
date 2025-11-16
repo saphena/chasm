@@ -20,30 +20,11 @@ The short version is that all scoring methods (bonuses, combos, etc, etc) curren
 
 ## Bonus claims
 
-This setup does not cater for processing live EBC claims but several such claims are available in the demo database. These can be used to examine normal claims judging processes. Manual claims can also be raised via [Show all claims] in the normal way or, if the option <em>Use EBC</em> is set to "Manually enter claims", via the "Judge incoming claims" button.
-
-Claims can also be amended or deleted via [Show all claims]. All such activity results in scorecard recalculation for the entrant.
-
-Claims can be decided (judged) in one of four ways:-
-
-- Accept good claim
-- Reject claim
-- Exclude claim
-- Leave undecided
-
-As it suggests, *Accept good claim* awards the score for this claim.
-Rejecting a claim, further refined into one of eight reasons, denies the score for this claim.
-Excluding a claim, different from rejecting a claim, means that the claim does not affect scoring and will not appear on scorecards.
-Leave undecided returns the claim to the bottom of the queue. "I'll look again later" or "I'll let Suzy decide this one".
-
-Normally, claims will be either accepted or rejected. Excluding a claim should be a rare event, in response to special circumstances.
-
+This setup does not cater for processing live EBC claims but several such claims are available in the demo database. These can be used to examine normal claims judging processes. Manual claims can also be raised via [Show all claims] in the normal way or, if the option <em>Use EBC</em> is set to "Manually enter claims", via the "Judge incoming claims" button. [See also](/guide/claims)
 
 ## Certificate classes
 
-In most rallies only one certificate class, Finisher, is used but it is also possible to use multiple classes with different certificates.
-
-Such classes can be assigned manually or automatically. Manual classes might be used for example to distinguish between entrants riding BMWs and those riding Hondas. Automatic classes could be used for example to provide separate certificates for podium finishers.
+In most rallies only one certificate class, Finisher, is used but it is also possible to use multiple classes with different certificates. [See also](/guide/classes)
 
 ## Teams
 

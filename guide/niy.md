@@ -38,7 +38,3 @@ A fully AI version of ScoreMaster may well appear by the 3rd quarter of 2026. Th
 
 This is a niche requirement desired by rally teams with too much time on their hands - the ability to ask the question "why did this entrant not score this combo?" and receive a listing of "missed" or unclaimed bonuses resulting in failure to claim a combo.
 
-## Manual combo claims
-
-Combos are normally claimed automatically based on the underlying bonuses claimed but there are circumstances when manual claiming of combos is preferred. The 2025 IBR is an example where riders in each of the three legs were expected to claim one and only one "loop".
-Actually, this can be achieved already by including an extra bonus in each combo specifically to enable claiming.

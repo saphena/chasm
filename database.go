@@ -89,7 +89,7 @@ func establishDatabase() bool {
 	if err == nil && rows.Next() {
 		err = rows.Scan(&dbi)
 		checkerr(err)
-		dbok = dbi == 1
+		dbok = dbi > 0
 		rows.Close()
 		return dbok
 	}
