@@ -53,7 +53,7 @@ func rankEntrants(intransaction bool) {
 	var sqlx string
 	var err error
 
-	//fmt.Println("Ranking entrants")
+	fmt.Println("Ranking entrants")
 	sqlx = "SELECT EntrantID,TeamID,TotalPoints,CorrectedMiles,IfNull((TotalPoints*1.0)/CorrectedMiles,0) AS PPM,0 AS Rank,Class FROM entrants WHERE EntrantStatus = "
 	sqlx += strconv.Itoa(EntrantFinisher)
 	sqlx += " AND TeamID > 0"
@@ -98,11 +98,11 @@ func rankEntrants(intransaction bool) {
 
 	sqlx = "SELECT EntrantID,TeamID,TotalPoints,CorrectedMiles,IfNull((TotalPoints*1.0)/CorrectedMiles,0) AS PPM,0 AS Rank,Class FROM entrants WHERE EntrantStatus = "
 	sqlx += strconv.Itoa(EntrantFinisher)
-	sqlx += " ORDER BY TeamID"
+	sqlx += " ORDER BY " //TeamID"
 	if CS.RallyRankEfficiency {
-		sqlx += ",PPM"
+		sqlx += "PPM"
 	} else {
-		sqlx += ",TotalPoints"
+		sqlx += "TotalPoints"
 	}
 	sqlx += " DESC"
 
