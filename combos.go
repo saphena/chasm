@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 	"text/template"
 )
@@ -27,6 +28,10 @@ var tmpltSingleCombo = `
 	<fieldset>
 		<button id="updatedb" class="hideuntil" title="Delete this record" disabled onclick="updateComboDB(this)"></button>
 	</fieldset>
+	<fieldset>
+		<button title="back to list" onclick="window.location.href='/combos'">↥☰↥</button>
+	</fieldset>
+
 </div>
 <p class="intro">Combos can be set to score different values depending on the number of underlying bonuses scored. 
 	By default all underlying bonuses must be scored. 
@@ -40,7 +45,7 @@ var tmpltSingleCombo = `
 		</fieldset>
 		<fieldset class="field">
 			<label for="BriefDesc">Description</label>
-			<input id="BriefDesc" class="BriefDesc" name="BriefDesc" data-c="{{.Comboid}}" value="{{.BriefDesc}}" data-save="saveCombo" oninput="oi(this)" onchange="saveCombo(this)" >
+			<input id="BriefDesc" class="BriefDesc" name="BriefDesc" {{if ne "" .Comboid}}autofocus{{end}} data-c="{{.Comboid}}" value="{{.BriefDesc}}" data-save="saveCombo" oninput="oi(this)" onchange="saveCombo(this)" >
 		</fieldset>
 		<fieldset>
 			<label for="BonusList">Underlying bonuses</label>
@@ -119,7 +124,7 @@ func comboBonusList(w http.ResponseWriter, r *http.Request) {
 		Bonuses []bl   `json:"bonuses"`
 	}
 
-	bonuses := strings.Split(r.FormValue("bl"), ",")
+	bonuses := strings.Split(normaliseBonusList(r.FormValue("bl")), ",")
 	sqlx := "SELECT BonusID,BriefDesc FROM bonuses WHERE BonusID=?"
 	stmt, err := DBH.Prepare(sqlx)
 	checkerr(err)
@@ -170,7 +175,7 @@ func createCombo(w http.ResponseWriter, r *http.Request) {
 	if ra != 1 {
 		fmt.Fprint(w, `{"ok":false,"msg":"Duplicate ComboID"}`)
 	} else {
-		fmt.Fprint(w, `{"ok":true,"msg":"`+bonus+`"}`)
+		fmt.Fprint(w, `{"ok":true,"msg":"`+bonus+`","bonuses":""}`)
 	}
 }
 
@@ -194,6 +199,13 @@ func deleteCombo(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `{"ok":true,"msg":"`+bonus+`"}`)
 }
 
+func normaliseBonusList(bl string) string {
+	re := regexp.MustCompile(`[A-Z0-9]+`)
+	tokens := re.FindAllString(strings.ToUpper(bl), -1)
+	return strings.Join(tokens, ",")
+
+}
+
 func saveCombo(w http.ResponseWriter, r *http.Request) {
 
 	bonus := r.FormValue("c")
@@ -207,6 +219,9 @@ func saveCombo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	val := r.FormValue(fld)
+	if fld == "Bonuses" {
+		val = normaliseBonusList(val)
+	}
 	sqlx := "UPDATE combos SET " + fld + "=? WHERE ComboID=?"
 	stmt, err := DBH.Prepare(sqlx)
 	checkerr(err)
@@ -220,16 +235,11 @@ func show_combo(w http.ResponseWriter, r *http.Request) {
 
 	comboid := r.FormValue("c")
 	var cb ComboBonus
-	/*
-		if comboid == "" {
-			fmt.Fprint(w, "no comboid!")
-			return
-		}
-	*/
 	if comboid != "" {
 		cr := loadCombos(comboid)
 		if len(cr) < 1 {
-			fmt.Fprint(w, "no such comboid")
+			//fmt.Fprint(w, "no such comboid")
+			show_combos(w, r)
 			return
 		}
 		cb = cr[0]

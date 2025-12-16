@@ -666,7 +666,9 @@ function showComboBonusList(bonuses) {
         if (!bonuses) return;
         bonuses.innerText = "";
         console.log(data);
-        for (let i = 0; i < data.bonuses.length; i++) {
+        let blen = 0;
+        if (data.bonuses) blen = data.bonuses.length;
+        for (let i = 0; i < blen; i++) {
           let fs = document.createElement("fieldset");
           let spn = document.createElement("span");
           spn.innerText = data.bonuses[i].BonusID;

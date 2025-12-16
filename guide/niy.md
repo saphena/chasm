@@ -1,4 +1,4 @@
-# ScoreMaster 4 - Features not implmented yet
+# ScoreMaster 4 - Features not implemented yet
 
 
 Several features of v3 ScoreMaster are not implemented in this version. Such features might appear in future versions as and when they're needed. They're described here in anticipation of questions beginning "What happened to feature X?"
