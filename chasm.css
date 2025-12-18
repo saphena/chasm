@@ -530,6 +530,28 @@ article.wizard {
     margin: 1em 1em 2em 1em;
   }
 }
+article.whynot {
+  max-width: var(--default-max-width);
+  margin: auto;
+  h2,hr {
+    margin: 2em 0 2em 0;
+  }
+  div {
+    margin: 0 0 1em 0;
+  }
+  .ynotbonuslist {
+    display: flex;
+    flex-direction: column;
+    div {
+      display: flex;
+      flex-direction: row;
+      margin: 0 0 1em 0;
+      span {
+        margin: 0 1em 0 0;
+      }
+    }
+  }
+}
 .PortSMTP,
 .PortIMAP {
   width: 4em;
