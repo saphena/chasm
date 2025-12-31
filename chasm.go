@@ -152,7 +152,7 @@ func main() {
 	http.HandleFunc("/upload", uploadImportDatafile)
 	http.HandleFunc("/wiz", showWizard)
 	http.HandleFunc("/wiz/{page}", showWizard)
-	http.HandleFunc("/ynot/{combo}/{entrant}", whynotcombo)
+	http.HandleFunc("/ynot", whynotcombo)
 	http.HandleFunc("/x", json_requests)
 	http.HandleFunc("/", central_dispatch)
 	http.ListenAndServe(":"+*HTTPPort, nil)

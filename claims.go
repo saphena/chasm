@@ -229,6 +229,20 @@ func judge_new_claims(w http.ResponseWriter, r *http.Request) {
 	showClaim(w, r)
 }
 
+const claimstopline = `	
+<div class="topline">
+		
+
+		<fieldset>
+			<button title="show Scorecard" onclick="loadPage('/score?e=%v')">☷</button>
+		</fieldset>
+		<fieldset>
+			<button title="why not combo?" onclick="loadPage('/ynot?e=%v')">☹??</button>
+		</fieldset>
+
+	</div>
+`
+
 func list_claims(w http.ResponseWriter, r *http.Request) {
 
 	const addnew_icon = "&nbsp;+&nbsp;"
@@ -249,6 +263,9 @@ func list_claims(w http.ResponseWriter, r *http.Request) {
 	esel := intval(r.FormValue("esel"))
 
 	startHTML(w, "CLAIMS LOG")
+	if esel > 0 {
+		fmt.Fprintf(w, claimstopline, esel, esel)
+	}
 
 	fmt.Fprint(w, `<div class="claimslog">`)
 
@@ -265,7 +282,7 @@ func list_claims(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintf(w, `<span class="button" title="Clear filters, show everything" onclick="resetClaimslogFilter();"> %v </span> &nbsp;`, filterclear)
 
-	fmt.Fprintf(w, `<input name="esel" onchange="reloadClaimslog()" placeholder="flag" class="EntrantID" value="%v">`, r.FormValue("esel"))
+	fmt.Fprintf(w, `<input name="esel" type="number" onchange="reloadClaimslog()" placeholder="flag" class="EntrantID" value="%v">`, r.FormValue("esel"))
 
 	bsel := r.FormValue("bsel")
 	fmt.Fprintf(w, `<input name="bsel" onchange="reloadClaimslog()" placeholder="bonus" class="BonusID" value="%v">`, bsel)
@@ -552,6 +569,9 @@ const claimTopline = `
 		<fieldset>
 			<button id="updatedb" class="hideuntil" title="Delete Claim" disabled onclick="deleteClaim(this)"></button>
 		</fieldset>
+		<fieldset>
+			<button title="back to list" onclick="window.location.href='/claims'">↥☰↥</button>
+		</fieldset>
 	</div>
 `
 
@@ -559,6 +579,9 @@ const lastClaimTopline = `
 	<div class="topline">
 		<fieldset>
 			Last claim: %v [%v] - %v %v - %v
+		</fieldset>
+		<fieldset>
+			<button title="back to list" onclick="window.location.href='/claims'">↥☰↥</button>
 		</fieldset>
 	</div>
 `

@@ -84,6 +84,7 @@ accessible via the Edit Raw Options screen. The default value is 3 "Out of hours
 <p>This is a safe procedure. If there is no imbalance, nothing will be done. If there is an imbalance, it will be rebalanced but that can be undone manually via the claims log if necessary.</p>
 </article>
 `
+const backToScorecards = `	<button title="back to list" onclick="window.location.href='/cards'">↥☰↥</button>`
 
 func showScorecard(w http.ResponseWriter, r *http.Request) {
 
@@ -160,6 +161,9 @@ func showScorecard(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `<option value="%v" %v>Rider AGREES</option>`, rs_entranthappy, sel)
 
 	fmt.Fprint(w, `</select>`)
+
+	fmt.Fprint(w, backToScorecards)
+
 	fmt.Fprint(w, `</div>`) //topline
 	fmt.Fprint(w, `</div>`) //scorecard
 	fmt.Fprint(w, `</header>`)

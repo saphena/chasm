@@ -136,8 +136,24 @@ const tptopline = `
 		<fieldset>
 			<button id="updatedb" class="hideuntil" title="Delete Penalty" disabled onclick="deleteTimep(this)"></button>
 		</fieldset>
+
+		<fieldset>
+			<button title="back to list" onclick="loadPage('/timep')">↥☰↥</button>
+		</fieldset>
+
 	</div>
 `
+const tpnewline = `	
+<div class="topline">
+		
+
+		<fieldset>
+			<button title="back to list" onclick="loadPage('/timep')">↥☰↥</button>
+		</fieldset>
+
+	</div>
+`
+
 const tpdetail = `
 
 <div class="intro">
@@ -207,6 +223,8 @@ func show_timepenalty(w http.ResponseWriter, r *http.Request) {
 	}
 	if tpid != "0" {
 		fmt.Fprint(w, tptopline)
+	} else {
+		fmt.Fprint(w, tpnewline)
 	}
 	fmt.Fprint(w, tpdetail)
 	fmt.Fprint(w, tphelp)

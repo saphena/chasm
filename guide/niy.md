@@ -1,7 +1,7 @@
 # ScoreMaster 4 - Features not implemented yet
 
 
-Several features of v3 ScoreMaster are not implemented in this version. Such features might appear in future versions as and when they're needed. They're described here in anticipation of questions beginning "What happened to feature X?"
+Several features of v3 ScoreMaster are not implemented in this version. Such features might appear in future versions as and when they're needed. They're described here in anticipation of questions beginning "<em>What happened to feature X?</em>"
 
 ## Multiple Legs
 
@@ -34,7 +34,4 @@ The facility to impose a limit on the number of claims available for scoring has
 A fully AI version of ScoreMaster may well appear by the 3rd quarter of 2026. This is an exciting prospect: ScoreMaster AI will be distinguished from regular ScoreMaster by the addition of "AI" after "ScoreMaster" on all screens and printouts. In all other respects, ScoreMaster AI will be exactly the same as regular ScoreMaster.
 
 
-## Missed combo analysis
-
-This is a niche requirement desired by rally teams with too much time on their hands - the ability to ask the question "why did this entrant not score this combo?" and receive a listing of "missed" or unclaimed bonuses resulting in failure to claim a combo.
 

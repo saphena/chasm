@@ -25,6 +25,7 @@ type ynot struct {
 	ComboID     string
 	ComboDesc   string
 	MinTicks    int
+	MaxTicks    int
 	ScoredTicks int
 	EntrantID   int
 	EntrantName string
@@ -40,14 +41,22 @@ function reloadYnot() {
 let c = document.getElementById('ComboID');
 let e = document.getElementById('EntrantID');
 if (c && e) {
-window.location.href='/ynot/'+c.value+'/'+e.value;
+window.location.href='/ynot?c='+c.value+'&e='+e.value;
 }
 }
 </script>
 `
+
 const whynotTemplate = `
+<div id="whynothelp" class="popover" popover>
+<h1>Why combo not scored</h1>
+<p>This helps answer the question "<em>why has this rider not scored this combo?</em>".</p>
+<p>This shows, for each underlying bonus of the combo, whether or not this rider has a good claim for it, highlighting what's missing from the score.</p>
+<p>Only the effective (most recent) claim is onsidered in each case. To check for earlier claims, examine the claims log for the rider.</p>
+</div>
 <article class="whynot">
 <h2>Individual Combo Analysis</h2>
+<div>This is useful for understanding why a particular combo has not yet been scored by an entrant. <input type="button" class="popover" popovertarget="whynothelp" value="[more details here]"></div>
 <div>
 	<label for="ComboID">Combo</label> 
 	<select id="ComboID" onchange="reloadYnot()">
@@ -55,7 +64,9 @@ const whynotTemplate = `
 		<option value="{{.ComboID}}" {{if eq .ComboID $.ComboID}}selected{{end}}>[ {{.ComboID}} ] {{.ComboDesc}}</option>
 	{{end}}
 	</select>
-	 - {{if .ClaimedOK}}Claimed successfully{{else}}Combo not scored{{end}}
+	 - needs {{.MinTicks}} of {{.MaxTicks}}
+	 - {{if .ClaimedOK}} Claimed successfully {{else}} Combo not scored &#9785; {{end}}
+	 <button onclick="window.location.href='/combo?c={{.ComboID}}'">Combo details</button>
 </div>
 <div>
 	<label for="EntrantID">Entrant</label> 
@@ -64,6 +75,7 @@ const whynotTemplate = `
 		<option value="{{.EntrantID}}" {{if eq .EntrantID $.EntrantID}}selected{{end}}>[ {{.EntrantID}} ] {{.EntrantName}}</option>
 	{{end}}
 	</select>
+	<button onclick="loadPage('/claims?esel={{.EntrantID}}')">Claims log</button>
 </div>
 <hr>
 <div class="ynotbonuslist">
@@ -121,9 +133,15 @@ func whynotcombo(w http.ResponseWriter, r *http.Request) {
 	const UndecidedClaimIcon = `Claim not yet decided`
 	const NoClaimIcon = `no claim found &#9785;`
 
-	combo := r.PathValue("combo")
-	entrant := intval(r.PathValue("entrant"))
+	combo := r.FormValue("c")
+	entrant := intval(r.FormValue("e"))
 
+	if combo == "" {
+		combo = getStringFromDB("SELECT ComboID FROM combos ORDER BY ComboID", "") // Get first combo
+	}
+	if entrant < 1 {
+		entrant = getIntegerFromDB("SELECT EntrantID FROM entrants ORDER BY EntrantID", 0) // Get first entrant
+	}
 	sqlx := "SELECT Bonuses FROM combos WHERE ComboID='" + combo + "'"
 	bonuses := strings.Split(getStringFromDB(sqlx, ""), ",")
 
@@ -131,9 +149,10 @@ func whynotcombo(w http.ResponseWriter, r *http.Request) {
 	y.ComboID = combo
 	y.EntrantID = entrant
 	y.ComboDesc = getStringFromDB("SELECT BriefDesc FROM combos WHERE ComboID='"+combo+"'", combo)
+	y.MaxTicks = len(bonuses)
 	y.MinTicks = getIntegerFromDB("SELECT MinimumTicks FROM combos WHERE ComboID='"+combo+"'", 0)
 	if y.MinTicks < 1 {
-		y.MinTicks = len(bonuses)
+		y.MinTicks = y.MaxTicks
 	}
 	y.EntrantName = getStringFromDB(fmt.Sprintf("SELECT "+RiderNameSQL+" FROM entrants WHERE EntrantID=%v", entrant), strconv.Itoa(entrant))
 	y.Combos = ynotcombos()

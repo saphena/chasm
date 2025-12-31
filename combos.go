@@ -28,6 +28,13 @@ var tmpltSingleCombo = `
 	<fieldset>
 		<button id="updatedb" class="hideuntil" title="Delete this record" disabled onclick="updateComboDB(this)"></button>
 	</fieldset>
+	
+	{{if ne .Comboid ""}}
+	<fieldset>
+		<button title="why not combo?" onclick="loadPage('/ynot?c={{.Comboid}}')">☹??</button>
+	</fieldset>
+	{{end}}
+
 	<fieldset>
 		<button title="back to list" onclick="window.location.href='/combos'">↥☰↥</button>
 	</fieldset>

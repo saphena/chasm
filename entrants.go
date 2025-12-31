@@ -253,6 +253,7 @@ func list_entrants(w http.ResponseWriter, r *http.Request) {
 var tmplEntrantBasic = `
 {{if ne .EntrantID 0}}
 	<div class="topline">
+
 		<fieldset>
 			<button title="Delete this Entrant?" onclick="enableDelete(!document.getElementById('enableDelete').checked)">   ` + TrashcanIcon + `</button>
 			<input type="checkbox" style="display:none;" id="enableDelete" onchange="enableSave(this.checked)">
@@ -261,10 +262,18 @@ var tmplEntrantBasic = `
 		<fieldset>
 			<button id="updatedb" class="hideuntil" data-e="{{.EntrantID}}" title="Delete Entrant" disabled onclick="deleteEntrant(this)"></button>
 		</fieldset>
+
+		<fieldset>
+			<button title="back to list" onclick="loadPage('/entrants')">↥☰↥</button>
+		</fieldset>
+
 	</div>
 {{end}}
 
 <article class="entrant basic">
+{{if eq .EntrantID 0}}
+<fieldset>New entrant created. Enter its number or leave blank for next number.</fieldset>
+{{end}}
 	<fieldset>
 		<label for="EntrantID">Entrant</label>
 		<input id="EntrantID" name="EntrantID" {{if ne .EntrantID 0}}type="text" readonly{{else}}type="text" autofocus{{end}} class="EntrantID" value="{{if ne .EntrantID 0}}{{.EntrantID}}{{end}}" onblur="addEntrant(this)" title="Flag">
@@ -288,7 +297,7 @@ var tmplEntrantBasic = `
 		<legend>Emergency contact</legend>
 		<input type="text" id="NokName" class="NokName" name="NokName" placeholder="name" value="{{.NokName}}" data-save="saveEntrant" oninput="oi(this)" onchange="saveEntrant(this)">
 		<input type="text" id="NokPhone" class="NokPhone" name="NokPhone" placeholder="phone" value="{{.NokPhone}}" data-save="saveEntrant" oninput="oi(this)" onchange="saveEntrant(this)">
-		<input type="text" id="NokRelation" class="NokRelation" name="NokRelation" place="relation" value="{{.NokRelation}}" data-save="saveEntrant" oninput="oi(this)" onchange="saveEntrant(this)">
+		<input type="text" id="NokRelation" class="NokRelation" name="NokRelation" placeholder="relation" value="{{.NokRelation}}" data-save="saveEntrant" oninput="oi(this)" onchange="saveEntrant(this)">
 	</fieldset>
 	<fieldset>
 		<label for="Bike">Bike</label>

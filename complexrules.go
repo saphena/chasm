@@ -63,11 +63,14 @@ var tmpltOption = `<option value="%s" %s>%s</option>`
 
 var crtopline = `<div class="topline">
 		<fieldset>
-			<button title="Delete this Bonus?" onclick="enableDelete(!document.getElementById('enableDelete').checked)">   ` + TrashcanIcon + `</button>
+			<button title="Delete this Rule?" onclick="enableDelete(!document.getElementById('enableDelete').checked)">   ` + TrashcanIcon + `</button>
 			<input type="checkbox" style="display:none;" id="enableDelete" onchange="enableSave(this.checked)">
 		</fieldset>
 		<fieldset>
 			<button id="updatedb" class="hideuntil" title="Delete Rule" disabled onclick="deleteRule(this)"></button>
+		</fieldset>
+		<fieldset>
+			<button title="back to list" onclick="loadPage('/rules')">↥☰↥</button>
 		</fieldset>
 
 	</div>`

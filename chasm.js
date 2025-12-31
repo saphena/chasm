@@ -1217,7 +1217,15 @@ function leaveUndecided() {
 
 function loadPage(pg) {
   console.log("loadPage called with '" + pg + "'");
-  window.location.href = pg;
+  let pgx = pg;
+  /*
+  if (pgx.indexOf("?" < 0))
+    pgx += "?";
+  else
+    pgx += "&";
+  pgx += "nocache="  + (new Date()).getTime();
+  */
+  window.location.href = pgx;
 }
 
 function setdirty(obj) {
