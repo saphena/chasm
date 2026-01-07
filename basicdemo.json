@@ -3,7 +3,6 @@
   "AutoFinisher": false,
   "ShowExcludedClaims": false,
   "CurrentLeg": 1,
-  "UseCheckinForOdo": true,
   "Basics": {
     "RallyTitle": "Bob's Basic Demo Rally",
     "RallyStarttime": "2025-06-21T07:00",

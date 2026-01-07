@@ -239,6 +239,7 @@ type eparams struct {
 	LastOdo        int
 	FinishOdo      int
 	FinishOdoCheck int
+	StartOdoCheck  int
 	OdoIsKm        bool
 	EntrantStatus  int
 	CheckedIn      bool
@@ -247,7 +248,7 @@ type eparams struct {
 func fetch_eparams(entrant int) eparams {
 	var ep eparams
 
-	sqlx := "SELECT TeamID,ifnull(StartTime,''),ifnull(FinishTime,''),ifnull(OdoRallyStart,0),ifnull(OdoCheckFinish,0),ifnull(OdoRallyFinish,0),OdoKms,EntrantStatus, CheckedIn"
+	sqlx := "SELECT TeamID,ifnull(StartTime,''),ifnull(FinishTime,''),ifnull(OdoRallyStart,0),ifnull(OdoCheckStart,0),ifnull(OdoCheckFinish,0),ifnull(OdoRallyFinish,0),OdoKms,EntrantStatus, CheckedIn"
 	sqlx += " FROM entrants WHERE EntrantID=" + strconv.Itoa(entrant)
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
@@ -255,12 +256,12 @@ func fetch_eparams(entrant int) eparams {
 	if rows.Next() {
 		var omk string
 		var ci int
-		err = rows.Scan(&ep.Team, &ep.StartTime, &ep.FinishTime, &ep.StartOdo, &ep.FinishOdoCheck, &ep.FinishOdo, &omk, &ep.EntrantStatus, &ci)
+		err = rows.Scan(&ep.Team, &ep.StartTime, &ep.FinishTime, &ep.StartOdo, &ep.StartOdoCheck, &ep.FinishOdoCheck, &ep.FinishOdo, &omk, &ep.EntrantStatus, &ci)
 		checkerr(err)
 		ep.OdoIsKm = omk == "K"
 		ep.CheckedIn = ci == 1
 		if ep.FinishOdo < 1 {
-			ep.FinishOdo = ep.FinishOdoCheck
+			ep.FinishOdo = ep.StartOdoCheck
 		}
 	}
 
@@ -1465,8 +1466,12 @@ func recalc_scorecard(entrant int) {
 		if ep.StartOdo < 1 {
 			ep.StartOdo = ep.LastOdo
 		}
-		if ep.LastOdo > ep.FinishOdo {
-			ep.FinishOdo = ep.LastOdo
+		if ep.LastOdo > ep.StartOdoCheck { // This reading MUST be greater than that given during check-out
+			if ep.FinishOdoCheck < 1 {
+				ep.FinishOdo = ep.LastOdo
+			} else {
+				ep.FinishOdo = ep.FinishOdoCheck
+			}
 		}
 
 		sx = checkApplySequences(BC, LastBonusClaimed)

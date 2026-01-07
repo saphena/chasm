@@ -46,20 +46,16 @@ const (
 )
 
 type chasmSettings struct {
+	UseEBC                  bool
 	StartOption             int
 	AutoFinisher            bool
 	ShowExcludedClaims      bool // If a claim is marked 'excluded' and is not superseded, show it on the scoresheet
-	CurrentLeg              int
-	UseCheckinForOdo        bool // If true, OdoRallyFinish updated only by check-in, not by individual claims
-	Basics                  RallyBasics
-	UnitMilesLit            string
-	UnitKmsLit              string
+	SuppressExclusion       bool // Discourage use of claim exclusion
 	PenaltyMilesDNF         int
 	PenaltyMilesMax         int
 	PenaltyMilesMethod      int
 	PenaltyMilesPoints      int
 	RallyMinMiles           int
-	DebugRules              bool
 	AutoLateDNF             bool
 	RallyMinPoints          int
 	RallyUseQA              bool
@@ -69,6 +65,7 @@ type chasmSettings struct {
 	RallyRankEfficiency     bool
 	RallySplitTies          bool
 	RallyTeamMethod         int
+	DowngradedClaimDecision int
 	FlagTeamTitle           string
 	FlagAlertTitle          string
 	FlagBikeTitle           string
@@ -87,9 +84,12 @@ type chasmSettings struct {
 	Email                   emailSettings
 	UploadsFolder           string
 	NoSuchBonus             string
-	DowngradedClaimDecision int
-	UseEBC                  bool
 	ShowSetupWizard         bool
+	CurrentLeg              int
+	Basics                  RallyBasics
+	UnitMilesLit            string
+	UnitKmsLit              string
+	DebugRules              bool
 }
 
 var CS chasmSettings
@@ -103,8 +103,8 @@ const defaultCS = `{
 	"StartOption": 			0,
 	"AutoFinisher":			false,
 	"ShowExcludedClaims": 	false,
+	"SuppressExclusion":	true,
 	"CurrentLeg": 			1,
-	"UseCheckInForOdo": 	true,
 	"RallyUnitKms": 		false,
 	"UnitMilesLit":			"miles",
 	"UnitKmsLit":			"km",

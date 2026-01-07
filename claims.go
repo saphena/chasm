@@ -1044,7 +1044,13 @@ func showEBC(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `</div>`)
 	fmt.Fprint(w, `<div>`)
 
-	for i := 1; i < 10; i++ {
+	// If we want to discourage the use of claim exclusion, we won't show it as an option when processing new claims
+	// Claim exclusion is still available via the claims log editing process.
+	ilim := 10
+	if CS.SuppressExclusion {
+		ilim = 9
+	}
+	for i := 1; i < ilim; i++ {
 		fmt.Fprintf(w, `<button data-result="%v"  name="Decision" onclick="closeEBC(this)" class="closebutton">%v</button>`, i, CS.CloseEBC[i])
 	}
 	fmt.Fprint(w, `</div>`)
@@ -1124,7 +1130,8 @@ func showPhotoFrame(w http.ResponseWriter, photos []string, BonusID string) {
 
 	fmt.Fprint(w, `<div class="bonusimgdiv" id="bonusimgdiv">`)
 	bimg := "/" + strings.ReplaceAll(filepath.Join(CS.ImgBonusFolder, filepath.Base(getStringFromDB("SELECT ifnull(Image,'') FROM bonuses WHERE BonusID='"+BonusID+"'", ""))), `\`, `/`)
-	fmt.Fprintf(w, `<img src="%v" id="bonusPhoto" alt=" " title="%v" data-folder="%v">`, bimg, CS.RallyBookImgTitle, CS.ImgBonusFolder)
+	//fmt.Printf("bimg={ %v }\n", bimg)
+	fmt.Fprintf(w, `<img src="%v" id="bonusPhoto" alt=" " title="%v" data-folder="/%v">`, bimg, CS.RallyBookImgTitle, CS.ImgBonusFolder)
 	fmt.Fprint(w, `</div>`)
 
 }

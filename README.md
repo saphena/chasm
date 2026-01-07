@@ -32,7 +32,9 @@ There is a large amount of crossover in functionality between combos and compoun
 
 ## Odo readings
 
-There is an option UseCheckinForOdo which, if true, prevents individual claims from updating final odo readings. This is so that oodo readings can be simple serial numbers rather than actual odo readings. If distance is to be recorded in a rally at all, it comes either from individual claim readings or from the final check-in.
+Where check-out and check-in are used, those readings are the authoritative ones used throughout the system, regardless of any individual claim readings.
+Individual claim readings are used where check-out/in are not used and are also applied as interim values during the rally. Such readings need not be actual
+odo readings, they could be simple sequence numbers or even a constant unless the rally relies on them to report distances ridden.
 
 In any event, a reading recorded during check-in is always recorded as the final reading.
 
