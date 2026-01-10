@@ -66,6 +66,8 @@ type chasmSettings struct {
 	RallySplitTies          bool
 	RallyTeamMethod         int
 	DowngradedClaimDecision int
+	CloseEBC                []string
+	CloseEBCUndecided       string
 	FlagTeamTitle           string
 	FlagAlertTitle          string
 	FlagBikeTitle           string
@@ -74,21 +76,19 @@ type chasmSettings struct {
 	FlagNightTitle          string
 	FlagRestrictedTitle     string
 	FlagReceiptTitle        string
-	CloseEBCUndecided       string
-	CloseEBC                []string
-	ImgBonusFolder          string // Holds rally book bonus photos
-	ImgEbcFolder            string // Holds images captured from emails
 	RallyBookImgTitle       string
 	EBCImgTitle             string
 	EBCImgSwapTitle         string
-	Email                   emailSettings
+	ImgBonusFolder          string // Holds rally book bonus photos
+	ImgEbcFolder            string // Holds images captured from emails
 	UploadsFolder           string
-	NoSuchBonus             string
-	ShowSetupWizard         bool
-	CurrentLeg              int
+	Email                   emailSettings
 	Basics                  RallyBasics
+	NoSuchBonus             string
 	UnitMilesLit            string
 	UnitKmsLit              string
+	ShowSetupWizard         bool
+	CurrentLeg              int
 	DebugRules              bool
 }
 

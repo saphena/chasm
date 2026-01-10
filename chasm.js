@@ -1960,8 +1960,9 @@ function testJsonEdit() {
 
 function enableRawSave(obj) {
   const myhilite = "#ffffe0";
-  let div = obj.parentElement;
-  let btn = div.querySelector("button");
+//  let div = obj.parentElement;
+//  let btn = div.querySelector("button");
+  let btn = document.querySelector('#rawoptsbtn')
   btn.disabled = false;
   obj.style.background = myhilite;
 }

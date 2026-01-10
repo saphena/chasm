@@ -2,11 +2,15 @@ package main
 
 import (
 	"database/sql"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"regexp"
 )
+
+//go:embed docs/options.md
+var rawoptsdoc string
 
 var queryresult string
 
@@ -85,10 +89,10 @@ func runRawSQL(w http.ResponseWriter, r *http.Request) {
 
 func showRawSQL(w http.ResponseWriter, r *http.Request) {
 
-	startHTML(w, "Raw SQL!!!")
+	startHTMLBL(w, "Raw SQL!!!", "/menu/Utilities")
 	fmt.Fprint(w, `</header>`)
 	fmt.Fprint(w, `<div class="sqlquery">`)
-	fmt.Fprint(w, `<p>This allows execution of raw SQL against the database. I hope you know what you're doing.</p>`)
+	fmt.Fprint(w, `<p class="warn">This allows execution of raw SQL against the database. I hope you know what you're doing.</p>`)
 	fmt.Fprint(w, `<form action="/sql" method="post">`)
 	fmt.Fprintf(w, `<input type="text" class="sqlquery" name="sql" value="%s">`, r.FormValue("sql"))
 	fmt.Fprint(w, `<button>Run SQL</button>`)
@@ -106,10 +110,20 @@ func editRawOptions(w http.ResponseWriter, r *http.Request) {
 	b, err := json.MarshalIndent(CS, "", "  ")
 	checkerr(err)
 
-	startHTML(w, "Edit raw options")
+	startHTMLBL(w, "Edit raw options", "/menu/Utilities")
+
+	fmt.Fprint(w, `<article id="rawopthelp" class="popover" popover>`)
+	fmt.Fprintf(w, `%s`, mdToHTML([]byte(rawoptsdoc)))
+	fmt.Fprint(w, `</article>`)
+
+	fmt.Fprint(w, `<div class="topline">`)
+	fmt.Fprint(w, `<fieldset><button id="rawoptsbtn" class="hidedisabled" disabled onclick="saveRawOpts(this)">Save changes</button></fieldset>`)
+	fmt.Fprint(w, `<fieldset title="Option descriptions"><input type="button" class="popover" popovertarget="rawopthelp" value="[options]"></fieldset>`)
+	fmt.Fprint(w, `<fieldset title="Specifications for JSON format (external website)"><a target="_blank" href="https://www.json.org/json-en.html">JSON format</a></fieldset>`)
+	fmt.Fprint(w, `</div>`)
 	fmt.Fprint(w, `</header>`)
 	fmt.Fprint(w, `<div class="rawoptions">`)
-	fmt.Fprint(w, `<button disabled onclick="saveRawOpts(this)">Save changes</button><br>`)
+	fmt.Fprint(w, `<p class="warn">These settings are in JSON format. Any changes must also conform to JSON specifications.</p>`)
 	fmt.Fprint(w, `<textarea id="rawopts" editable oninput="enableRawSave(this)">`)
 	fmt.Fprintf(w, "%s", b)
 	fmt.Fprint(w, `</textarea>`)

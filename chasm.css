@@ -879,6 +879,11 @@ div.claim {
     border-radius: 6px;
     border: none;
   }
+  button.hidedisabled:disabled {
+      color: var(--topline-background);
+      background-color: var(var(--topline-background));
+    }
+
   input[type="button"]:disabled,
   button:disabled {
     padding: 0 0.5em 0 0.5em;
@@ -886,7 +891,9 @@ div.claim {
     min-height: 36px;
     background-color: var(--button-back-disabled);
     color: var(--button-disabled-text);
+
   }
+
 }
 .topline.left {
   justify-content: flex-start;
