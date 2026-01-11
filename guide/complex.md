@@ -13,8 +13,8 @@ The classic example of this method is the 2017 Brit Butt Rally in which the valu
 
 Relatively complex arithmetic can be used in this method. Speak to Bob if you want to know more.
 
-## Sequences
-**Uninterrupted** claiming of a particular category can be used to award extra points. For example, three consecutive farms results in doubling the points awarded for the farm bonuses. The extra points can be either a multiple of the sum of the points scored by the relevant bonuses or a fixed number of extra points. The "uninterrupted" refers to the order of bonus claiming, not the proximity of bonuses within a group. eg. An entrant claims M3, M1, F1, M2: this gives an uninterrupted sequence (US) of two 'M's, not three. Claiming M5, M1, M3, F2 gives a US of three Ms.
+## Uninterrupted sequences
+*Uninterrupted* claiming of a particular category can be used to award extra points. For example, three consecutive farms results in doubling the points awarded for the farm bonuses. The extra points can be either a multiple of the sum of the points scored by the relevant bonuses or a fixed number of extra points. The "uninterrupted" refers to the order of bonus claiming, not the proximity of bonuses within a group. eg. An entrant claims M3, M1, F1, M2: this gives an uninterrupted sequence (US) of two 'M's, not three. Claiming M5, M1, M3, F2 gives a US of three Ms.
 
 ## Collection of bonuses
 This can be used to award extra points based on the number of bonuses scored within a category or the number of categories scored within a set. The criterion at this stage is simple group membership, order of scoring, etc are not relevant.

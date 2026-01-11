@@ -101,9 +101,6 @@ func doTheReset(w http.ResponseWriter, r *http.Request) {
 	case 3:
 		zapAllClaims(true)
 		zapEntrants()
-		sqlx := "UPDATE config SET Settings='{}'"
-		_, err := DBH.Exec(sqlx)
-		checkerr(err)
 		zapRallyConfig()
 
 	case 4:
@@ -116,10 +113,7 @@ func doTheReset(w http.ResponseWriter, r *http.Request) {
 		// rebuild scorecards
 		// reset entrant status/odos
 	}
-	//_, err = DBH.Exec("COMMIT")
-	//checkerr(err)
 	fmt.Fprint(w, `</header><p class="thatsall">Reset complete</p>`)
-	//fmt.Println("Reset complete")
 }
 
 func reloadDemoRally() {

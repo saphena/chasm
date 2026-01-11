@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"text/template"
@@ -58,6 +59,7 @@ type EntrantDBRecord struct {
 	FinishTimeTime       string
 	CheckedOut           int
 	CheckedIn            int
+	Emails               string
 }
 
 type EntrantDetails struct {
@@ -269,7 +271,17 @@ var tmplEntrantBasic = `
 
 	</div>
 {{end}}
-
+<div id="EntrantEmailPop" class="popover" popover>
+<h1>Email address(es)</h1>
+<p>Used when bonus claims are submitted by email.</p>
+<p>Only registered addresses are permitted to send bonus claims. Each rider may register one or several addresses, separated by ',' or other separators</p>
+</div>
+<div id="EntrantStatusPop" class="popover" popover>
+<h1>Entrant status</h1>
+<p>Each entrant record includes a status, one of DNS, ok, Finisher and DNF.</p>
+<p>The initial status is DNS (Did Not Start). This changes, depending on the setting 'Rally Start option', during Check-out or when the first bonus claim is submitted.</p>
+<p>Check-out and Check-in are separately recorded to further distinguish the status.</p>
+</div>
 <article class="entrant basic">
 {{if eq .EntrantID 0}}
 <fieldset>New entrant created. Enter its number or leave blank for next number.</fieldset>
@@ -282,11 +294,12 @@ var tmplEntrantBasic = `
 	</fieldset>
 	<fieldset>
 		<label for="RiderPhone">Phone</label>
-		<input type="text" id="RiderPhone" class="RiderPhone" name="Phone" value="{{.RiderPhone}}" data-save="saveEntrant" oninput="oi(this)" onchange="saveEntrant(this)">
+		<input type="text" placeholder="Rider's mobile" id="RiderPhone" class="RiderPhone" name="Phone" value="{{.RiderPhone}}" data-save="saveEntrant" oninput="oi(this)" onchange="saveEntrant(this)">
 	</fieldset>
 	<fieldset>
 		<label for="RiderEmail">Email</label>
-		<input type="text" id="RiderEmail" class="RiderEmail" name="Email" value="{{.RiderEmail}}" data-save="saveEntrant" oninput="oi(this)" onchange="saveEntrant(this)">
+		<input title="{{.Emails}}" placeholder="Email address(es)" type="text" id="RiderEmail" class="RiderEmail" name="Email" value="{{.RiderEmail}}" data-save="saveEntrant" oninput="oi(this)" onchange="saveEntrant(this)">
+		<button popovertarget="EntrantEmailPop">?</button>
 	</fieldset>
 	<fieldset>
 		<label for="PillionFirst">Pillion</label>
@@ -301,8 +314,8 @@ var tmplEntrantBasic = `
 	</fieldset>
 	<fieldset>
 		<label for="Bike">Bike</label>
-		<input type="text" id="Bike" name="Bike" class="Bike" value="{{.Bike}}" data-save="saveEntrant" oninput="oi(this)" onchange="saveEntrant(this)">
-		<input type="text" id="BikeReg" name="BikeReg" class="BikeReg" value="{{.BikeReg}}" data-save="saveEntrant" oninput="oi(this)" onchange="saveEntrant(this)">
+		<input type="text" placeholder="Make &amp; model" id="Bike" name="Bike" class="Bike" value="{{.Bike}}" data-save="saveEntrant" oninput="oi(this)" onchange="saveEntrant(this)">
+		<input type="text" placeholder="Registration" id="BikeReg" name="BikeReg" class="BikeReg" value="{{.BikeReg}}" data-save="saveEntrant" oninput="oi(this)" onchange="saveEntrant(this)">
 	</fieldset>
 	<fieldset>
 		<label for="OdoKms">Odo counts</label>
@@ -347,6 +360,7 @@ var tmplEntrantBasic = `
 			<option value="0" {{if eq .CheckedIn 0}}selected{{end}}>not checked in</option>
 			<option value="1" {{if eq .CheckedIn 1}}selected{{end}}>Checked in</option>
 		</select>
+		<button popovertarget="EntrantStatusPop">?</button>
 	</fieldset>
 	<fieldset>
 		<label for="Team">Team</label>
@@ -441,6 +455,17 @@ func fetchEntrantRecord(entrant int) EntrantDBRecord {
 
 }
 
+func splitEmails(email string) []string {
+	re := regexp.MustCompile(`[A-Za-z@\.\_\-0-9]+`)
+	tokens := re.FindAllString(email, -1)
+	return tokens
+}
+func normaliseEmailList(bl string) string {
+	tokens := splitEmails(bl)
+	return strings.Join(tokens, ",")
+
+}
+
 func saveEntrant(w http.ResponseWriter, r *http.Request) {
 
 	e := r.FormValue("e")
@@ -450,6 +475,9 @@ func saveEntrant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	val := r.FormValue(fld)
+	if fld == "Email" {
+		val = normaliseEmailList(val)
+	}
 
 	sqlx := "UPDATE entrants SET " + fld + "=? WHERE EntrantID=?"
 	stmt, err := DBH.Prepare(sqlx)
@@ -464,6 +492,7 @@ func showEntrant(w http.ResponseWriter, r *http.Request) {
 
 	entrant := intval(r.PathValue("e"))
 	er := fetchEntrantRecord(entrant)
+	er.Emails = strings.Join(splitEmails(er.RiderEmail), "\r")
 
 	if r.FormValue("back") != "" {
 		startHTMLBL(w, "Entrant detail", r.FormValue("back"))

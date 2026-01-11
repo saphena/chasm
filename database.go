@@ -32,13 +32,12 @@ func ensureDirWritable(path string) error {
 	}
 
 	// Check if directory is writable by trying to create a temp file
-	testFile := filepath.Join(dir, ".writable_check")
 	f, err := os.CreateTemp(dir, ".writable_check_*")
 	if err != nil {
 		return fmt.Errorf("directory is not writable: %w", err)
 	}
+	defer os.Remove(f.Name())
 	f.Close()
-	os.Remove(testFile) // cleanup
 
 	return nil
 }

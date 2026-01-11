@@ -66,6 +66,11 @@ var BonusDisplayScreen = `
 		</fieldset>
 
 	</div>
+	<div id="BonusValuePop" class="popover" popover>
+	<h1>Bonus value</h1>
+	<p>The points value of the bonus is either a fixed number of points, a variable number of points (entered manually during claim processing) or calculated with reference to the most recently claimed bonus.</p>
+	<p>In the case of a 'multiply last' setting, the number entered in the 'Points' box of this bonus is multiplied by the value of the last bonus claimed. If the last bonus claimed was also a 'multiply last', the result is 0 points.</p>
+	</div>
 	<article class="bonus">
 		<fieldset>
 			<label for="BonusID">Code</label>
@@ -83,6 +88,7 @@ var BonusDisplayScreen = `
 				<option value="1" {{if eq .B.AskPoints 1}}selected{{end}}>Variable</option>
 				<option value="2" {{if eq .B.AskPoints 2}}selected{{end}}>Multiply last</option>
 			</select>
+			<button popovertarget="BonusValuePop">?</button>
 		</fieldset>
 		<fieldset>
 			<label for="Notes">Scoring notes</label>

@@ -31,6 +31,9 @@ var classes string
 //go:embed guide/claims.md
 var claimsmd string
 
+//go:embed guide/whatworks.md
+var whatworks string
+
 var guideheader = `
 <!DOCTYPE html>
 <html lang="en">
@@ -113,6 +116,8 @@ func showGuides(w http.ResponseWriter, r *http.Request) {
 		md = []byte(classes)
 	case "claims":
 		md = []byte(claimsmd)
+	case "whatworks":
+		md = []byte(whatworks)
 	default:
 		md = []byte(betatest)
 	}

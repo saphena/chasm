@@ -7,7 +7,7 @@ Several features of v3 ScoreMaster are not implemented in this version. Such fea
 
 It is possible to establish a rally with multiple distinct legs rather than the common arrangement of a single leg. A multi-leg rally has start and finish times for each leg, might be scored separately, and can have bonuses and/or combos restricted to a single leg.
 
-It is obviously possible to run a multi-leg rally by establish multiple databases and swapping between legs.
+It is obviously possible to run a multi-leg rally by establishing multiple databases and swapping between legs.
 
 ## Entrant emailing
 
@@ -15,7 +15,7 @@ This feature is used to send customised emails to entrants, with or without smal
 
 ## Starting cohorts
 
-Probably no longer needed. Was useful during Covid but starts now tend to be either a single mass start or with first claim starts.
+Probably no longer needed. Was useful during Covid but starts now tend to be either a single mass start or 'with first claim' starts.
 
 ## Odo check facility
 

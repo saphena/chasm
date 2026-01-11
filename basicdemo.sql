@@ -63,6 +63,10 @@ INSERT INTO "certificates" VALUES (0,'','<div id="topimagefiller" style="text-al
 <p><br></p><p><br></p><p class="main ancient" style="text-align: center;">Congratulations on your outstanding performance in your quest to unlock the puzzle of Bob''s Demo Rally.<br><br><br></p><p style="text-align: center;"><br></p><p id="signature" style="text-align: center;">________________________<br>Bob Stammers</p><p style="text-align: center;">Author</p><p style="text-align: center;">ScoreMaster</p>
 
 ',NULL,NULL,0,'Rally finisher');
+DELETE FROM "classes";
+INSERT INTO "classes" (Class,BriefDesc) VALUES(0,'default');
+DELETE FROM "teams";
+INSERT INTO "teams" VALUES(0,'-----');
 DELETE FROM "combos";
 INSERT INTO "combos" VALUES ('YY','Combo YY',1,2,'2','F4,F1',0,2,0,0,0,0,0,0,0,0);
 INSERT INTO "combos" VALUES ('ZZ','Combo ZZ',0,2,'300','D2,D4',0,0,0,0,0,0,0,0,0,0);
