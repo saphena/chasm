@@ -11,7 +11,7 @@ Basic bonus scores can be modified by either the number of bonuses scored within
 
 The classic example of this method is the 2017 Brit Butt Rally in which the value of any bonus depended on the number of bonuses scored within a county. The first bonus was worth one point, the second two points, the third four points, the fourth eight points and so on.
 
-Relatively complex arithmetic can be used in this method. Speak to Bob if you want to know more.
+Relatively complex arithmetic can be used in this method.
 
 ## Uninterrupted sequences
 *Uninterrupted* claiming of a particular category can be used to award extra points. For example, three consecutive farms results in doubling the points awarded for the farm bonuses. The extra points can be either a multiple of the sum of the points scored by the relevant bonuses or a fixed number of extra points. The "uninterrupted" refers to the order of bonus claiming, not the proximity of bonuses within a group. eg. An entrant claims M3, M1, F1, M2: this gives an uninterrupted sequence (US) of two 'M's, not three. Claiming M5, M1, M3, F2 gives a US of three Ms.
@@ -19,8 +19,7 @@ Relatively complex arithmetic can be used in this method. Speak to Bob if you wa
 ## Collection of bonuses
 This can be used to award extra points based on the number of bonuses scored within a category or the number of categories scored within a set. The criterion at this stage is simple group membership, order of scoring, etc are not relevant.
 
-This method may also be used to force DNF in the event of too many/not enough categories being scored. DNF can also be forced if the ratio of bonuses scored in two categories differs from a specified ratio.
+This method may also be used to force DNF in the event of too many/not enough categories being scored. 
 
-This mechanism can also be adapted to exclude certain bonuses rather than forcing DNF.
+DNF can also be forced if the ratio of bonuses scored in two categories differs from a specified ratio. Alternatively, this mechanism can rebalance the categories by exluding the highest value bonuses.
 
-Speak to Bob if you want to know more.

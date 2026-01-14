@@ -9,11 +9,19 @@ import (
 const tphelp = `
 <div id="tphelp" class="popover" popover>
 <h1>TIME PENALTIES</h1>
-<p>Rally time runs from the rally start time to the rally finish time.</p>
-<p>Individual entrants may have less time available. This can happen where variable start times are available (popular during the pandemic or where riders might start anywhere over a large area). The rally time window is set wide enough to cater for the variable starts and each entrant's time window is limited by the <em>max rideable hours</em> setting.</p>
+<p>Rally time runs from the rally start time to the rally finish time as specified in [Rally Parameters]</p>
+<p>Individual entrants may have less time available. This can happen where variable start times are available (popular during the pandemic or where riders might start anywhere over a large area). The rally time window is set wide enough to cater for the variable starts and each entrant's time window is limited by the <em>Max Rideable hours</em> setting.</p>
 <p>Penalties other than DNF can be specified for particular periods within the overall or individual entrant's rally time. Periods are specified either as date/time ranges or as minutes before DNF ranges.</p>
 <p>Time penalties are triggered by entrant check-in (or last claim) time.</p>
 <p>The start time specified identifies the first minute when a penalty is applied. So for a rally ending at 17:00 and a penalty start of 30 minutes before DNF, the penalty is incurred by anyone checking-in on or after 16:30.</p>
+<p>Example:</p>
+<ul>
+<li> <em>Rally finishes</em> in [Rally Parameters] is "2026-04-12 21:00"</li>
+<li> <em>Max Rideable hours</em> in [Rally Parameters] is 8</li>
+<li> George Bone starts his rally at "2026-04-12 09:00"</li>
+<li> <em>Rally DNF</em> is "2026-04-12 21:00"</li>
+<li> <em>Entrant DNF</em> is "2026-04-12 17:00"</li>
+</ul
 </div>
 `
 

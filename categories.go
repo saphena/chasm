@@ -68,7 +68,7 @@ func build_axisLabels() []string {
 
 func addCatCat(w http.ResponseWriter, r *http.Request) {
 
-	fmt.Println("addCatCat")
+	//fmt.Println("addCatCat")
 	set := r.FormValue("s")
 	if intval(set) < 1 {
 		fmt.Fprint(w, `{"ok":false,"msg":"Bad set index"}`)
@@ -79,7 +79,7 @@ func addCatCat(w http.ResponseWriter, r *http.Request) {
 	_, err := DBH.Exec(sqlx)
 	checkerr(err)
 	fmt.Fprintf(w, `{"ok":true,"msg":"%v"}`, cat)
-	fmt.Printf(" done = %v\n", cat)
+	//fmt.Printf(" done = %v\n", cat)
 }
 
 func delCatCat(w http.ResponseWriter, r *http.Request) {

@@ -82,6 +82,13 @@ async function deleteRule(obj) {
 }
 
 function showCurrentRule() {
+  /*
+  let rid = document.getElementById('ruleid');
+  if (rid) {
+    window.location.href="/rule?r="+rid.value + "&back=rules&dt="+(Math.random() * 1000)
+    return
+  }
+    */
   console.log("showCurrentRule called");
   let art = document.getElementById("singlerule");
   let typ = document.getElementById("RuleType");
@@ -98,6 +105,8 @@ function showCurrentRule() {
       else flds[i].classList.add("hide");
   }
   setRuleWhichCat(typ);
+  // It would be nice to have code here which offers points/mults for group awards
+  // but only points for individual bonus awards. Redisplaying the rule get it right.
 }
 
 function chgAxis(obj) {
@@ -172,7 +181,7 @@ function fetchBonusDetails(obj) {
       if (!data.ok) {
         console.error(`Error! ${data.ok}`);
       } else {
-        console.log(data)
+        console.log(data);
         let bd = document.getElementById("bonusDetails");
         bd.innerHTML = data.name;
         let flags = data.flags;
@@ -280,6 +289,19 @@ function showEvidence(obj) {
 function saveRule(obj) {
   let ruleid = document.getElementById("ruleid");
   if (!ruleid) return;
+
+  let frm = document.getElementById("postrule");
+  if (frm) {
+    switch (obj.name) {
+      case "RuleType":
+      case "ModBonus":
+      case "NMethod":
+      case "NPower":
+      case "NPowerSelect":
+        frm.submit();
+        return
+    }
+  }
   let url = "/saverule?ruleid=" + ruleid.value;
   url += "&ff=" + obj.name;
   url += "&" + obj.name + "=" + encodeURIComponent(obj.value);
@@ -1960,9 +1982,9 @@ function testJsonEdit() {
 
 function enableRawSave(obj) {
   const myhilite = "#ffffe0";
-//  let div = obj.parentElement;
-//  let btn = div.querySelector("button");
-  let btn = document.querySelector('#rawoptsbtn')
+  //  let div = obj.parentElement;
+  //  let btn = div.querySelector("button");
+  let btn = document.querySelector("#rawoptsbtn");
   btn.disabled = false;
   obj.style.background = myhilite;
 }

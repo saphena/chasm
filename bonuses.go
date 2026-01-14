@@ -60,8 +60,8 @@ var BonusDisplayScreen = `
 			<button id="updatedb" class="hideuntil" title="Delete Bonus" disabled onclick="deleteBonus(this)"></button>
 		</fieldset>
 		<fieldset>
-			<button title="show next" onclick="window.location.href='/bonus?b={{.B.BonusID}}&prev'">⋘</button>
-			<button title="show previous" onclick="window.location.href='/bonus?b={{.B.BonusID}}&next'">⋙</button>
+			<button title="show previous" onclick="window.location.href='/bonus?b={{.B.BonusID}}&prev'">⋘</button>
+			<button title="show next" onclick="window.location.href='/bonus?b={{.B.BonusID}}&next'">⋙</button>
 			<button title="back to list" onclick="window.location.href='/bonuses'">↥☰↥</button>
 		</fieldset>
 
@@ -74,8 +74,10 @@ var BonusDisplayScreen = `
 	<article class="bonus">
 		<fieldset>
 			<label for="BonusID">Code</label>
-			<input type="text" id="BonusID" name="BonusID" {{if ne "" .B.BonusID}}readonly{{else}}autofocus{{end}} class="BonusID" value="{{.B.BonusID}}" onchange="addBonus(this)">
+			<input title="Unique identifier for this bonus" type="text" id="BonusID" name="BonusID" {{if ne "" .B.BonusID}}readonly{{else}}autofocus{{end}} class="BonusID" value="{{.B.BonusID}}" onchange="addBonus(this)" oninput="document.getElementById('addBonusBtn').disabled=this.value==''">
+			{{if eq .B.BonusID ""}}<button disabled id="addBonusBtn" title="Create bonus" onclick="addBonus(document.getElementById('BonusID'));return false">ok</button>{{end}}
 		</fieldset>
+		{{if ne .B.BonusID ""}}
 		<fieldset>
 			<label for="BriefDesc">Description</label>
 			<input type="text" id="BriefDesc" data-b="{{.B.BonusID}}" {{if ne .B.BonusID ""}}autofocus{{end}} data-save="saveBonus" oninput="oi(this)" onchange="saveBonus(this)" name="BriefDesc" class="BriefDesc" value="{{.B.BriefDesc}}">
@@ -169,6 +171,7 @@ var BonusDisplayScreen = `
 				<option value="1" {{if eq .B.Compulsory 1}}selected{{end}}>Compulsory</option>
 			</select>
 		</fieldset>
+		{{end}}
 		</article>
 `
 
@@ -502,10 +505,14 @@ func show_bonus(w http.ResponseWriter, r *http.Request) {
 	br.FlagR = strings.Contains(b.Flags, "R")
 	br.FlagT = strings.Contains(b.Flags, "T")
 
+	bx := "Bonus detail"
+	if bonus == "" {
+		bx = "Creating new bonus"
+	}
 	if r.FormValue("back") != "" {
-		startHTMLBL(w, "Bonus detail", r.FormValue("back"))
+		startHTMLBL(w, bx, r.FormValue("back"))
 	} else {
-		startHTML(w, "Bonus detail")
+		startHTML(w, bx)
 	}
 	fmt.Fprint(w, `</header>`)
 

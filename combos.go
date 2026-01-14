@@ -48,8 +48,10 @@ var tmpltSingleCombo = `
 	<form>
 		<fieldset class="field">
 			<label for="ComboID">Code</label>
-			<input id="ComboID" class="ComboID" {{if ne "" .Comboid}}readonly{{else}}autofocus{{end}} name="Combo code" value="{{.Comboid}}" onchange="addCombo(this)">
+			<input id="ComboID" class="ComboID" {{if ne "" .Comboid}}readonly{{else}}autofocus{{end}} name="Combo code" value="{{.Comboid}}" onchange="addCombo(this)" oninput="document.getElementById('addComboBtn').disabled=this.value==''">
+			{{if eq "" .Comboid}}<button disabled id="addComboBtn" title="Create combo" onclick="addCombo(document.getElementById('ComboID'));return false">ok</button>{{end}}
 		</fieldset>
+		{{if ne "" .Comboid}}
 		<fieldset class="field">
 			<label for="BriefDesc">Description</label>
 			<input id="BriefDesc" class="BriefDesc" name="BriefDesc" {{if ne "" .Comboid}}autofocus{{end}} data-c="{{.Comboid}}" value="{{.BriefDesc}}" data-save="saveCombo" oninput="oi(this)" onchange="saveCombo(this)" >
@@ -91,6 +93,7 @@ var tmpltSingleCombo = `
 				<option value="1" {{if .Compulsory}}selected{{end}}>COMPULSORY</option>
 			</select>
 		</fieldset>
+		{{end}}
 	</form>
 </article>
 <script>extractComboPointsArray()</script>

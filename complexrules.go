@@ -27,30 +27,30 @@ const complexhelp = `
 <h3>Award extra points for scoring N categories within a set</h3>
 <ul>
     <li>One or more rules, each of type Categories Scored, Affects Group-based awards, Ordinary scoring rule.</li>
-    <li>Set Triggered when and Results in to the required values.</li>
+    <li>Set <em>Triggered when</em> and <em>Results in</em> to the required values.</li>
 </ul>
 <h3>Deduct points for scoring less than N categories within a set</h3>
 <ul>
-    <li>Set a placeholder with a Triggered when value = N;</li>
-    <li>Set an Ordinary scoring rule with Triggered when = 0 and Results in to the negative value.</li>
+    <li>Set a placeholder with a <em>Triggered when</em> value = N;</li>
+    <li>Set an Ordinary scoring rule with <em>Triggered when</em> = 0 and <em>Results in</em> to the negative value.</li>
 </ul>
 <h3>Award extra points for scoring N bonuses within a category</h3>
 <ul>
     <li>One or more rules, each of type Bonuses per category, Affects Group-based awards, Ordinary scoring rule.</li>
-    <li>Set Triggered when and Results in to the required values.</li>
+    <li>Set <em>Triggered when</em> and <em>Results in</em> to the required values.</li>
 </ul>
 <h3>Award DNF if not enough categories scored</h3>
 <ul>
-    <li>Set a placeholder with a Triggered when value = N;</li>
-    <li>Set a DNF if triggered rule with Triggered when = 0</li>
+    <li>Set a placeholder with a <em>Triggered when</em> value = N;</li>
+    <li>Set a DNF if triggered rule with <em>Triggered when</em> = 0</li>
 </ul>
 <h3>Award DNF if too many categories scored</h3>
 <ul>
-    <li>Set a DNF is triggered rule with Triggered when set to the limit</li>
+    <li>Set a DNF is triggered rule with <em>Triggered when</em> set to the limit</li>
 </ul>
 <h3>Award DNF if claims in category A has wrong ratio to claims in category B</h3>
 <ul>
-	<li>Establish one or more rules of type Cat ratio DNF</li>
+	<li>Establish one or more rules of type Category ratio DNF</li>
 </ul>
 </article>
 `
@@ -78,15 +78,22 @@ var crtopline = `<div class="topline">
 var tmpltSingleRule = `
 	<article class="popover" id="individualbonushelp" popover>
 	<h1>Individual Bonuses</h1>
-		<p>Some definitions:- <strong>BV</strong> = points value of current bonus; <strong>RV</strong> = the "results in" value of current rule; <strong>N</strong> is the number of bonuses within the category, <strong>N1</strong> is <strong>N</strong>-1; <strong>SV</strong> is the resulting score.</p>
-		<p><strong>N</strong> is calculated as the number of bonuses per category, regardless of the setting of the "Calculate" flag. If the category is set to "any", "then </p>
+		<p>Some definitions:- </p>
+		<ul>
+		<li><strong>BV</strong> = points value of current bonus</li>
+		<li><strong>RV</strong> = the "results in" value of current rule</li>
+		<li><strong>N</strong> is the number of bonuses scored within the category</li>
+		<li><strong>N1</strong> is <strong>N</strong> - 1 &nbsp;&nbsp; <em>a convenient term</em></li>
+		<li><strong>SV</strong> is the resulting score</li>
+		</ul>
+		<p><strong>N</strong> is calculated as the number of bonuses scored per category. </p>
 		<p>If <strong>RV</strong> is 0, <strong>SV</strong> = <strong>BV</strong> * <strong>N1</strong>  simple multiplication.</p>
 		<p>If <strong>RV</strong> is set to "multipliers", <strong>SV</strong> = <strong>BV</strong> * <strong>RV</strong> * <strong>N1</strong>  simple multiplication.</p>
 		<p>If <strong>RV</strong> is set to "points", <strong>SV</strong> = <strong>BV</strong> * <strong>RV</strong> ^ <strong>N1</strong> exponential score.</p>
 	</article>
 
 <div id="singlerule" class="singlerule">
-  <form action="updtcrule" method="post">
+  <form action="updtcrule" id="postrule" method="post">
   <fieldset class="field rule0 rule1 rule2 rule3 rule4 rule5">
     <label for="RuleType">Rule type</label>
     <select id="RuleType" name="RuleType" onchange="chgRuleType(this);">
@@ -110,8 +117,8 @@ var tmpltSingleRule = `
   </fieldset>
 
   <fieldset class="field help rule5">
-	<p>Cat ratio rules describe an optional final test on a scorecard involving comparing N, the number of successful claims in 'First category' with M, the number of successful claims in 'Second category'.</p>
-	<p>If R, the 'Ratio between cats' value is 1, N must equal M.
+	<p>Category ratio rules describe an optional final test on a scorecard involving comparing N, the number of successful claims in 'First category' with M, the number of successful claims in 'Second category'.</p>
+	<p>If R, the 'Ratio between categories' value is 1, N must equal M.
 	If R is &gt; 1, N must be at least R x M</p>
   </fieldset>
 												  <!-- End of help texts -->
@@ -149,8 +156,8 @@ var tmpltSingleRule = `
 
   <fieldset class="field rule0 rule1 rule2 rule3 rule4 rule5">
     <label class="rule0 rule1 rule2 rule3 rule4" for="NMin">Triggered when <var>n</var> &ge; </label>
-	<label class="rule5" for="NMin">Ratio between cats</label>
-	<input id="NMin" name="NMin" type="number" value="%v" onchange="saveRule(this)">
+	<label class="rule5" for="NMin">Ratio between categories</label>
+	<input id="NMin" name="NMin" type="number" min="1" value="%v" onchange="saveRule(this)">
   </fieldset>
 
   <fieldset class="field rule0 rule4 ">
@@ -244,6 +251,9 @@ func optsSingleAxisCats(axis int, selcat int) []string {
 func selectOptionArray(vals []int, lbls []string, sel int) []string {
 
 	res := make([]string, 0)
+	if sel > len(vals) {
+		sel = 0
+	}
 	for i, v := range vals {
 		var selx string
 		if v == sel {
@@ -298,8 +308,12 @@ func showSingleRule(w http.ResponseWriter, r *http.Request, cr CompoundRule) {
 	}
 
 	rtvals := []int{CAT_OrdinaryScoringRule, CAT_DNF_Unless_Triggered, CAT_DNF_If_Triggered, CAT_PlaceholderRule, CAT_OrdinaryScoringSequence, CAT_RatioRule}
-	rtlabs := []string{"ordinary scoring rule", "DNF unless triggered", "DNF if triggered", "placeholder only", "uninterrupted sequence", "Cat ratio DNF"}
+	rtlabs := []string{"ordinary scoring rule", "DNF unless triggered", "DNF if triggered", "placeholder only", "uninterrupted sequence", "Category ratio DNF"}
 
+	results := selectOptionArray([]int{CAT_ResultPoints, CAT_ResultMults}, []string{"points", "multipliers"}, cr.PointsMults)
+	if cr.Ruletype == CAT_OrdinaryScoringRule && cr.Target == CAT_ModifyBonusScore {
+		results = selectOptionArray([]int{CAT_ResultPoints}, []string{"points"}, cr.PointsMults)
+	}
 	page := fmt.Sprintf(tmpltSingleRule,
 		selectOptionArray(rtvals, rtlabs, cr.Ruletype),
 		selectOptionArray([]int{CAT_ModifyBonusScore, CAT_ModifyAxisScore}, []string{"individual bonuses", "group-based awards"}, cr.Target),
@@ -311,7 +325,7 @@ func showSingleRule(w http.ResponseWriter, r *http.Request, cr CompoundRule) {
 
 		cr.Min,
 		cr.Power,
-		selectOptionArray([]int{CAT_ResultPoints, CAT_ResultMults, CAT_ResultCount}, []string{"points", "multipliers", "count"}, cr.PointsMults),
+		results,
 
 		strings.Join(optsSingleAxisCats(cr.Axis, cr.Power), ""),
 
@@ -323,7 +337,7 @@ func showSingleRule(w http.ResponseWriter, r *http.Request, cr CompoundRule) {
 func show_rules(w http.ResponseWriter, r *http.Request) {
 
 	const leg = 0
-	var rt = map[int]string{0: "ordinary", 1: "DNF unless", 2: "DNF if", 3: "dummy", 4: "sequence", 5: "cat ratio"}
+	var rt = map[int]string{0: "ordinary", 1: "DNF unless", 2: "DNF if", 3: "dummy", 4: "sequence", 5: "category ratio"}
 	rules := build_compoundRuleArray(leg)
 	axes := build_axisLabels()
 	nsets := 0
@@ -422,19 +436,38 @@ func update_rule(w http.ResponseWriter, r *http.Request) {
 	cr.Axis, _ = strconv.Atoi(r.FormValue("Axis"))
 	cr.Cat, _ = strconv.Atoi(r.FormValue("Cat"))
 	cr.Method, _ = strconv.Atoi(r.FormValue("NMethod"))
+	cr.Target, _ = strconv.Atoi(r.FormValue("ModBonus"))
 	cr.Min, _ = strconv.Atoi(r.FormValue("NMin"))
 	cr.PointsMults, _ = strconv.Atoi("PointsMults")
 	cr.Power, _ = strconv.Atoi(r.FormValue("Power"))
 	cr.Ruletype, _ = strconv.Atoi(r.FormValue("RuleType"))
 
-	sqlx := "UPDATE catcompound SET Ruletype=%d,Axis=%d,Cat=%d,NMethod=%d,NMin=%d,PointsMults=%d,NPower=%d WHERE rowid=%d"
-	sqlx = fmt.Sprintf(sqlx, cr.Ruletype, cr.Axis, cr.Cat, cr.Method, cr.Min, cr.PointsMults, cr.Power, ruleid)
+	// Sanitise results
+
+	if cr.Min < 1 {
+		cr.Min = 1
+	}
+	switch cr.Ruletype {
+	case CAT_OrdinaryScoringRule:
+		if cr.Target == CAT_ModifyBonusScore {
+			cr.Method = CAT_NumBonusesPerCatMethod
+			cr.PointsMults = CAT_ResultPoints
+		}
+	}
+	if cr.Method == CAT_NumBonusesPerCatMethod {
+		if cr.Cat < 1 {
+			cr.Cat = getIntegerFromDB(fmt.Sprintf("SELECT Cat FROM categories WHERE Axis=%d ORDER BY Axis,Cat", cr.Axis), 0)
+		}
+	}
+
+	sqlx := "UPDATE catcompound SET Ruletype=%d,Axis=%d,Cat=%d,NMethod=%d,NMin=%d,PointsMults=%d,NPower=%d,ModBonus=%d WHERE rowid=%d"
+	sqlx = fmt.Sprintf(sqlx, cr.Ruletype, cr.Axis, cr.Cat, cr.Method, cr.Min, cr.PointsMults, cr.Power, cr.Target, ruleid)
 	log.Println(sqlx)
 
 	_, err = DBH.Exec(sqlx)
 	checkerr(err)
 
-	fmt.Fprint(w, `<script>window.location.href="/rules"</script>`)
+	fmt.Fprintf(w, `<script>window.location.href="/rule?r=%d&back=/rules"</script>`, ruleid)
 
 }
 
