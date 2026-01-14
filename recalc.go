@@ -1568,11 +1568,11 @@ func recalc_scorecard(entrant int) {
 			//dbg, _ := json.Marshal(cr)
 			//fmt.Printf("%v [[ %v ]] %v\n", BC.Bonusid, string(dbg), catcount)
 			if cr.Power == 0 {
-				PointsDesc = fmt.Sprintf("%d x %d", BasicPoints, catcount-1)
-				BasicPoints = BasicPoints * (catcount - 1)
+				PointsDesc = fmt.Sprintf("%d x %d", BasicPoints, catcount)
+				BasicPoints = BasicPoints * catcount
 			} else if cr.PointsMults == CAT_ResultMults {
-				PointsDesc = fmt.Sprintf("%d x %d x %d", BasicPoints, cr.Power, catcount-1)
-				BasicPoints = BasicPoints * cr.Power * (catcount - 1)
+				PointsDesc = fmt.Sprintf("%d x %d x %d", BasicPoints, cr.Power, catcount)
+				BasicPoints = BasicPoints * cr.Power * catcount
 			} else {
 				PointsDesc = fmt.Sprintf("%d x %d^%d", BasicPoints, cr.Power, catcount-1)
 				BasicPoints = BasicPoints * powInt(cr.Power, catcount-1)

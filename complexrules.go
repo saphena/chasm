@@ -83,13 +83,26 @@ var tmpltSingleRule = `
 		<li><strong>BV</strong> = points value of current bonus</li>
 		<li><strong>RV</strong> = the "results in" value of current rule</li>
 		<li><strong>N</strong> is the number of bonuses scored within the category</li>
-		<li><strong>N1</strong> is <strong>N</strong> - 1 &nbsp;&nbsp; <em>a convenient term</em></li>
+		<li><strong>N1</strong> is <strong>N</strong> - 1</li>
 		<li><strong>SV</strong> is the resulting score</li>
 		</ul>
-		<p><strong>N</strong> is calculated as the number of bonuses scored per category. </p>
-		<p>If <strong>RV</strong> is 0, <strong>SV</strong> = <strong>BV</strong> * <strong>N1</strong>  simple multiplication.</p>
-		<p>If <strong>RV</strong> is set to "multipliers", <strong>SV</strong> = <strong>BV</strong> * <strong>RV</strong> * <strong>N1</strong>  simple multiplication.</p>
+		<p>If <strong>RV</strong> is 0, <strong>SV</strong> = <strong>BV</strong> * <strong>N</strong>  simple multiplication.</p>
+		<p>If <strong>RV</strong> is set to "multipliers", <strong>SV</strong> = <strong>BV</strong> * <strong>RV</strong> * <strong>N</strong>  simple multiplication.</p>
 		<p>If <strong>RV</strong> is set to "points", <strong>SV</strong> = <strong>BV</strong> * <strong>RV</strong> ^ <strong>N1</strong> exponential score.</p>
+		<p>So, with <strong>BV</strong> = 5 for all bonuses claimed, <strong>RV</strong> = 2, points. Successive claims give:-</p>
+		<ol>
+			<li><strong>SV</strong> = 5 * 2 ^ 0 = 5</li>
+			<li><strong>SV</strong> = 5 * 2 ^ 1 = 10</li>
+			<li><strong>SV</strong> = 5 * 2 ^ 2 = 20</li>
+			<li><strong>SV</strong> = 5 * 2 ^ 3 = 40</li>
+		</ol>
+		<p>So, with <strong>BV</strong> = 5, <strong>RV</strong> = 2, multipliers</p>
+		<ol>
+			<li><strong>SV</strong> = 5 * 2 * 1 = 10</li>
+			<li><strong>SV</strong> = 5 * 2 * 2 = 20</li>
+			<li><strong>SV</strong> = 5 * 2 * 3 = 30</li>
+			<li><strong>SV</strong> = 5 * 2 * 4 = 40</li>
+		</ol>
 	</article>
 
 <div id="singlerule" class="singlerule">
@@ -137,7 +150,7 @@ var tmpltSingleRule = `
 	</select>
   </fieldset>
   
-  <fieldset class="field rule0 rule1 rule2 rule3">
+  <fieldset id="calculateN" class="field rule0 rule1 rule2 rule3">
     <label for="NMethod">Calculate <var>n</var> using </label>
     <select id="NMethod" name="NMethod" onchange="saveRule(this);">
     %v
@@ -311,9 +324,11 @@ func showSingleRule(w http.ResponseWriter, r *http.Request, cr CompoundRule) {
 	rtlabs := []string{"ordinary scoring rule", "DNF unless triggered", "DNF if triggered", "placeholder only", "uninterrupted sequence", "Category ratio DNF"}
 
 	results := selectOptionArray([]int{CAT_ResultPoints, CAT_ResultMults}, []string{"points", "multipliers"}, cr.PointsMults)
-	if cr.Ruletype == CAT_OrdinaryScoringRule && cr.Target == CAT_ModifyBonusScore {
-		results = selectOptionArray([]int{CAT_ResultPoints}, []string{"points"}, cr.PointsMults)
-	}
+	/*
+		if cr.Ruletype == CAT_OrdinaryScoringRule && cr.Target == CAT_ModifyBonusScore {
+			results = selectOptionArray([]int{CAT_ResultPoints}, []string{"points"}, cr.PointsMults)
+		}
+	*/
 	page := fmt.Sprintf(tmpltSingleRule,
 		selectOptionArray(rtvals, rtlabs, cr.Ruletype),
 		selectOptionArray([]int{CAT_ModifyBonusScore, CAT_ModifyAxisScore}, []string{"individual bonuses", "group-based awards"}, cr.Target),
@@ -419,12 +434,12 @@ func show_rules(w http.ResponseWriter, r *http.Request) {
 
 func update_rule(w http.ResponseWriter, r *http.Request) {
 
-	log.Println("updating a rule")
+	//log.Println("updating a rule")
 	var cr CompoundRule
 
 	r.ParseForm()
 
-	log.Printf("%v\n", r.Form)
+	//log.Printf("%v\n", r.Form)
 	ruleid, err := strconv.Atoi(r.FormValue("ruleid"))
 	if err != nil || ruleid == 0 {
 		fmt.Fprint(w, "No ruleid supplied")
@@ -453,6 +468,11 @@ func update_rule(w http.ResponseWriter, r *http.Request) {
 			cr.Method = CAT_NumBonusesPerCatMethod
 			cr.PointsMults = CAT_ResultPoints
 		}
+	case CAT_RatioRule:
+		if cr.Power < 1 { // Category 2
+			cr.Power = getIntegerFromDB(fmt.Sprintf("SELECT Cat FROM categories WHERE Axis=%d ORDER BY Axis,Cat", cr.Axis), 0)
+		}
+
 	}
 	if cr.Method == CAT_NumBonusesPerCatMethod {
 		if cr.Cat < 1 {
@@ -462,7 +482,7 @@ func update_rule(w http.ResponseWriter, r *http.Request) {
 
 	sqlx := "UPDATE catcompound SET Ruletype=%d,Axis=%d,Cat=%d,NMethod=%d,NMin=%d,PointsMults=%d,NPower=%d,ModBonus=%d WHERE rowid=%d"
 	sqlx = fmt.Sprintf(sqlx, cr.Ruletype, cr.Axis, cr.Cat, cr.Method, cr.Min, cr.PointsMults, cr.Power, cr.Target, ruleid)
-	log.Println(sqlx)
+	//log.Println(sqlx)
 
 	_, err = DBH.Exec(sqlx)
 	checkerr(err)

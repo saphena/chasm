@@ -82,13 +82,6 @@ async function deleteRule(obj) {
 }
 
 function showCurrentRule() {
-  /*
-  let rid = document.getElementById('ruleid');
-  if (rid) {
-    window.location.href="/rule?r="+rid.value + "&back=rules&dt="+(Math.random() * 1000)
-    return
-  }
-    */
   console.log("showCurrentRule called");
   let art = document.getElementById("singlerule");
   let typ = document.getElementById("RuleType");
@@ -104,9 +97,13 @@ function showCurrentRule() {
         flds[i].classList.remove("hide");
       else flds[i].classList.add("hide");
   }
+  let mb = document.getElementById("ModBonus");
+  let rt = document.getElementById("RuleType");
+  if (mb && rt && rt.value == 0 && mb.value == 1) { // ordinary scoring, individual bonuses
+    let nm = document.getElementById('NMethod');
+    if (nm) nm.disabled=true
+  }
   setRuleWhichCat(typ);
-  // It would be nice to have code here which offers points/mults for group awards
-  // but only points for individual bonus awards. Redisplaying the rule get it right.
 }
 
 function chgAxis(obj) {
@@ -296,10 +293,10 @@ function saveRule(obj) {
       case "RuleType":
       case "ModBonus":
       case "NMethod":
-      case "NPower":
-      case "NPowerSelect":
+      //case "NPower":
+      //case "NPowerSelect":
         frm.submit();
-        return
+        return;
     }
   }
   let url = "/saverule?ruleid=" + ruleid.value;

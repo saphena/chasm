@@ -11,7 +11,7 @@ Basic bonus scores can be modified by either the number of bonuses scored within
 
 The classic example of this method is the 2017 Brit Butt Rally in which the value of any bonus depended on the number of bonuses scored within a county. The first bonus was worth one point, the second two points, the third four points, the fourth eight points and so on.
 
-Relatively complex arithmetic can be used in this method.
+Relatively complex arithmetic can be used in this method. [See here for details](/guide/ibarith)
 
 ## Uninterrupted sequences
 *Uninterrupted* claiming of a particular category can be used to award extra points. For example, three consecutive farms results in doubling the points awarded for the farm bonuses. The extra points can be either a multiple of the sum of the points scored by the relevant bonuses or a fixed number of extra points. The "uninterrupted" refers to the order of bonus claiming, not the proximity of bonuses within a group. eg. An entrant claims M3, M1, F1, M2: this gives an uninterrupted sequence (US) of two 'M's, not three. Claiming M5, M1, M3, F2 gives a US of three Ms.
