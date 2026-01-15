@@ -83,12 +83,12 @@ var tmpltSingleRule = `
 		<li><strong>BV</strong> = points value of current bonus</li>
 		<li><strong>RV</strong> = the "results in" value of current rule</li>
 		<li><strong>N</strong> is the number of bonuses scored within the category</li>
-		<li><strong>N1</strong> is <strong>N</strong> - 1</li>
+		<li><strong>M</strong> is <strong>N</strong> - 1</li>
 		<li><strong>SV</strong> is the resulting score</li>
 		</ul>
 		<p>If <strong>RV</strong> is 0, <strong>SV</strong> = <strong>BV</strong> * <strong>N</strong>  simple multiplication.</p>
 		<p>If <strong>RV</strong> is set to "multipliers", <strong>SV</strong> = <strong>BV</strong> * <strong>RV</strong> * <strong>N</strong>  simple multiplication.</p>
-		<p>If <strong>RV</strong> is set to "points", <strong>SV</strong> = <strong>BV</strong> * <strong>RV</strong> ^ <strong>N1</strong> exponential score.</p>
+		<p>If <strong>RV</strong> is set to "points", <strong>SV</strong> = <strong>BV</strong> * <strong>RV</strong> ^ <strong>M</strong> exponential score.</p>
 		<p>So, with <strong>BV</strong> = 5 for all bonuses claimed, <strong>RV</strong> = 2, points. Successive claims give:-</p>
 		<ol>
 			<li><strong>SV</strong> = 5 * 2 ^ 0 = 5</li>

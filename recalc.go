@@ -748,7 +748,7 @@ func checkApplySequences(BC ClaimedBonus, LastBonusClaimed ClaimedBonus) ScorexL
 		}
 
 		// If this bonus is in the same category as the last one
-		if Cat == LastCat {
+		if Cat == LastCat && BC.Bonusid != "" {
 			// Still building the sequence so
 
 			continue
@@ -1595,6 +1595,7 @@ func recalc_scorecard(entrant int) {
 
 	// Final check for a sequence
 	var BC ClaimedBonus
+	//fmt.Printf("'%v' === '%v'\n", BC.Bonusid, LastBonusClaimed.Bonusid)
 	sx = checkApplySequences(BC, LastBonusClaimed)
 	if sx.IsValidLine {
 		TotalPoints += sx.Points

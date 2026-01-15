@@ -34,6 +34,9 @@ var claimsmd string
 //go:embed guide/whatworks.md
 var whatworks string
 
+//go:embed guide/ibarith.md
+var ibarith string
+
 var guideheader = `
 <!DOCTYPE html>
 <html lang="en">
@@ -118,6 +121,8 @@ func showGuides(w http.ResponseWriter, r *http.Request) {
 		md = []byte(claimsmd)
 	case "whatworks":
 		md = []byte(whatworks)
+	case "ibarith":
+		md = []byte(ibarith)
 	default:
 		md = []byte(betatest)
 	}

@@ -1180,7 +1180,7 @@ function saveUpdatedClaim(obj) {
     })
     .then((data) => {
       if (!data.OK) {
-        window.location.href = "/" + sav;
+        window.location.href = sav;
       }
     })
     .catch((error) => {

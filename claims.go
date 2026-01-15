@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"fmt"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -390,9 +391,10 @@ func list_claims(w http.ResponseWriter, r *http.Request) {
 		if !ok {
 			rname = strconv.Itoa(cr.EntrantID)
 		}
-		fmt.Fprintf(w, `<fieldset class="row claims" onclick="window.location.href='/claim/%v?back=/claims'">`, claimid)
-		fmt.Fprintf(w, `<fieldset class="col claims" >%v #%v</fieldset>`, rname, cr.EntrantID)
-		fmt.Fprintf(w, `<fieldset class="col claims">%v</fieldset>`, cr.BonusID)
+		blink := url.QueryEscape(fmt.Sprintf("/claims?esel=%v&bsel=%v", esel, bsel))
+		fmt.Fprintf(w, `<fieldset class="row claims" onclick="window.location.href='/claim/%v?back=%v'">`, claimid, blink)
+		fmt.Fprintf(w, `<fieldset class="col claims" oncontextmenu="window.location.href='/claims?esel=%v';return false" >%v #%v</fieldset>`, cr.EntrantID, rname, cr.EntrantID)
+		fmt.Fprintf(w, `<fieldset class="col claims" oncontextmenu="window.location.href='/claims?bsel=%v';return false">%v</fieldset>`, cr.BonusID, cr.BonusID)
 		fmt.Fprintf(w, `<fieldset class="col claims">%v</fieldset>`, cr.OdoReading)
 		fmt.Fprintf(w, `<fieldset class="col claims">%v</fieldset>`, logtime(cr.ClaimTime))
 		decision := tick_icon
@@ -570,7 +572,7 @@ const claimTopline = `
 			<button id="updatedb" class="hideuntil" title="Delete Claim" disabled onclick="deleteClaim(this)"></button>
 		</fieldset>
 		<fieldset>
-			<button title="back to list" onclick="window.location.href='/claims'">↥☰↥</button>
+			<button title="back to list" onclick="window.location.href='%s'">↥☰↥</button>
 		</fieldset>
 	</div>
 `
@@ -638,15 +640,29 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
 
+	//fmt.Printf(`%v\n\n`, r)
 	claimhdr := "Claims log"
 	claimid := intval(r.PathValue("claim"))
 	if claimid < 1 {
 		claimhdr = "Making new claim"
 	}
-	startHTMLBL(w, claimhdr, "/claims")
+
+	datasave, err := url.QueryUnescape(r.FormValue("back"))
+	checkerr(err)
+	//fmt.Println("[[-" + datasave + "-]]")
+	if datasave == "" {
+		datasave = "/claims"
+	}
+	//fmt.Println("[[-" + datasave + "-]]")
+	if claimid < 1 && !CS.UseEBC {
+		datasave = "judgenew"
+	}
+	//fmt.Println("[[-" + datasave + "-]]")
+
+	startHTMLBL(w, claimhdr, datasave)
 
 	if claimid > 0 {
-		fmt.Fprint(w, claimTopline)
+		fmt.Fprintf(w, claimTopline, datasave)
 	} else if !CS.UseEBC {
 		emitLastClaimTopline(w)
 	}
@@ -654,10 +670,6 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `</header><div class="claim">`)
 	fmt.Fprint(w, `<form id="iclaim" data-unloadok="1">`)
 
-	datasave := "claims"
-	if claimid < 1 && !CS.UseEBC {
-		datasave = "judgenew"
-	}
 	fmt.Fprintf(w, `<input type="hidden" id="claimid" name="claimid" data-save="%v" value="%v">`, datasave, claimid)
 	if claimid < 1 {
 		//fmt.Fprint(w, `<input type="text" autofocus tabindex="1" class="subject" placeholder="Paste email Subject line here" oninput="pasteNewClaim(this)">`)
