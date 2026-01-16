@@ -99,9 +99,10 @@ function showCurrentRule() {
   }
   let mb = document.getElementById("ModBonus");
   let rt = document.getElementById("RuleType");
-  if (mb && rt && rt.value == 0 && mb.value == 1) { // ordinary scoring, individual bonuses
-    let nm = document.getElementById('NMethod');
-    if (nm) nm.disabled=true
+  if (mb && rt && rt.value == 0 && mb.value == 1) {
+    // ordinary scoring, individual bonuses
+    let nm = document.getElementById("NMethod");
+    if (nm) nm.disabled = true;
   }
   setRuleWhichCat(typ);
 }
@@ -293,8 +294,8 @@ function saveRule(obj) {
       case "RuleType":
       case "ModBonus":
       case "NMethod":
-      //case "NPower":
-      //case "NPowerSelect":
+        //case "NPower":
+        //case "NPowerSelect":
         frm.submit();
         return;
     }
@@ -1911,7 +1912,20 @@ function saveTimep(obj) {
   let tpid = document.getElementById("tpid");
   if (!tpid) return;
   let url = "/x?f=savetimep&ff=" + obj.name + "&tpid=" + tpid.value;
-  url += "&" + obj.name + "=" + encodeURIComponent(obj.value);
+  switch (obj.name) {
+    case "PenaltyStart":
+      let sd = document.getElementById("PenaltyStartDate");
+      let st = document.getElementById("PenaltyStartTime");
+      url += "&PenaltyStart=" + sd.value + "T" + st.value;
+      break;
+    case "PenaltyFinish":
+      let fd = document.getElementById("PenaltyFinishDate");
+      let ft = document.getElementById("PenaltyFinishTime");
+      url += "&PenaltyFinish=" + fd.value + "T" + ft.value;
+      break;
+    default:
+      url += "&" + obj.name + "=" + encodeURIComponent(obj.value);
+  }
   switch (obj.name) {
     case "TimeSpec":
       let std = document.getElementById("PenaltyStartDate");

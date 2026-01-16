@@ -84,7 +84,8 @@ accessible via the Edit Raw Options screen. The default value is 3 "Out of hours
 <p>This is a safe procedure. If there is no imbalance, nothing will be done. If there is an imbalance, it will be rebalanced but that can be undone manually via the claims log if necessary.</p>
 </article>
 `
-const backToScorecards = `	<button title="back to list" onclick="window.location.href='/cards'">↥☰↥</button>`
+
+var backToScorecards = `	<button title="back to list" onclick="window.location.href='%v'">↥☰↥</button>`
 
 func showScorecard(w http.ResponseWriter, r *http.Request) {
 
@@ -116,8 +117,12 @@ func showScorecard(w http.ResponseWriter, r *http.Request) {
 		team += " &amp; " + sr.PillionName
 	}
 
-	if r.FormValue("back") != "" {
-		startHTMLBL(w, "Scorecard", r.FormValue("back"))
+	blink := r.FormValue("back")
+	if blink == "" {
+		blink = "/cards"
+	}
+	if blink != "" {
+		startHTMLBL(w, "Scorecard", blink)
 	} else {
 		startHTML(w, "Scorecard")
 	}
@@ -162,7 +167,7 @@ func showScorecard(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprint(w, `</select>`)
 
-	fmt.Fprint(w, backToScorecards)
+	fmt.Fprintf(w, backToScorecards, blink)
 
 	fmt.Fprint(w, `</div>`) //topline
 	fmt.Fprint(w, `</div>`) //scorecard

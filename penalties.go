@@ -21,7 +21,8 @@ const tphelp = `
 <li> George Bone starts his rally at "2026-04-12 09:00"</li>
 <li> <em>Rally DNF</em> is "2026-04-12 21:00"</li>
 <li> <em>Entrant DNF</em> is "2026-04-12 17:00"</li>
-</ul
+</ul>
+<p>Typically, penalties result in either a fixed number of points deducted or points deducted per mile/km (depending on the rally's unit of distance). It is also possible to affect the number of multipliers applied to the final score if they're being used in the rally.</p>
 </div>
 `
 
@@ -72,6 +73,7 @@ func show_timepenalties(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, tphelp)
 	fmt.Fprint(w, tpheader)
 	fmt.Fprint(w, `</header>`)
+
 	t, err := template.New("tplist").Parse(tmpltListTimepenalties)
 	checkerr(err)
 	err = t.Execute(w, TimePenalties)
@@ -107,8 +109,8 @@ var tmplTimepenalty = `
 <fieldset>
 	<label for="PenaltyFinish">Continues until</label>
 	{{$cls = ""}}{{if ne .TimeSpec 0}}{{$cls = "hide"}}{{end}}
-		<input type="date" id="PenaltyFinishDate" class="{{$cls}}" name="PenaltyStart" onchange="saveTimep(this)" value="{{.PenaltyFinishDate}}">
-		<input type="time" id="PenaltyFinishTime" class="{{$cls}}" name="PenaltyStart" onchange="saveTimep(this)" value="{{.PenaltyFinishTime}}">
+		<input type="date" id="PenaltyFinishDate" class="{{$cls}}" name="PenaltyFinish" onchange="saveTimep(this)" value="{{.PenaltyFinishDate}}">
+		<input type="time" id="PenaltyFinishTime" class="{{$cls}}" name="PenaltyFinish" onchange="saveTimep(this)" value="{{.PenaltyFinishTime}}">
 	{{$cls = ""}}
 	{{if eq .TimeSpec 0}}{{$cls = "hide"}}{{end}}
 		<input type="number" id="PenaltyFinishMins" class="{{$cls}}" title="Minutes before DNF" name="PenaltyFinish" oninput="oi(this)" data=save="saveTimep" onchange="saveTimep(this)" value="{{.PenaltyFinishMins}}">
@@ -190,6 +192,7 @@ func saveTimePenalty(w http.ResponseWriter, r *http.Request) {
 	}
 	val := r.FormValue(fld)
 	sqlx := "UPDATE timepenalties SET " + fld + "='" + val + "' WHERE rowid=" + tpid
+	fmt.Println(sqlx)
 	_, err := DBH.Exec(sqlx)
 	checkerr(err)
 	fmt.Fprint(w, `{"ok":true,"msg":"ok"}`)
@@ -207,11 +210,14 @@ func show_timepenalty(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if tpid == "0" { // Create new record
-		sqlx = fmt.Sprintf("INSERT INTO timepenalties(TimeSpec)VALUES(%v)", TimeSpecEntrantDNF)
+		sqlx = fmt.Sprintf("INSERT INTO timepenalties(TimeSpec,PenaltyStart,PenaltyFinish)VALUES(%v,%v,%v)", TimeSpecEntrantDNF, "30", "0")
 		res, err := DBH.Exec(sqlx)
 		checkerr(err)
 		tp.Tpid, err = res.LastInsertId()
 		checkerr(err)
+		tp.TimeSpec = TimeSpecEntrantDNF
+		tp.PenaltyStartMins = 30
+		tp.PenaltyFinishMins = 0
 	} else {
 		TimePenalties = build_timePenaltyArray()
 		for i := range TimePenalties {

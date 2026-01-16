@@ -118,7 +118,7 @@ func show_qlist(w http.ResponseWriter, r *http.Request) {
 		if pn != "" {
 			rr.Name += " &amp; " + pn
 		}
-		fmt.Fprintf(w, `<fieldset class="row rankings link" onclick="window.location.href='/score?e=%v&back=qlist'">`, rr.Entrant)
+		fmt.Fprintf(w, `<fieldset class="row rankings link" onclick="window.location.href='/score?e=%v&back=/qlist'">`, rr.Entrant)
 		status := EntrantStatusLits[rr.Status]
 		if rr.Status == EntrantFinisher {
 			status = strconv.Itoa(rr.Rank)

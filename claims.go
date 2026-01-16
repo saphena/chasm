@@ -655,7 +655,7 @@ func showClaim(w http.ResponseWriter, r *http.Request) {
 	}
 	//fmt.Println("[[-" + datasave + "-]]")
 	if claimid < 1 && !CS.UseEBC {
-		datasave = "judgenew"
+		datasave = "/judgenew"
 	}
 	//fmt.Println("[[-" + datasave + "-]]")
 
