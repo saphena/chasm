@@ -39,6 +39,26 @@ var InspiredBy = []string{
 
 const LicenceMIT = `Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.`
 
+const magicScript = `
+<script>
+const newspaperSpinning = [
+  { transform: 'rotate(0) scale(1)' },
+  { transform: 'rotate(360deg) scale(0)' }
+];
+
+const newspaperTiming = {
+  duration: 2000,
+  iterations: 1,
+}
+
+const newspaper = document.querySelector("#helpabout");
+
+newspaper.addEventListener('click', () => {
+  newspaper.animate(newspaperSpinning, newspaperTiming);
+});	
+</script>
+`
+
 func showAboutChasm(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
@@ -46,7 +66,7 @@ func showAboutChasm(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprint(w, `</header>`)
 
-	fmt.Fprint(w, `<article class="about">`)
+	fmt.Fprint(w, `<article class="about" id="helpabout">`)
 	fmt.Fprintf(w, `<h1>%v v%v <span class="h2" title="CHasm Ain't ScoreMaster">Powered by CHASM</span><span class="h2"> &amp; EBCFetch</span></h1>`, PROGRAMTITLE, PROGRAMVERSION)
 	fmt.Fprintf(w, `<p>%v</p>`, PROGDESC)
 	fmt.Fprint(w, `<hr>`)
@@ -83,6 +103,7 @@ func showAboutChasm(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `</dl>`)
 	fmt.Fprintf(w, `<p class="legal hide" id="LicenceMIT">%v</p>`, LicenceMIT)
 	fmt.Fprint(w, `</article>`)
+	fmt.Fprint(w, magicScript)
 }
 
 func showFreeSpace(path string) string {
